@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+*.log
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+*.mo
+
+# Env / secrets
+.env
+.env.*
+*.env
+*.key
+*.pem
+
+#venv
+backend/Scripts
+backend/Lib
+backend/Include/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Pytest and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+
+
+#not now
+frontend
+backend/insomea_crm/apps/clients
+backend/insomea_crm/apps/core
+backend/insomea_crm/apps/suppliers
+backend/insomea_crm/apps/ventes
+
+
+
+
+
+

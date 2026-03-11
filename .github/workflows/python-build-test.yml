@@ -1,0 +1,79 @@
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      working-directory:
+        required: false
+        type: string
+        default: "."
+      run-lint:
+        required: false
+        type: boolean
+        default: true
+      run-tests:
+        required: false
+        type: boolean
+        default: true
+      upload-artifacts:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  python-build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.version }}
+
+      - name: Cache Python packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('${{ inputs.working-directory }}/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "${{ inputs.working-directory }}/requirements.txt" ]; then
+            pip install -r "${{ inputs.working-directory }}/requirements.txt"
+          fi
+      
+      - name: Check Django migrations 
+        run: | 
+          cd "${{ inputs.working-directory }}"
+          if [ -f "manage.py"]; then 
+            python manage.py makemigrations --check --dry-run
+          fi
+  
+      - name: Run Python tests
+        if: ${{ inputs.run-tests }}
+        run: |
+          cd "${{ inputs.working-directory }}"
+          pytest -v
+
+      - name: Python lint
+        if: ${{ inputs.run-lint }}
+        run: |
+          pip install flake8
+          flake8 "${{ inputs.working-directory }}" || true
+
+      - name: Upload Python artifacts
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-artifacts
+          path: |
+            ${{ inputs.working-directory }}/dist
+            ${{ inputs.working-directory }}/build
+            ${{ inputs.working-directory }}/.pytest_cache

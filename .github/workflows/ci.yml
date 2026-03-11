@@ -1,0 +1,32 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-python:
+    uses: ./.github/workflows/python-build-test.yml
+    with:
+      version: "3.13.5"
+      working-directory: backend
+      run-lint: true
+      run-tests: true
+      upload-artifacts: true
+
+#  frontend-node:
+#    uses: ./.github/workflows/node-build-test.yml
+#    with:
+#      version: "18"
+#      working-directory: frontend
+#      run-lint: true
+#      run-tests: false
+#      upload-artifacts: true
+
+#  build-docker-images:
+#    uses: ./.github/workflows/build-docker-images.yml
+#    needs: 
+#      - backend-python
+#      - frontend-node
