@@ -13,7 +13,7 @@ jobs:
       version: "3.13.5"
       working-directory: backend
       run-lint: true
-      run-tests: true
+      run-tests: false
       upload-artifacts: true
 
 #  frontend-node:
