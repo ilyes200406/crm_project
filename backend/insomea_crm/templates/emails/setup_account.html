@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurez votre compte</title>
+    <!--
+    EXPLICATION :
+    
+    Template HTML pour email de setup account
+    
+    Bonnes pratiques email HTML :
+    - Utiliser tables pour layout (compatibilité email clients)
+    - Inline CSS (Gmail ne supporte pas <style>)
+    - Couleurs en hexadécimal
+    - Images hébergées sur CDN (pas en attachment)
+    -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #2563eb;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 30px;
+            background-color: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+        .info-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    EXPLICATION STRUCTURE :
+    
+    1. Header : Logo + Titre
+    2. Content : Message principal + Bouton CTA
+    3. Info Box : Instructions
+    4. Warning : Informations sécurité
+    5. Footer : Contact + Legal
+    -->
+    
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🔐 Bienvenue chez Insomea</h1>
+        </div>
+        
+        <!-- CONTENT -->
+        <div class="content">
+            <p>Bonjour <strong>{{ user.get_full_name }}</strong>,</p>
+            
+            <p>
+                Un compte a été créé pour vous sur la plateforme <strong>Insomea CRM</strong>. 
+                Pour finaliser la configuration de votre compte, veuillez définir votre mot de passe 
+                en cliquant sur le bouton ci-dessous :
+            </p>
+            
+            <!-- CTA BUTTON -->
+            <!-- 
+            EXPLICATION :
+            
+            setup_url contient le token complet
+            Exemple : http://localhost:5173/setup?token=abc123xyz...
+            
+            User clique → Frontend affiche formulaire
+            → User définit password → POST /api/auth/setup/
+            -->
+            <div style="text-align: center;">
+                <a href="{{ setup_url }}" class="button">
+                    Configurer mon compte
+                </a>
+            </div>
+            
+            <!-- INFO BOX -->
+            <div class="info-box">
+                <strong>📋 Que faire ensuite ?</strong>
+                <ol>
+                    <li>Cliquez sur le bouton ci-dessus</li>
+                    <li>Définissez un mot de passe sécurisé (minimum 8 caractères)</li>
+                    <li>Complétez votre profil si nécessaire</li>
+                    <li>Connectez-vous à la plateforme</li>
+                </ol>
+            </div>
+            
+            <!-- SECURITY WARNING -->
+            <!-- 
+            EXPLICATION :
+            
+            Informe user que le lien expire
+            Encourage à agir rapidement
+            Prévient des tentatives de phishing
+            -->
+            <div class="warning">
+                <strong>⚠️ Important :</strong>
+                <ul>
+                    <li>Ce lien est valide pendant <strong>{{ expiry_hours }} heures</strong></li>
+                    <li>Il ne peut être utilisé qu'<strong>une seule fois</strong></li>
+                    <li>Si vous n'avez pas demandé ce compte, ignorez cet email</li>
+                    <li>Ne partagez jamais ce lien avec qui que ce soit</li>
+                </ul>
+            </div>
+            
+            <!-- MANUAL LINK -->
+            <!-- 
+            EXPLICATION :
+            
+            Si bouton ne fonctionne pas (email client bloque HTML)
+            User peut copier/coller le lien
+            -->
+            <p style="font-size: 12px; color: #6b7280;">
+                Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :
+                <br>
+                <a href="{{ setup_url }}" style="color: #2563eb; word-break: break-all;">
+                    {{ setup_url }}
+                </a>
+            </p>
+            
+            <!-- SUPPORT -->
+            <p>
+                Besoin d'aide ? Contactez-nous à 
+                <a href="mailto:support@insomea.tn" style="color: #2563eb;">support@insomea.tn</a>
+            </p>
+            
+            <p>
+                Cordialement,<br>
+                <strong>L'équipe Insomea CRM</strong>
+            </p>
+        </div>
+        
+        <!-- FOOTER -->
+        <div class="footer">
+            <p>
+                © {{ "now"|date:"Y" }} Insomea SARL. Tous droits réservés.
+            </p>
+            <p>
+                Cet email a été envoyé à <strong>{{ user.email }}</strong>
+            </p>
+            <p>
+                Insomea SARL - 123 Avenue Habib Bourguiba, 1000 Tunis, Tunisie
+            </p>
+        </div>
+    </div>
+</body>
+</html>
