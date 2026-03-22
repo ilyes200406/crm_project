@@ -23,7 +23,9 @@ class OpportunityStatus(models.TextChoices):
     CLIENT_PO_REQUEST = 'CLIENT_PO_REQUEST', _('BC client demandé')
     CLIENT_PO_RECIEVED = 'CLIENT_PO_RECIEVED', _('BC client reçu')
     APPROUVED = 'APPROUVEd', _('approuvée')
-    CANCELLED = 'CANCELLED', _('Annulé')                      
+    CANCELLED = 'CANCELLED', _('Annulé')     
+
+    # has                 
 
 class Opportunity(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -125,7 +127,7 @@ class Opportunity(models.Model):
     def create_insomea_quote(self):
         pass
     def has_insomea_quote(self):
-        return hasattr(self, 'insomea_quote_line') and self.insomea_quote_line is not None
+        return hasattr(self, 'insomea_quote') and self.insomea_quote is not None
     
     @transition(field=status, source=OpportunityStatus.INSOMEA_QUOTE_CREATED, target=OpportunityStatus.CLIENT_PO_REQUEST)
     def request_client_po(self):
