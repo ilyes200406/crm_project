@@ -23,7 +23,7 @@ from ..models import (
 # ═══════════════════════════════════════════════════════════
 
 @transaction.atomic
-def create_renewal_opportunity(*, subscription, user, ip_address=None):
+def create_renewal_opportunity(*, subscription, user, quantity=None, notes='', ip_address=None):
     """
     Crée opportunité renewal pour subscription
     
@@ -97,7 +97,7 @@ def create_renewal_opportunity(*, subscription, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     # 3. CRÉATION OPPORTUNITY RENEWAL
     # ───────────────────────────────────────────────────────
-    
+
     renewal_opportunity = Opportunity.objects.create(
         type=OpportunityType.RENEWAL,
         related_opportunity=original_opportunity,
@@ -113,15 +113,17 @@ def create_renewal_opportunity(*, subscription, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     # 4. CRÉATION OPPORTUNITY LINE
     # ───────────────────────────────────────────────────────
-    
+
+    final_quantity = quantity or subscription.quantity
+    final_notes = notes or f"Renouvellement subscription {subscription.subscription_number}"
+
     renewal_line = OpportunityLine.objects.create(
         opportunity=renewal_opportunity,
         product=subscription.product,
-        quantity=subscription.quantity,
+        quantity=final_quantity,
         billing_cycle=subscription.billing_cycle,
         renewal_of_subscription=subscription,
-        notes=f"Renouvellement subscription {subscription.subscription_number}",
-        # status = DRAFT (default)
+        notes=final_notes,
     )
     
     return {

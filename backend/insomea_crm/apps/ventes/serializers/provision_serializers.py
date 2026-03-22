@@ -1,228 +1,246 @@
 """
-PROVISION SERIALIZERS
-
-Transformation Provision & Subscription ↔ JSON
+PROVISION SERIALIZERS - MODIFIÉ
 """
 
 from rest_framework import serializers
-from datetime import date
-
-from ..models import Provision, ProvisionStatus, Subscription
-from ..validators import validate_can_start_provisioning
-
-# Import serializers
-from ...users.api.serializers import UserMinimalSerializer
+from ..models import Provision, ProvisionStatus
 
 
-# ═══════════════════════════════════════════════════════════
-# PROVISION
-# ═══════════════════════════════════════════════════════════
-
-class ProvisionMinimalSerializer(serializers.ModelSerializer):
+class ProvisionListSerializer(serializers.ModelSerializer):
     """
-    Serializer minimal Provision (pour nested)
+    Serializer liste Provisions (léger)
     """
     
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    provisionned_by = UserMinimalSerializer(read_only=True)
+    # Relations
+    product_title = serializers.CharField(
+        source='opportunity_line.product.title',
+        read_only=True
+    )
     
-    class Meta:
-        model = Provision
-        fields = [
-            'id',
-            'status',
-            'status_display',
-            'provisionned_by',
-            'provisioning_started_at',
-            'provisioning_completed_at',
-        ]
-        read_only_fields = fields
-
-
-class ProvisionSerializer(serializers.ModelSerializer):
-    """
-    Serializer complet Provision
+    client_name = serializers.CharField(
+        source='opportunity_line.opportunity.client.company_name',
+        read_only=True
+    )
     
-    Usage:
-        GET /provisions/
-        GET /provisions/{id}/
-    """
+    opportunity_reference = serializers.CharField(
+        source='opportunity_line.opportunity.reference',
+        read_only=True
+    )
     
-    opportunity_line = serializers.SerializerMethodField()
-    provisionned_by = UserMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    provisionned_by_name = serializers.CharField(
+        source='provisionned_by.get_full_name',
+        read_only=True,
+        allow_null=True
+    )
     
-    # Subscription nested (si existe)
-    subscription = serializers.SerializerMethodField()
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Flags renewal
+    is_renewal = serializers.BooleanField(read_only=True)
+    is_initial = serializers.BooleanField(read_only=True)
+    
+    # 🆕 NOUVEAU: Subscription info (si existe)
+    subscription_number = serializers.CharField(
+        source='subscription.subscription_number',
+        read_only=True,
+        allow_null=True
+    )
     
     class Meta:
         model = Provision
         fields = [
             'id',
             'opportunity_line',
+            'product_title',
+            'client_name',
+            'opportunity_reference',
+            'subscription',  # 🆕 NOUVEAU
+            'subscription_number',  # 🆕 NOUVEAU
+            'subscription_term',  # 🆕 NOUVEAU
+            'provisionned_by',
+            'provisionned_by_name',
+            'microsoft_subscription_id',
             'status',
             'status_display',
+            'is_renewal',  # 🆕 NOUVEAU
+            'is_initial',  # 🆕 NOUVEAU
+            'provisioning_started_at',
+            'provisioning_completed_at',
+            'created_at',
+        ]
+
+
+class ProvisionDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer détail Provision (complet)
+    """
+    
+    # Relations (nested)
+    opportunity_line = serializers.SerializerMethodField()
+    provisionned_by = serializers.SerializerMethodField()
+    
+    # 🆕 NOUVEAU: Subscription (nested si existe)
+    subscription = serializers.SerializerMethodField()
+    subscription_term = serializers.SerializerMethodField()
+    
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    # Flags
+    is_renewal = serializers.BooleanField(read_only=True)
+    is_initial = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = Provision
+        fields = [
+            'id',
+            'opportunity_line',
+            'subscription',  # 🆕 NOUVEAU
+            'subscription_term',  # 🆕 NOUVEAU
             'provisionned_by',
             'microsoft_subscription_id',
+            'status',
+            'status_display',
+            'is_renewal',  # 🆕 NOUVEAU
+            'is_initial',  # 🆕 NOUVEAU
             'provisioning_started_at',
             'provisioning_completed_at',
             'provisioning_error',
-            'subscription',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = fields
+        read_only_fields = [
+            'id',
+            'status',
+            'created_at',
+            'updated_at',
+        ]
     
     def get_opportunity_line(self, obj):
-        """Retourne OpportunityLine avec product"""
-        if obj.opportunity_line:
-            from .line_serializers import OpportunityLineMinimalSerializer
-            return OpportunityLineMinimalSerializer(
-                obj.opportunity_line,
-                context=self.context
-            ).data
+        """OpportunityLine info"""
+        from .line_serializers import OpportunityLineDetailSerializer
+        return OpportunityLineDetailSerializer(obj.opportunity_line).data
+    
+    def get_provisionned_by(self, obj):
+        """User info"""
+        if obj.provisionned_by:
+            from ...users.api.serializers import UserSerializer
+            return UserSerializer(obj.provisionned_by).data
         return None
     
     def get_subscription(self, obj):
-        """Retourne Subscription si existe"""
-        if hasattr(obj, 'subscription') and obj.subscription:
-            return SubscriptionSerializer(
-                obj.subscription,
-                context=self.context
-            ).data
+        """Subscription info (si existe)"""
+        if obj.subscription:
+            from .subscription_serializers import SubscriptionListSerializer
+            return SubscriptionListSerializer(obj.subscription).data
+        return None
+    
+    def get_subscription_term(self, obj):
+        """SubscriptionTerm info (si existe)"""
+        if obj.subscription_term:
+            from .subscription_serializers import SubscriptionTermSerializer
+            return SubscriptionTermSerializer(obj.subscription_term).data
         return None
 
 
-# ═══════════════════════════════════════════════════════════
-# PROVISION ACTIONS
-# ═══════════════════════════════════════════════════════════
-
 class StartProvisioningSerializer(serializers.Serializer):
     """
-    Serializer action: Démarrer provisionnement
+    Serializer start provisioning
     
     Usage:
-        POST /provisions/{id}/start/
+        POST /provisions/:id/start/
     
-    Input: {} (vide, user récupéré depuis request)
+    Input: (vide)
     """
-    
-    # Pas de fields requis (user depuis request.user)
     pass
 
 
 class CompleteProvisioningSerializer(serializers.Serializer):
     """
-    Serializer action: Terminer provisionnement
+    Serializer complete provisioning
+    
+    🆕 MODIFIÉ: Support INITIAL vs RENEWAL
     
     Usage:
-        POST /provisions/{id}/complete/
+        POST /provisions/:id/complete/
     
     Input:
+        CAS INITIAL:
         {
-            "subscription_number": "abc-123-def",
+            "subscription_number": "MS-123",
             "start_date": "2024-01-01",
             "end_date": "2025-01-01"
         }
+        
+        CAS RENEWAL:
+        {
+            "start_date": "2025-01-01",
+            "end_date": "2026-01-01"
+            # PAS de subscription_number
+        }
     """
     
+    # 🆕 MODIFIÉ: Optionnel (requis seulement si INITIAL)
     subscription_number = serializers.CharField(
+        required=False,
         max_length=200,
-        help_text="ID Microsoft subscription"
+        help_text="Microsoft Subscription ID (requis si INITIAL)"
     )
     
-    start_date = serializers.DateField()
-    end_date = serializers.DateField()
+    start_date = serializers.DateField(
+        required=True,
+        help_text="Date début terme"
+    )
     
-    def validate_subscription_number(self, value):
-        """Valide unicité"""
-        if Subscription.objects.filter(subscription_number=value).exists():
-            raise serializers.ValidationError(
-                f'Subscription {value} existe déjà'
-            )
-        return value
+    end_date = serializers.DateField(
+        required=True,
+        help_text="Date fin terme"
+    )
     
-    def validate(self, data):
-        """Valide dates"""
-        if data['end_date'] <= data['start_date']:
+    def validate(self, attrs):
+        """Validation"""
+        
+        # Vérifie dates
+        if attrs['end_date'] <= attrs['start_date']:
             raise serializers.ValidationError({
-                'end_date': 'end_date doit être après start_date'
+                'end_date': 'End date must be after start date'
             })
         
-        # Vérifie dates cohérentes (end_date pas trop loin)
-        from datetime import timedelta
-        max_duration = timedelta(days=5*365)  # 5 ans max
+        # 🆕 NOUVEAU: Vérifie subscription_number si INITIAL
+        provision = self.context.get('provision')
         
-        if data['end_date'] - data['start_date'] > max_duration:
-            raise serializers.ValidationError({
-                'end_date': 'Durée subscription trop longue (max 5 ans)'
-            })
+        if provision and provision.is_initial():
+            # INITIAL: subscription_number REQUIS
+            if not attrs.get('subscription_number'):
+                raise serializers.ValidationError({
+                    'subscription_number': 'Required for initial provisioning'
+                })
+        else:
+            # RENEWAL: subscription_number pas nécessaire
+            if attrs.get('subscription_number'):
+                raise serializers.ValidationError({
+                    'subscription_number': 'Not allowed for renewal (subscription already exists)'
+                })
         
-        return data
+        return attrs
 
 
 class FailProvisioningSerializer(serializers.Serializer):
     """
-    Serializer action: Marquer provisionnement échoué
+    Serializer fail provisioning
     
     Usage:
-        POST /provisions/{id}/fail/
-    
-    Input:
-        {
-            "error_message": "Microsoft API timeout"
-        }
+        POST /provisions/:id/fail/
     """
     
     error_message = serializers.CharField(
-        max_length=1000,
-        help_text="Message d'erreur détaillé"
+        required=True,
+        help_text="Error message"
     )
-
-
-# ═══════════════════════════════════════════════════════════
-# SUBSCRIPTION
-# ═══════════════════════════════════════════════════════════
-
-class SubscriptionSerializer(serializers.ModelSerializer):
-    """
-    Serializer Subscription
-    
-    Usage:
-        GET /subscriptions/
-        GET /subscriptions/{id}/
-    """
-    
-    provision = ProvisionMinimalSerializer(read_only=True)
-    
-    # Helpers
-    is_active = serializers.SerializerMethodField()
-    days_until_expiration = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Subscription
-        fields = [
-            'id',
-            'provision',
-            'subscription_number',
-            'start_date',
-            'end_date',
-            'is_active',
-            'days_until_expiration',
-            'created_at',
-            'updated_at',
-        ]
-        read_only_fields = fields
-    
-    def get_is_active(self, obj):
-        """Vérifie si subscription active"""
-        today = date.today()
-        return obj.start_date <= today <= obj.end_date
-    
-    def get_days_until_expiration(self, obj):
-        """Jours jusqu'à expiration"""
-        today = date.today()
-        if obj.end_date < today:
-            return 0  # Expirée
-        delta = obj.end_date - today
-        return delta.days

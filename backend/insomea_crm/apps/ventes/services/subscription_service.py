@@ -87,7 +87,6 @@ def create_initial_subscription(
     
     subscription = Subscription.objects.create(
         subscription_number=subscription_number,
-        provision=provision,  # First provision
         product=opportunity_line.product,
         client=opportunity_line.opportunity.client,
         quantity=opportunity_line.quantity,
@@ -95,7 +94,7 @@ def create_initial_subscription(
         current_term_start=start_date,
         current_term_end=end_date,
         auto_renew=True,
-        status=SubscriptionStatus.PENDING_ACTIVATION,
+        status=SubscriptionStatus.ACTIVE,
     )
     
     # ───────────────────────────────────────────────────────
@@ -239,7 +238,7 @@ def renew_subscription(
     subscription.current_term_end = end_date
     
     # FSM: renew(term)
-    if subscription.status == SubscriptionStatus.PENDING_RENEWAL:
+    if subscription.status == SubscriptionStatus.PENDING_RENEWAL or subscription.status == SubscriptionStatus.EXPIRED:
         subscription.renew(new_term=term)
     
     subscription.save()
@@ -278,65 +277,10 @@ def cancel_subscription(*, subscription, reason='', user=None):
     
     Business Rules:
         - FSM: cancel()
-        - Status: ANY → CANCELLED
+        - Status: EXPIRED → CANCELLED
     """
     
     subscription.cancel(reason=reason)
-    subscription.save()
-    # Signal FSM → StatusHistory créé auto
-    
-    return subscription
-
-
-@transaction.atomic
-def suspend_subscription(*, subscription, reason='', user=None):
-    """
-    Suspend subscription
-    
-    Args:
-        subscription: Subscription instance
-        reason: str raison suspension
-        user: User instance
-    
-    Returns:
-        Subscription (updated)
-    
-    Business Rules:
-        - FSM: suspend()
-        - Status: ACTIVE → SUSPENDED
-    """
-    
-    if subscription.status != SubscriptionStatus.ACTIVE:
-        raise ValidationError('Seules subscriptions ACTIVE peuvent être suspendues')
-    
-    subscription.suspend(reason=reason)
-    subscription.save()
-    # Signal FSM → StatusHistory créé auto
-    
-    return subscription
-
-
-@transaction.atomic
-def reactivate_subscription(*, subscription, user=None):
-    """
-    Réactive subscription suspendue
-    
-    Args:
-        subscription: Subscription instance
-        user: User instance
-    
-    Returns:
-        Subscription (updated)
-    
-    Business Rules:
-        - FSM: reactivate()
-        - Status: SUSPENDED → ACTIVE
-    """
-    
-    if subscription.status != SubscriptionStatus.SUSPENDED:
-        raise ValidationError('Seules subscriptions SUSPENDED peuvent être réactivées')
-    
-    subscription.reactivate()
     subscription.save()
     # Signal FSM → StatusHistory créé auto
     

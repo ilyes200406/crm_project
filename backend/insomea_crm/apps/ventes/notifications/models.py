@@ -1,45 +1,4 @@
 """
-from django.db import models
-import uuid
-
-class TypeNotification(models.TextChoices):
-    EXPIR_90J = 'EXPIR_90J', 'Expiration 90 jours'
-    EXPIR_60J = 'EXPIR_60J', 'Expiration 60 jours'
-    EXPIR_30J = 'EXPIR_30J', 'Expiration 30 jours'
-    EXPIR_7J = 'EXPIR_7J', 'Expiration 7 jours'
-    EXPIR_3J = 'EXPIR_3J', 'Expiration 3 jours'
-    NOUVEAU_DEPLOIEMENT = 'NOUVEAU_DEPLOIEMENT', 'Nouveau déploiement'
-    DEPLOIEMENT_CONFIRME = 'DEPLOIEMENT_CONFIRME', 'Déploiement confirmé'
-
-class CanalNotif(models.TextChoices):
-    EMAIL = 'EMAIL', 'Email'
-    IN_APP = 'IN_APP', 'In-app'
-    LES_DEUX = 'LES_DEUX', 'Email + In-app'
-
-class Notification(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    opportunity = models.ForeignKey('deploiements.Attribution', on_delete=models.PROTECT, related_name='notifications', null=True, blank=True)
-    subscription = models.ForeignKey('authentication.Utilisateur', on_delete=models.PROTECT, related_name='notifications', null=True, blank=True)
-    type = models.CharField(max_length=30, choices=TypeNotification.choices)
-    titre = models.CharField(max_length=255)
-    message = models.TextField()
-    canal = models.CharField(max_length=20, choices=CanalNotif.choices, default=CanalNotif.LES_DEUX)
-    lu = models.BooleanField(default=False)
-    date_envoi = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'notifications'
-        verbose_name = 'Notification'
-        verbose_name_plural = 'Notifications'
-        ordering = ['-date_envoi']
-        indexes = [
-            models.Index(fields=['destinataire', 'lu']),
-            models.Index(fields=['date_envoi']),
-        ]
-"""
-
-"""
 NOTIFICATION MODEL
 
 Notifications internes (dashboard + email) pour les équipes

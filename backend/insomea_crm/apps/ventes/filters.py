@@ -1,7 +1,7 @@
 """
-FILTERS - APP OPPORTUNITIES
+FILTERS - APP OPPORTUNITIES - MODIFIÉ
 
-Django-filter FilterSets
+🆕 Ajout filtres type, related_opportunity
 """
 
 import django_filters
@@ -11,28 +11,39 @@ from .models import (
     Opportunity,
     OpportunityLine,
     OpportunityStatus,
+    OpportunityType,  # 🆕 NOUVEAU
     OpportunityLineStatus,
     SupplierQuote,
     InsomeaQuote,
     Provision,
     ProvisionStatus,
     Subscription,
+    SubscriptionStatus,  # 🆕 NOUVEAU
     StatusHistory,
 )
 
+
+# ═══════════════════════════════════════════════════════════
+# OPPORTUNITY FILTER
+# ═══════════════════════════════════════════════════════════
 
 class OpportunityFilter(django_filters.FilterSet):
     """
     Filters pour Opportunity
     
-    Usage:
-        GET /opportunities/?status=DRAFT&client=uuid&created_after=2024-01-01
+    🆕 MODIFIÉ: Ajout type, related_opportunity
     """
     
     # Status
     status = django_filters.ChoiceFilter(
         field_name='status',
         choices=OpportunityStatus.choices
+    )
+    
+    # 🆕 NOUVEAU: Type
+    type = django_filters.ChoiceFilter(
+        field_name='type',
+        choices=OpportunityType.choices
     )
     
     # Client
@@ -45,6 +56,11 @@ class OpportunityFilter(django_filters.FilterSet):
     # Assignation
     created_by = django_filters.UUIDFilter(field_name='created_by__id')
     assigned_to = django_filters.UUIDFilter(field_name='assigned_to__id')
+    
+    # 🆕 NOUVEAU: Related opportunity
+    related_opportunity = django_filters.UUIDFilter(
+        field_name='related_opportunity__id'
+    )
     
     # Dates
     created_after = django_filters.DateFilter(
@@ -71,19 +87,61 @@ class OpportunityFilter(django_filters.FilterSet):
         model = Opportunity
         fields = [
             'status',
+            'type',  # 🆕 NOUVEAU
             'client',
             'created_by',
             'assigned_to',
+            'related_opportunity',  # 🆕 NOUVEAU
         ]
 
 
+# ═══════════════════════════════════════════════════════════
+# OPPORTUNITYLINE FILTER (INCHANGÉ)
+# ═══════════════════════════════════════════════════════════
+
 class OpportunityLineFilter(django_filters.FilterSet):
+    """Filters pour OpportunityLine"""
+    
+    opportunity = django_filters.UUIDFilter(field_name='opportunity__id')
+    product = django_filters.UUIDFilter(field_name='product__id')
+    product_name = django_filters.CharFilter(
+        field_name='product__title',
+        lookup_expr='icontains'
+    )
+    status = django_filters.ChoiceFilter(
+        field_name='status',
+        choices=OpportunityLineStatus.choices
+    )
+    billing_cycle = django_filters.CharFilter(field_name='billing_cycle')
+    
+    class Meta:
+        model = OpportunityLine
+        fields = ['opportunity', 'product', 'status', 'billing_cycle']
+
+
+# ═══════════════════════════════════════════════════════════
+# SUBSCRIPTION FILTER
+# ═══════════════════════════════════════════════════════════
+
+class SubscriptionFilter(django_filters.FilterSet):
     """
-    Filters pour OpportunityLine
+    Filters pour Subscription
+    
+    🆕 NOUVEAU
     """
     
-    # Opportunity
-    opportunity = django_filters.UUIDFilter(field_name='opportunity__id')
+    # Status
+    status = django_filters.ChoiceFilter(
+        field_name='status',
+        choices=SubscriptionStatus.choices
+    )
+    
+    # Client
+    client = django_filters.UUIDFilter(field_name='client__id')
+    client_name = django_filters.CharFilter(
+        field_name='client__company_name',
+        lookup_expr='icontains'
+    )
     
     # Product
     product = django_filters.UUIDFilter(field_name='product__id')
@@ -92,38 +150,59 @@ class OpportunityLineFilter(django_filters.FilterSet):
         lookup_expr='icontains'
     )
     
-    # Status
-    status = django_filters.ChoiceFilter(
-        field_name='status',
-        choices=OpportunityLineStatus.choices
-    )
-    
     # Billing cycle
     billing_cycle = django_filters.CharFilter(field_name='billing_cycle')
     
+    # Auto renew
+    auto_renew = django_filters.BooleanFilter(field_name='auto_renew')
+    
+    # Dates
+    term_end_after = django_filters.DateFilter(
+        field_name='current_term_end',
+        lookup_expr='gte'
+    )
+    term_end_before = django_filters.DateFilter(
+        field_name='current_term_end',
+        lookup_expr='lte'
+    )
+    
+    # Search
+    search = django_filters.CharFilter(method='filter_search')
+    
+    def filter_search(self, queryset, name, value):
+        """Recherche dans subscription_number, client, product"""
+        return queryset.filter(
+            Q(subscription_number__icontains=value) |
+            Q(client__company_name__icontains=value) |
+            Q(product__title__icontains=value)
+        )
+    
     class Meta:
-        model = OpportunityLine
-        fields = ['opportunity', 'product', 'status', 'billing_cycle']
+        model = Subscription
+        fields = [
+            'status',
+            'client',
+            'product',
+            'billing_cycle',
+            'auto_renew',
+        ]
 
+
+# ═══════════════════════════════════════════════════════════
+# AUTRES FILTERS (INCHANGÉS)
+# ═══════════════════════════════════════════════════════════
 
 class SupplierQuoteFilter(django_filters.FilterSet):
-    """
-    Filters pour SupplierQuote
-    """
+    """Filters pour SupplierQuote"""
     
-    # Supplier
     supplier = django_filters.UUIDFilter(field_name='supplier__id')
     supplier_name = django_filters.CharFilter(
         field_name='supplier__name',
         lookup_expr='icontains'
     )
-    
-    # Opportunity (via lines)
     opportunity = django_filters.UUIDFilter(
         field_name='lines__opportunity_line__opportunity__id'
     )
-    
-    # Dates
     received_after = django_filters.DateFilter(
         field_name='received_at',
         lookup_expr='gte'
@@ -139,17 +218,10 @@ class SupplierQuoteFilter(django_filters.FilterSet):
 
 
 class InsomeaQuoteFilter(django_filters.FilterSet):
-    """
-    Filters pour InsomeaQuote
-    """
+    """Filters pour InsomeaQuote"""
     
-    # Opportunity
     opportunity = django_filters.UUIDFilter(field_name='opportunity__id')
-    
-    # Client (via opportunity)
     client = django_filters.UUIDFilter(field_name='opportunity__client__id')
-    
-    # Dates
     created_after = django_filters.DateFilter(
         field_name='created_at',
         lookup_expr='gte'
@@ -165,113 +237,46 @@ class InsomeaQuoteFilter(django_filters.FilterSet):
 
 
 class ProvisionFilter(django_filters.FilterSet):
-    """
-    Filters pour Provision
-    """
+    """Filters pour Provision"""
     
-    # Status
     status = django_filters.ChoiceFilter(
         field_name='status',
         choices=ProvisionStatus.choices
     )
-    
-    # Opportunity
     opportunity = django_filters.UUIDFilter(
         field_name='opportunity_line__opportunity__id'
     )
-    
-    # Technicien
     provisionned_by = django_filters.UUIDFilter(field_name='provisionned_by__id')
-    
-    # Product
     product = django_filters.UUIDFilter(
         field_name='opportunity_line__product__id'
     )
     
+    # 🆕 NOUVEAU: Filter by subscription (renewal vs initial)
+    subscription = django_filters.UUIDFilter(field_name='subscription__id')
+    is_renewal = django_filters.BooleanFilter(method='filter_is_renewal')
+    
+    def filter_is_renewal(self, queryset, name, value):
+        """Filter renewal vs initial provisions"""
+        if value:
+            return queryset.filter(subscription__isnull=False)
+        else:
+            return queryset.filter(subscription__isnull=True)
+    
     class Meta:
         model = Provision
-        fields = ['status', 'opportunity', 'provisionned_by', 'product']
-
-
-class SubscriptionFilter(django_filters.FilterSet):
-    """
-    Filters pour Subscription
-    """
-    
-    # Opportunity
-    opportunity = django_filters.UUIDFilter(
-        field_name='provision__opportunity_line__opportunity__id'
-    )
-    
-    # Product
-    product = django_filters.UUIDFilter(
-        field_name='provision__opportunity_line__product__id'
-    )
-    
-    # Technicien
-    provisionned_by = django_filters.UUIDFilter(
-        field_name='provision__provisionned_by__id'
-    )
-    
-    # Dates
-    start_after = django_filters.DateFilter(
-        field_name='start_date',
-        lookup_expr='gte'
-    )
-    end_before = django_filters.DateFilter(
-        field_name='end_date',
-        lookup_expr='lte'
-    )
-    
-    # Active
-    is_active = django_filters.BooleanFilter(method='filter_is_active')
-    
-    def filter_is_active(self, queryset, name, value):
-        """Filtre subscriptions actives"""
-        from datetime import date
-        today = date.today()
-        
-        if value:
-            return queryset.filter(
-                start_date__lte=today,
-                end_date__gte=today
-            )
-        else:
-            return queryset.exclude(
-                start_date__lte=today,
-                end_date__gte=today
-            )
-    
-    class Meta:
-        model = Subscription
-        fields = ['opportunity', 'product', 'provisionned_by']
+        fields = ['status', 'opportunity', 'provisionned_by', 'product', 'subscription']
 
 
 class StatusHistoryFilter(django_filters.FilterSet):
-    """
-    Filters pour StatusHistory
-    """
+    """Filters pour StatusHistory"""
     
-    # Opportunity
     opportunity = django_filters.UUIDFilter(field_name='opportunity__id')
-    
-    # OpportunityLine
     opportunity_line = django_filters.UUIDFilter(field_name='opportunity_line__id')
-    
-    # Provision
     provision = django_filters.UUIDFilter(field_name='provision__id')
-    
-    # User
     changed_by = django_filters.UUIDFilter(field_name='changed_by__id')
-    
-    # Transition
     transition_name = django_filters.CharFilter(field_name='transition_name')
-    
-    # Status
     status_precedent = django_filters.CharFilter(field_name='status_precedent')
     status_suivant = django_filters.CharFilter(field_name='status_suivant')
-    
-    # Dates
     created_after = django_filters.DateTimeFilter(
         field_name='created_at',
         lookup_expr='gte'

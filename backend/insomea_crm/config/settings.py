@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from celery import crontab
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -285,7 +287,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 # Explication : Utilise SMTP pour envoyer emails réels
 # En dev, on peut utiliser 'django.core.mail.backends.console.EmailBackend'
 
@@ -295,17 +297,22 @@ EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 # Explication : Port SMTP (587 = TLS, 465 = SSL)
 
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True)
 # Explication : Utilise TLS pour chiffrer emails
 
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 # Explication : Email expéditeur (ex: noreply@insomea.tn)
 
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # Explication : Password ou App Password de l'email
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@insomea.tn')
 # Explication : Email affiché comme expéditeur
+
+# Email addresses teams
+FINANCE_TEAM_EMAIL = config('FINANCE_TEAM_EMAIL', default='finance@insomea.com')
+TECH_TEAM_EMAIL = config('TECH_TEAM_EMAIL', default='tech@insomea.com')
+ADMIN_EMAIL = config('ADMIN_EMAIL', default='admin@insomea.com')
 
 # ═══════════════════════════════════════════════════════════
 # FRONTEND URL (pour les liens dans emails)
@@ -369,8 +376,8 @@ CACHES = {
 # CELERY CONFIGURATION
 # ═══════════════════════════════════════════════════════════
 
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -391,20 +398,3 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=9, minute=0),  # 9:00 AM UTC daily
     },
 }
-
-# ═══════════════════════════════════════════════════════════
-# EMAIL CONFIGURATION (si pas déjà configuré)
-# ═══════════════════════════════════════════════════════════
-
-EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = env.int('EMAIL_PORT', default=587)
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
-EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@insomea.com')
-
-# Email addresses teams
-FINANCE_TEAM_EMAIL = env('FINANCE_TEAM_EMAIL', default='finance@insomea.com')
-TECH_TEAM_EMAIL = env('TECH_TEAM_EMAIL', default='tech@insomea.com')
-ADMIN_EMAIL = env('ADMIN_EMAIL', default='admin@insomea.com')

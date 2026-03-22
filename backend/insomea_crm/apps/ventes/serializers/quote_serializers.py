@@ -401,7 +401,6 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
             "lines_pricing": [
                 {
                     "line_id": "uuid",
-                    "supplier_quote_line_id": "uuid",  ← Choix commercial
                     "unit_price_sale": 120.00
                 },
                 ...
@@ -441,7 +440,7 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
         # Valide chaque ligne
         for i, line_data in enumerate(value):
             # Fields requis
-            required = ['line_id', 'supplier_quote_line_id', 'unit_price_sale']
+            required = ['line_id', 'unit_price_sale']
             for field in required:
                 if field not in line_data:
                     raise serializers.ValidationError({
@@ -452,6 +451,7 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
             try:
                 sale_price = Decimal(str(line_data['unit_price_sale']))
                 validate_price_positive(sale_price)
+                line_data['unit_price_sale'] = sale_price
             except Exception as e:
                 raise serializers.ValidationError({
                     f'lines_pricing[{i}].unit_price_sale': str(e)
@@ -460,39 +460,48 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
         return value
     
     def validate(self, data):
-        """Validation globale"""
-        
-        # Récupère SupplierQuoteLines pour vérifier prix achat
+        from ..models import OpportunityLine
+
         lines_pricing = data['lines_pricing']
-        
-        from ..models import SupplierQuoteLine
-        sql_ids = [lp['supplier_quote_line_id'] for lp in lines_pricing]
-        sql_map = {
-            str(sql.id): sql
-            for sql in SupplierQuoteLine.objects.filter(id__in=sql_ids)
-        }
-        
-        # Enrichit avec prix achat + validation
+        line_ids = [lp['line_id'] for lp in lines_pricing]
+
+        lines = OpportunityLine.objects.filter(
+            id__in=line_ids
+        ).prefetch_related('supplier_quote_lines')
+
+        if lines.count() != len(line_ids):
+            raise serializers.ValidationError({
+                'lines_pricing': 'Certaines lignes sont introuvables'
+            })
+
+        line_map = {str(line.id): line for line in lines}
+
         for lp in lines_pricing:
-            sql_id = str(lp['supplier_quote_line_id'])
-            
-            if sql_id not in sql_map:
+            line = line_map[str(lp['line_id'])]
+            supplier_quote_lines = line.supplier_quote_lines.all()
+
+            if supplier_quote_lines.count() == 0:
                 raise serializers.ValidationError({
-                    'lines_pricing': f'SupplierQuoteLine {sql_id} introuvable'
+                    'lines_pricing': f'Aucun devis fournisseur pour la ligne {line.id}'
                 })
-            
-            sql = sql_map[sql_id]
+
+            if supplier_quote_lines.count() > 1:
+                raise serializers.ValidationError({
+                    'lines_pricing': (
+                        f'Plusieurs devis fournisseur pour la ligne {line.id}. '
+                        'Le workflow attendu impose un seul devis fournisseur par ligne.'
+                    )
+                })
+
+            sql = supplier_quote_lines.first()
             lp['unit_price_purchase'] = sql.unit_price_purchase
-            
-            # Valide sale >= purchase
+
             validate_sale_price_greater_than_purchase(
                 lp['unit_price_purchase'],
-                Decimal(str(lp['unit_price_sale']))
+                lp['unit_price_sale']
             )
-        
-        # Validation composite
+
         validate_insomea_quote_lines_pricing(lines_pricing)
-        
         return data
     
     def create(self, validated_data):

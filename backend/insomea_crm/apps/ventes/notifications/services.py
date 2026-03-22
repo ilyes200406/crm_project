@@ -27,7 +27,7 @@ def notify_finance_to_approve(opportunity):
         Signal post_transition Opportunity (CLIENT_PO_RECEIVED)
     """
     
-    from ..users.models.users import User
+    from ...users.models.users import User
     
     # Get all FINANCE users
     finance_users = User.objects.filter(role='FINANCE', is_active=True)
@@ -68,7 +68,7 @@ def notify_techniciens_provision_waiting(provision):
         Signal post_save Provision (status=WAITING_PROVISION)
     """
     
-    from ..users.models.users import User
+    from ...users.models.users import User
     
     # Get all TECHNICIEN users
     tech_users = User.objects.filter(role='TECHNICIEN', is_active=True)
@@ -107,7 +107,7 @@ def notify_all_provisioned(provision):
         Signal post_transition Provision (PROVISIONED)
     """
     
-    from ..users.models.users import User
+    from ...users.models.users import User
     
     # Get commercial assigné + Finance + Tech teams
     opportunity = provision.opportunity_line.opportunity
@@ -195,7 +195,7 @@ def notify_subscription_expired(subscription):
         Celery task expire_unrenewed_subscriptions
     """
     
-    from ..users.models.users import User
+    from ...users.models.users import User
     
     # Notifier Finance + Commercial assigné + Admin
     recipients = set()

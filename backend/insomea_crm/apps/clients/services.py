@@ -485,11 +485,11 @@ def assign_client(*, client_id, assigned_to_id, user, ip_address=None):
     # VALIDATION COMMERCIAL CIBLE
     # ───────────────────────────────────────────────────────
     
-    from authentication.models import Utilisateur
+    from ..users.models.users import User
     
     try:
-        new_assignee = Utilisateur.objects.get(id=assigned_to_id)
-    except Utilisateur.DoesNotExist:
+        new_assignee = User.objects.get(id=assigned_to_id)
+    except User.DoesNotExist:
         raise ValidationError({'assigned_to': 'Utilisateur non trouvé'})
     
     if new_assignee.role != 'COMMERCIAL':

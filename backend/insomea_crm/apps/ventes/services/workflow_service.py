@@ -14,6 +14,7 @@ from ..selectors import (
     get_opportunity_by_id,
 )
 from .provision_service import create_provision_for_line
+from ..emails.services import send_supplier_quote_request, send_client_quote_with_pdf
 
 
 # ═══════════════════════════════════════════════════════════
@@ -84,8 +85,34 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
     # NOTE: update_opportunity_status_from_lines() appelé auto via signal
     # Mais on peut forcer si besoin:
     update_opportunity_status_from_lines(opportunity)
+
     
-    # Recharge opportunity pour avoir status à jour
+    # Groupe lignes par fournisseur (via product.supplier si existe)
+    from collections import defaultdict
+    lines_by_supplier = defaultdict(list)
+    
+    for line in opportunity.lines.all():
+        # Get supplier depuis product (si FK existe)
+        # Sinon, skip email (supplier sera choisi lors création SupplierQuote)
+        if hasattr(line.product, 'supplier') and line.product.supplier:
+            supplier = line.product.supplier
+            lines_by_supplier[supplier].append(line)
+    
+    # Envoi email par fournisseur
+    for supplier, lines in lines_by_supplier.items():
+        try:
+            send_supplier_quote_request(
+                opportunity=opportunity,
+                supplier=supplier,
+                lines=lines
+            )
+        except Exception as e:
+            # Log error mais continue (email pas critique)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending email to supplier {supplier.name}: {e}")
+    
+    # Recharge opportunity (status recalculé via signal)
     opportunity.refresh_from_db()
     
     return opportunity
@@ -132,6 +159,19 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
     opportunity.request_client_po()
     opportunity.save()
     # Signal FSM → StatusHistory créé auto
+
+    # Get InsomeaQuote
+    if hasattr(opportunity, 'insomea_quote') and opportunity.insomea_quote:
+        try:
+            send_client_quote_with_pdf(
+                opportunity=opportunity,
+                insomea_quote=opportunity.insomea_quote
+            )
+        except Exception as e:
+            # Log error mais continue
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending email to client: {e}")
     
     return opportunity
 

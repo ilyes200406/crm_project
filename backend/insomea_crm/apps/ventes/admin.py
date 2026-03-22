@@ -448,3 +448,113 @@ class StatusHistoryAdmin(admin.ModelAdmin):
 # Register autres models simples
 admin.site.register(ClientPO)
 admin.site.register(InsomeaPurchaseOrder)
+
+
+# ... (garder tout le code existant)
+
+# 🆕 NOUVEAU IMPORT
+from ..notifications.models import Notification, NotificationType, NotificationStatus
+
+
+# ═══════════════════════════════════════════════════════════
+# 🆕 NOTIFICATION ADMIN
+# ═══════════════════════════════════════════════════════════
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    """Admin Notification"""
+    
+    list_display = (
+        'created_at',
+        'type_badge',
+        'recipient',
+        'title',
+        'status_badge',
+        'sent_at',
+        'read_at',
+    )
+    
+    list_filter = ('type', 'status', 'created_at', 'sent_at')
+    
+    search_fields = (
+        'title',
+        'message',
+        'recipient__email',
+        'recipient__first_name',
+        'recipient__last_name',
+    )
+    
+    readonly_fields = (
+        'type',
+        'recipient',
+        'title',
+        'message',
+        'opportunity',
+        'provision',
+        'subscription',
+        'action_url',
+        'status',
+        'sent_at',
+        'read_at',
+        'created_at',
+    )
+    
+    fieldsets = (
+        ('Notification', {
+            'fields': ('type', 'status', 'recipient')
+        }),
+        ('Contenu', {
+            'fields': ('title', 'message', 'action_url')
+        }),
+        ('Objets liés', {
+            'fields': ('opportunity', 'provision', 'subscription'),
+            'classes': ('collapse',)
+        }),
+        ('Métadonnées', {
+            'fields': ('sent_at', 'read_at', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def type_badge(self, obj):
+        """Badge type"""
+        colors = {
+            'FINANCE_APPROVE': '#2196F3',
+            'TECH_PROVISION_WAITING': '#FF9800',
+            'SUBSCRIPTION_PROVISIONED': '#4CAF50',
+            'SUBSCRIPTION_EXPIRING': '#FFC107',
+            'SUBSCRIPTION_EXPIRED': '#F44336',
+        }
+        color = colors.get(obj.type, '#9E9E9E')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 3px;">{}</span>',
+            color,
+            obj.get_type_display()
+        )
+    type_badge.short_description = 'Type'
+    
+    def status_badge(self, obj):
+        """Badge statut"""
+        colors = {
+            'PENDING': '#9E9E9E',
+            'SENT': '#2196F3',
+            'READ': '#4CAF50',
+            'FAILED': '#F44336',
+        }
+        color = colors.get(obj.status, '#9E9E9E')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 3px;">{}</span>',
+            color,
+            obj.get_status_display()
+        )
+    status_badge.short_description = 'Statut'
+    
+    # Read-only admin (auto-créées via signals)
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser  # Seulement superuser peut supprimer

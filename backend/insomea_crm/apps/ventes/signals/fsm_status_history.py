@@ -1,18 +1,47 @@
-from ..models.opportunityLine import OpportunityLine
-from ..models.opportunity import Opportunity
-from ..models.provision import Provision
-from ..models.statusHistory import StatusHistory
-from ..services.workflow_service import update_opportunity_status_from_lines
+"""
+SIGNALS - APP OPPORTUNITIES
+
+Auto-logging des transitions FSM + Notifications automatiques
+"""
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django_fsm.signals import post_transition
 
+from ..models import (
+    Opportunity,
+    OpportunityLine,
+    OpportunityStatus,
+    Provision,
+    ProvisionStatus,
+    StatusHistory,
+)
+
+
+# ═══════════════════════════════════════════════════════════
+# SIGNAL FSM : AUTO-LOG TOUTES TRANSITIONS
+# ═══════════════════════════════════════════════════════════
 
 @receiver(post_transition)
 def log_fsm_transition(sender, instance, name, source, target, **kwargs):
-
-    if sender not in [Opportunity, OpportunityLine, Provision]:
+    """
+    Signal django-fsm : log automatique TOUTES transitions FSM
+    
+    Déclenché après CHAQUE transition @transition
+    
+    Args:
+        sender: Model class (Opportunity, OpportunityLine, Provision, Subscription)
+        instance: Instance de l'objet transitionné
+        name: Nom de la transition (ex: 'request_supplier_quote')
+        source: État source
+        target: État cible
+        kwargs: method_kwargs (user, ip_address, etc.)
+    """
+    
+    from ..models import Subscription  # Import ici pour éviter circular
+    
+    # Filtre seulement nos models FSM
+    if sender not in [Opportunity, OpportunityLine, Provision, Subscription]:
         return
     
     # Récupère user/ip depuis method_kwargs si passé
@@ -42,9 +71,77 @@ def log_fsm_transition(sender, instance, name, source, target, **kwargs):
         history_data['opportunity'] = instance
     elif sender == Provision:
         history_data['provision'] = instance
+    elif sender == Subscription:
+        # Subscription n'a pas FK dans StatusHistory actuellement
+        # Si nécessaire, ajouter subscription FK dans StatusHistory model
+        pass
     
     # Crée log
     StatusHistory.objects.create(**history_data)
+
+
+# ═══════════════════════════════════════════════════════════
+# 🆕 OPPORTUNITY TRANSITIONS → NOTIFICATIONS
+# ═══════════════════════════════════════════════════════════
+
+@receiver(post_transition, sender=Opportunity)
+def notify_on_opportunity_transition(sender, instance, name, source, target, **kwargs):
+    """
+    Notifications automatiques après transitions Opportunity
+    
+    Triggers:
+        - CLIENT_PO_RECEIVED → Notif Finance (approuver)
+    """
+    
+    from ..notifications.services import notify_finance_to_approve
+    
+    # Notif Finance: Approuver opportunité
+    if target == OpportunityStatus.CLIENT_PO_RECIEVED:
+        notify_finance_to_approve(instance)
+
+
+# ═══════════════════════════════════════════════════════════
+# 🆕 PROVISION CREATION → NOTIFICATION TECHNICIENS
+# ═══════════════════════════════════════════════════════════
+
+@receiver(post_save, sender=Provision)
+def notify_on_provision_created(sender, instance, created, **kwargs):
+    """
+    Notification Techniciens: Provision créée (WAITING_PROVISION)
+    
+    Trigger:
+        - Provision créée avec status WAITING_PROVISION
+    """
+    
+    from ..notifications.services import notify_techniciens_provision_waiting
+    
+    if created and instance.status == ProvisionStatus.WAITING_PROVISION:
+        notify_techniciens_provision_waiting(instance)
+
+
+# ═══════════════════════════════════════════════════════════
+# 🆕 PROVISION TRANSITIONS → NOTIFICATIONS
+# ═══════════════════════════════════════════════════════════
+
+@receiver(post_transition, sender=Provision)
+def notify_on_provision_transition(sender, instance, name, source, target, **kwargs):
+    """
+    Notifications automatiques après transitions Provision
+    
+    Triggers:
+        - PROVISIONED → Notif tous (subscription créée)
+    """
+    
+    from ..notifications.services import notify_all_provisioned
+    
+    # Notif tous: Subscription provisionnée
+    if target == ProvisionStatus.PROVISIONED:
+        notify_all_provisioned(instance)
+
+
+# ═══════════════════════════════════════════════════════════
+# AUTO-UPDATE OPPORTUNITY STATUS (COMPUTED)
+# ═══════════════════════════════════════════════════════════
 
 @receiver(post_save, sender=OpportunityLine)
 def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
@@ -63,6 +160,8 @@ def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
         Évite boucle infinie avec flag _updating_opportunity_status
     """
     
+    from ..services.workflow_service import update_opportunity_status_from_lines
+    
     # Évite boucle infinie
     if hasattr(instance, '_updating_opportunity_status'):
         return
@@ -70,7 +169,7 @@ def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
     # Mark pour éviter récursion
     instance._updating_opportunity_status = True
     
-    # After a line status change (or create), update the parent opportunity aggregated status.
+    # Recalcule status
     update_opportunity_status_from_lines(instance.opportunity)
     
     # Cleanup
@@ -89,83 +188,11 @@ def update_opportunity_status_on_line_delete(sender, instance, **kwargs):
         - Si 0 lignes → Opportunity.status = DRAFT
     """
     
+    from ..services.workflow_service import update_opportunity_status_from_lines
+    
     # Vérifie que opportunity existe encore
     if instance.opportunity_id:
         try:
             update_opportunity_status_from_lines(instance.opportunity)
         except Opportunity.DoesNotExist:
             pass
-
-
-
-"""
-**✅ SERVICES COMPLETS (5/5) - OPPORTUNITIES APP TERMINÉE !**
-
-**Coverage TOTALE SERVICES :**
-
-### **opportunity_service.py (6 fonctions)**
-- create_opportunity, update_opportunity, delete_opportunity
-- add_line_to_opportunity, update_opportunity_line, remove_line_from_opportunity
-
-### **quote_service.py (4 fonctions)**
-- create_supplier_quote, recalculate_supplier_quote_totals
-- create_insomea_quote, recalculate_insomea_quote_totals
-
-### **purchase_order_service.py (3 fonctions)**
-- upload_client_po, create_insomea_pos, request_client_po_transition
-
-### **provision_service.py (5 fonctions)**
-- create_provision_for_line, start_provisioning, complete_provisioning
-- fail_provisioning, retry_provisioning
-
-### **workflow_service.py (4 fonctions)**
-- request_all_supplier_quotes, request_client_po, approve_opportunity
-- update_opportunity_status_from_lines ← **CŒUR DU SYSTÈME**
-
-**TOTAL : 22 SERVICES** ✅
-
----
-
-## **🎯 WORKFLOW COMPLET END-TO-END**
-```
-1. Commercial crée opportunity + lignes
-   → create_opportunity(), add_line_to_opportunity()
-
-2. Commercial demande devis fournisseurs
-   → request_all_supplier_quotes()
-   → FSM lines: DRAFT → SUPPLIER_QUOTE_REQUEST
-   → Signal → Opportunity.status = SUPPLIER_QUOTE_REQUEST (computed)
-
-3. Commercial upload devis fournisseurs
-   → create_supplier_quote()
-   → FSM lines: SUPPLIER_QUOTE_REQUEST → SUPPLIER_QUOTE_RECEIVED
-   → Signal → Opportunity.status = SUPPLIER_QUOTE_RECEIVED (computed)
-
-4. Commercial crée devis Insomea
-   → create_insomea_quote()
-   → Copie prix fournisseur + définit prix vente
-   → FSM Opportunity: SUPPLIER_QUOTE_RECEIVED → INSOMEA_QUOTE_CREATED
-
-5. Commercial demande BC client
-   → request_client_po()
-   → FSM Opportunity: INSOMEA_QUOTE_CREATED → CLIENT_PO_REQUEST
-
-6. Commercial upload BC client
-   → upload_client_po()
-   → FSM Opportunity: CLIENT_PO_REQUEST → CLIENT_PO_RECEIVED
-
-7. Finance approuve
-   → approve_opportunity()
-   → FSM Opportunity: CLIENT_PO_RECEIVED → APPROVED
-   → Crée Provisions (WAITING_PROVISION)
-   → Crée InsomeaPOs par fournisseur
-
-8. Technicien provisionne
-   → start_provisioning()
-   → FSM Provision: WAITING_PROVISION → PROVISIONING
-   → complete_provisioning()
-   → Crée Subscription
-   → FSM Provision: PROVISIONING → PROVISIONED
-"""
-
-

@@ -1,250 +1,299 @@
 """
-OPPORTUNITY LINE SERIALIZERS
+OPPORTUNITY LINE SERIALIZERS - MODIFIÉ
 
-Transformation OpportunityLine ↔ JSON
+Support renewal workflow
 """
 
 from rest_framework import serializers
 
 from ..models import OpportunityLine, OpportunityLineStatus, BillingCycle
 from ..validators import (
-    validate_opportunity_line_data,
     validate_quantity,
-    validate_product_unique_in_opportunity,
+    validate_line_editable,
 )
 
-# Import serializers from other apps
-from ...products.serializers import ProductMinimalSerializer
-
 
 # ═══════════════════════════════════════════════════════════
-# MINIMAL (pour nested)
+# OPPORTUNITYLINE LIST SERIALIZER
 # ═══════════════════════════════════════════════════════════
 
-class OpportunityLineMinimalSerializer(serializers.ModelSerializer):
+class OpportunityLineListSerializer(serializers.ModelSerializer):
     """
-    Serializer minimal ligne (pour nested)
-    
-    Usage:
-        - Nested dans OpportunityDetailSerializer
-        - Références dans quotes, provisions
+    Serializer liste OpportunityLines (léger)
     """
     
-    product = ProductMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    # Relations
+    product_title = serializers.CharField(
+        source='product.title',
+        read_only=True
+    )
+    
+    opportunity_reference = serializers.CharField(
+        source='opportunity.reference',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Renewal info
+    renewal_of_subscription_number = serializers.CharField(
+        source='renewal_of_subscription.subscription_number',
+        read_only=True,
+        allow_null=True
+    )
+    
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    billing_cycle_display = serializers.CharField(
+        source='get_billing_cycle_display',
+        read_only=True
+    )
+    
+    # Pricing (from InsomeaQuoteLine if exists)
+    unit_price_purchase = serializers.SerializerMethodField()
+    unit_price_sale = serializers.SerializerMethodField()
+    total_purchase = serializers.SerializerMethodField()
+    total_sale = serializers.SerializerMethodField()
+    margin = serializers.SerializerMethodField()
+    
+    # 🆕 NOUVEAU: Flags
+    is_renewal = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = OpportunityLine
         fields = [
             'id',
+            'opportunity',
+            'opportunity_reference',
             'product',
+            'product_title',
             'quantity',
             'billing_cycle',
+            'billing_cycle_display',
+            'renewal_of_subscription',  # 🆕 NOUVEAU
+            'renewal_of_subscription_number',  # 🆕 NOUVEAU
             'status',
             'status_display',
+            'unit_price_purchase',
+            'unit_price_sale',
+            'total_purchase',
+            'total_sale',
+            'margin',
+            'is_renewal',  # 🆕 NOUVEAU
+            'notes',
             'created_at',
         ]
-        read_only_fields = fields
+    
+    def get_unit_price_purchase(self, obj):
+        """Get price from InsomeaQuoteLine"""
+        if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
+            return float(obj.insomea_quote_line.unit_price_purchase)
+        return None
+    
+    def get_unit_price_sale(self, obj):
+        """Get price from InsomeaQuoteLine"""
+        if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
+            return float(obj.insomea_quote_line.unit_price_sale)
+        return None
+    
+    def get_total_purchase(self, obj):
+        """Get total from InsomeaQuoteLine"""
+        if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
+            return float(obj.insomea_quote_line.line_total_purchase)
+        return None
+    
+    def get_total_sale(self, obj):
+        """Get total from InsomeaQuoteLine"""
+        if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
+            return float(obj.insomea_quote_line.line_total_sale)
+        return None
+    
+    def get_margin(self, obj):
+        """Get margin from InsomeaQuoteLine"""
+        if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
+            return float(obj.insomea_quote_line.line_margin)
+        return None
 
 
 # ═══════════════════════════════════════════════════════════
-# DETAIL
+# OPPORTUNITYLINE DETAIL SERIALIZER
 # ═══════════════════════════════════════════════════════════
 
-class OpportunityLineSerializer(serializers.ModelSerializer):
+class OpportunityLineDetailSerializer(serializers.ModelSerializer):
     """
-    Serializer complet ligne
-    
-    Usage:
-        GET /opportunity-lines/{id}/
+    Serializer détail OpportunityLine (complet)
     """
     
-    product = ProductMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    # Relations (nested)
+    product = serializers.SerializerMethodField()
+    opportunity = serializers.SerializerMethodField()
     
-    # Relations optionnelles (si préchargées)
+    # 🆕 NOUVEAU: Renewal subscription (nested)
+    renewal_of_subscription = serializers.SerializerMethodField()
+    
+    # Quotes
     supplier_quote_line = serializers.SerializerMethodField()
     insomea_quote_line = serializers.SerializerMethodField()
-    provision = serializers.SerializerMethodField()
-    insomea_purchase_order = serializers.SerializerMethodField()
     
-    # Helpers
-    has_supplier_quote = serializers.BooleanField(read_only=True, source='has_supplier_quote')
+    # Provision
+    provision = serializers.SerializerMethodField()
+    
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    billing_cycle_display = serializers.CharField(
+        source='get_billing_cycle_display',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Flags
+    is_renewal = serializers.BooleanField(read_only=True)
+    
+    # Permissions
+    can_edit = serializers.SerializerMethodField()
     
     class Meta:
         model = OpportunityLine
         fields = [
             'id',
+            'opportunity',
             'product',
             'quantity',
             'billing_cycle',
+            'billing_cycle_display',
+            'renewal_of_subscription',  # 🆕 NOUVEAU
+            'insomea_purchase_order',
             'status',
             'status_display',
-            'notes',
-            
-            # Relations
             'supplier_quote_line',
             'insomea_quote_line',
             'provision',
-            'insomea_purchase_order',
-            
-            # Helpers
-            'has_supplier_quote',
-            
+            'is_renewal',  # 🆕 NOUVEAU
+            'notes',
+            'can_edit',
             'created_at',
             'updated_at',
         ]
         read_only_fields = [
             'id',
             'status',
-            'status_display',
             'created_at',
             'updated_at',
         ]
     
+    def get_product(self, obj):
+        """Product info"""
+        from ...products.serializers import ProductDetailSerializer
+        return ProductDetailSerializer(obj.product).data
+    
+    def get_opportunity(self, obj):
+        """Opportunity info (light)"""
+        from .opportunity_serializers import OpportunityListSerializer
+        return OpportunityListSerializer(obj.opportunity).data
+    
+    # 🆕 NOUVEAU
+    def get_renewal_of_subscription(self, obj):
+        """Original subscription (si renewal)"""
+        if obj.renewal_of_subscription:
+            from .subscription_serializers import SubscriptionListSerializer
+            return SubscriptionListSerializer(obj.renewal_of_subscription).data
+        return None
+    
     def get_supplier_quote_line(self, obj):
-        """Retourne SupplierQuoteLine si existe"""
+        """SupplierQuoteLine"""
         if hasattr(obj, 'supplier_quote_line') and obj.supplier_quote_line:
             from .quote_serializers import SupplierQuoteLineSerializer
-            return SupplierQuoteLineSerializer(
-                obj.supplier_quote_line,
-                context=self.context
-            ).data
+            return SupplierQuoteLineSerializer(obj.supplier_quote_line).data
         return None
     
     def get_insomea_quote_line(self, obj):
-        """Retourne InsomeaQuoteLine si existe"""
+        """InsomeaQuoteLine"""
         if hasattr(obj, 'insomea_quote_line') and obj.insomea_quote_line:
             from .quote_serializers import InsomeaQuoteLineSerializer
-            return InsomeaQuoteLineSerializer(
-                obj.insomea_quote_line,
-                context=self.context
-            ).data
+            return InsomeaQuoteLineSerializer(obj.insomea_quote_line).data
         return None
     
     def get_provision(self, obj):
-        """Retourne Provision si existe"""
+        """Provision"""
         if hasattr(obj, 'provision') and obj.provision:
-            from .provision_serializers import ProvisionMinimalSerializer
-            return ProvisionMinimalSerializer(
-                obj.provision,
-                context=self.context
-            ).data
+            from .provision_serializers import ProvisionListSerializer
+            return ProvisionListSerializer(obj.provision).data
         return None
     
-    def get_insomea_purchase_order(self, obj):
-        """Retourne InsomeaPO si lié"""
-        if obj.insomea_purchase_order:
-            from .workflow_serializers import InsomeaPOSerializer
-            return InsomeaPOSerializer(
-                obj.insomea_purchase_order,
-                context=self.context
-            ).data
-        return None
+    def get_can_edit(self, obj):
+        """Check if can edit"""
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        
+        # Check if opportunity editable
+        return obj.opportunity.can_edit()
 
 
 # ═══════════════════════════════════════════════════════════
-# CREATE
+# OPPORTUNITYLINE CREATE/UPDATE SERIALIZERS
 # ═══════════════════════════════════════════════════════════
 
-class OpportunityLineCreateSerializer(serializers.Serializer):
+class OpportunityLineCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer pour création ligne
+    Serializer création OpportunityLine
     
     Usage:
-        POST /opportunities/{id}/lines/
-        POST /opportunity-lines/
+        - POST /opportunity-lines/
+        - Via add_line_to_opportunity service
     
-    Note:
-        Utilise Serializer (pas ModelSerializer) pour contrôle total validation
+    🆕 MODIFIÉ: renewal_of_subscription en read-only (géré par service)
     """
     
-    opportunity_id = serializers.UUIDField(
-        write_only=True,
-        required=False,
-        help_text="UUID Opportunity (requis si POST direct sur /opportunity-lines/)"
-    )
-    
-    product_id = serializers.UUIDField(write_only=True)
-    
-    quantity = serializers.IntegerField(min_value=1, max_value=10000)
-    
-    billing_cycle = serializers.ChoiceField(
-        choices=BillingCycle.choices,
-        default=BillingCycle.ANNUAL
-    )
-    
-    notes = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        max_length=1000
-    )
-    
-    def validate_product_id(self, value):
-        """Valide que produit existe"""
-        from ...products.models import Product
-        
-        try:
-            product = Product.objects.get(id=value)
-            return value
-        except Product.DoesNotExist:
-            raise serializers.ValidationError('Produit introuvable')
+    class Meta:
+        model = OpportunityLine
+        fields = [
+            'opportunity',
+            'product',
+            'quantity',
+            'billing_cycle',
+            'renewal_of_subscription',  # 🆕 NOUVEAU (read-only)
+            'notes',
+        ]
+        read_only_fields = ['renewal_of_subscription']  # 🆕 Géré par service
     
     def validate_quantity(self, value):
-        """Valide quantité"""
+        """Validate quantity"""
         validate_quantity(value)
         return value
     
-    def validate(self, data):
-        """Validation globale"""
+    def validate(self, attrs):
+        """Validation"""
         
-        # Récupère product
-        from ...products.models import Product
-        product = Product.objects.get(id=data['product_id'])
-        data['product'] = product
+        opportunity = attrs.get('opportunity')
+        product = attrs.get('product')
         
-        # Récupère opportunity (depuis context ou data)
-        opportunity = self.context.get('opportunity')
-        if not opportunity and 'opportunity_id' in data:
-            from ..models import Opportunity
-            try:
-                opportunity = Opportunity.objects.get(id=data['opportunity_id'])
-            except Opportunity.DoesNotExist:
-                raise serializers.ValidationError({
-                    'opportunity_id': 'Opportunité introuvable'
-                })
-        
-        if not opportunity:
+        # Vérif duplicate product
+        if OpportunityLine.objects.filter(
+            opportunity=opportunity,
+            product=product
+        ).exists():
             raise serializers.ValidationError({
-                'opportunity_id': 'Opportunité requise'
+                'product': 'Product already exists in this opportunity'
             })
         
-        # Validation métier
-        validate_opportunity_line_data(data, opportunity=opportunity)
-        
-        return data
-    
-    def create(self, validated_data):
-        """
-        NE PAS utiliser directement
-        
-        Utiliser le service: add_line_to_opportunity()
-        """
-        raise NotImplementedError(
-            'Utiliser opportunities.services.add_line_to_opportunity()'
-        )
+        return attrs
 
-
-# ═══════════════════════════════════════════════════════════
-# UPDATE
-# ═══════════════════════════════════════════════════════════
 
 class OpportunityLineUpdateSerializer(serializers.ModelSerializer):
     """
-    Serializer pour mise à jour ligne
+    Serializer update OpportunityLine
     
     Usage:
-        PUT/PATCH /opportunity-lines/{id}/
+        - PATCH /opportunity-lines/:id/
+    
+    Note:
+        renewal_of_subscription non modifiable
     """
     
     class Meta:
@@ -255,23 +304,11 @@ class OpportunityLineUpdateSerializer(serializers.ModelSerializer):
             'notes',
         ]
     
-    def validate_quantity(self, value):
-        """Valide quantité"""
-        validate_quantity(value)
-        return value
-    
-    def validate(self, data):
-        """Validation globale"""
-        opportunity = self.instance.opportunity
-        validate_opportunity_line_data(data, opportunity=opportunity, line=self.instance)
-        return data
-    
-    def update(self, instance, validated_data):
-        """
-        NE PAS utiliser directement
+    def validate(self, attrs):
+        """Validation"""
+        line = self.instance
         
-        Utiliser le service: update_opportunity_line()
-        """
-        raise NotImplementedError(
-            'Utiliser opportunities.services.update_opportunity_line()'
-        )
+        # Check if editable
+        validate_line_editable(line)
+        
+        return attrs

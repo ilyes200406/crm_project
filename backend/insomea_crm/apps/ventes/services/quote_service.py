@@ -186,7 +186,6 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
             [
                 {
                     'line_id': UUID OpportunityLine,
-                    'supplier_quote_line_id': UUID SupplierQuoteLine,  ← Choix commercial
                     'unit_price_sale': Decimal
                 },
                 ...
@@ -239,27 +238,37 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     
     if not lines_pricing:
         raise ValidationError('Au moins une ligne requise')
-    
-    # Récupère SupplierQuoteLines pour copier prix achat
-    from ..models import SupplierQuoteLine
-    supplier_quote_line_ids = [lp['supplier_quote_line_id'] for lp in lines_pricing]
-    supplier_quote_lines = SupplierQuoteLine.objects.filter(
-        id__in=supplier_quote_line_ids
-    ).select_related('opportunity_line')
-    
-    # Map supplier_quote_line_id → SupplierQuoteLine
-    sql_map = {str(sql.id): sql for sql in supplier_quote_lines}
-    
-    # Valide pricing (sale >= purchase)
+
+    line_ids = [lp['line_id'] for lp in lines_pricing]
+    opportunity_lines = opportunity.lines.filter(id__in=line_ids).prefetch_related('supplier_quote_lines')
+
+    if opportunity_lines.count() != len(line_ids):
+        raise ValidationError('Certaines lignes ne font pas partie de cette opportunité')
+
+    line_map = {str(line.id): line for line in opportunity_lines}
+
     for lp in lines_pricing:
-        sql_id = str(lp['supplier_quote_line_id'])
-        if sql_id not in sql_map:
-            raise ValidationError(f'SupplierQuoteLine {sql_id} introuvable')
-        
-        sql = sql_map[sql_id]
-        lp['unit_price_purchase'] = sql.unit_price_purchase  # Copie prix achat
-        
-        # Valide
+        opp_line = line_map.get(str(lp['line_id']))
+        if not opp_line:
+            raise ValidationError(f"Ligne {lp['line_id']} introuvable dans cette opportunité")
+
+        supplier_quote_lines = opp_line.supplier_quote_lines.all()
+
+        if supplier_quote_lines.count() == 0:
+            raise ValidationError(
+                f'Aucun devis fournisseur pour la ligne {opp_line.id}'
+            )
+
+        if supplier_quote_lines.count() > 1:
+            raise ValidationError(
+                f'Plusieurs devis fournisseur pour la ligne {opp_line.id}. '
+                'Le workflow attendu impose un seul devis fournisseur par ligne.'
+            )
+
+        supplier_quote_line = supplier_quote_lines.first()
+        lp['supplier_quote_line'] = supplier_quote_line
+        lp['unit_price_purchase'] = supplier_quote_line.unit_price_purchase
+
         validate_sale_price_greater_than_purchase(
             lp['unit_price_purchase'],
             lp['unit_price_sale']
@@ -284,22 +293,14 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     # ───────────────────────────────────────────────────────
     
     for lp in lines_pricing:
-        line_id = lp['line_id']
-        sql_id = str(lp['supplier_quote_line_id'])
-        
-        # Récupère OpportunityLine
-        opp_line = opportunity.lines.get(id=line_id)
-        
-        # Récupère SupplierQuoteLine
-        supplier_quote_line = sql_map[sql_id]
-        
-        # Crée InsomeaQuoteLine
+        opp_line = line_map[str(lp['line_id'])]
+
         InsomeaQuoteLine.objects.create(
             insomea_quote=insomea_quote,
             opportunity_line=opp_line,
-            supplier_quote_line=supplier_quote_line,
-            unit_price_purchase=lp['unit_price_purchase'],  # Copié depuis SupplierQuoteLine
-            unit_price_sale=lp['unit_price_sale'],          # Fourni par commercial
+            supplier_quote_line=lp['supplier_quote_line'],
+            unit_price_purchase=lp['unit_price_purchase'],
+            unit_price_sale=lp['unit_price_sale'],
         )
         # NOTE: calculate totals appelé dans save() de InsomeaQuoteLine
     
@@ -322,11 +323,53 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     # 8. GÉNÉRATION PDF (TODO)
     # ───────────────────────────────────────────────────────
     
-    # TODO: Générer PDF via template
-    # insomea_quote.document = generate_quote_pdf(insomea_quote)
-    # insomea_quote.save()
+    # Générer PDF via template
+    pdf_file = generate_quote_pdf(insomea_quote)
+    insomea_quote.document.save(pdf_file.name, pdf_file, save=True)
     
     return insomea_quote
+
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.core.files.base import ContentFile
+from weasyprint import HTML
+
+
+def generate_quote_pdf(insomea_quote):
+    """
+    Generate PDF for an InsomeaQuote and return a Django ContentFile
+    """
+
+    # 🔹 1. Load related data (optimize queries)
+    lines = insomea_quote.lines.select_related(
+        'opportunity_line',
+        'supplier_quote_line'
+    )
+
+    # 🔹 2. Prepare context
+    context = {
+        'quote': insomea_quote,
+        'lines': lines,
+        'opportunity': insomea_quote.opportunity,
+        'client': insomea_quote.opportunity.client,
+    }
+
+    # 🔹 3. Render HTML from template
+    html_string = render_to_string(
+        'pdf/insomea_quote.html',
+        context
+    )
+
+    # 🔹 4. Generate PDF (important: base_url for static files)
+    pdf_bytes = HTML(
+        string=html_string,
+        base_url=settings.BASE_DIR  # or STATIC_ROOT if needed
+    ).write_pdf()
+
+    # 🔹 5. Create Django file object
+    filename = f"quote_{insomea_quote.reference}.pdf"
+
+    return ContentFile(pdf_bytes, name=filename)
 
 
 @transaction.atomic

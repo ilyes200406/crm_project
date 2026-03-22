@@ -13,7 +13,7 @@ class InsomeaQuote(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Insomea_quote_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")
     
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique InsomeaQuote (ex: INSOMEA-2024-00001)")
-    document = models.FileField()
+    document = models.FileField(upload_to='quotes/')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     subtotal_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Sous-total achat")
@@ -25,6 +25,21 @@ class InsomeaQuote(models.Model):
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))], help_text="Remise globale en %")
     margin = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), help_text="Marge totale")
     margin_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), help_text="Marge %")
+
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            self.reference = self._generate_reference()
+        super().save(*args, **kwargs)
+
+    def _generate_reference(self):
+        current_year = datetime.now().year
+        last_insomea_quote = InsomeaQuote.objects.filter(reference__startswith=f'INSOMEA-{current_year}').order_by('-reference').first()
+        if last_insomea_quote:
+            last_num = int(last_insomea_quote.reference.split('-')[-1])
+            new_num = last_num + 1
+        else:
+            new_num = 1
+        return f'INSOMEA-{current_year}-{new_num:05d}'
 
     def calculate_totals(self):
         from django.db.models import Sum

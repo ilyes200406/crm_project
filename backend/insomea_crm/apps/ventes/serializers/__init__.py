@@ -1,76 +1,42 @@
-from .opportunity_serializers import (
-    OpportunityListSerializer,
-    OpportunityDetailSerializer,
-    OpportunityCreateSerializer,
-    OpportunityUpdateSerializer,
-    OpportunityMinimalSerializer,
-)
+"""
+SERIALIZERS - APP OPPORTUNITIES
+"""
 
-from .line_serializers import (
-    OpportunityLineSerializer,
-    OpportunityLineCreateSerializer,
-    OpportunityLineUpdateSerializer,
-    OpportunityLineMinimalSerializer,
-)
+# ... (garder imports existants)
 
-from .quote_serializers import (
-    SupplierQuoteSerializer,
-    SupplierQuoteLineSerializer,
-    CreateSupplierQuoteSerializer,
-    InsomeaQuoteSerializer,
-    InsomeaQuoteLineSerializer,
-    CreateInsomeaQuoteSerializer,
+# 🆕 NOUVEAUX IMPORTS
+from .subscription_serializers import (
+    SubscriptionTermSerializer,
+    SubscriptionListSerializer,
+    SubscriptionDetailSerializer,
+    SubscriptionCreateSerializer,
+    SubscriptionUpdateSerializer,
+    CreateRenewalSerializer,
+    RenewalDataSerializer,
 )
 
 from .provision_serializers import (
-    ProvisionSerializer,
-    ProvisionMinimalSerializer,
+    ProvisionListSerializer,
+    ProvisionDetailSerializer,
     StartProvisioningSerializer,
-    CompleteProvisioningSerializer,
+    CompleteProvisioningSerializer,  # 🆕 MODIFIÉ
     FailProvisioningSerializer,
-    SubscriptionSerializer,
-)
-
-from .workflow_serializers import (
-    ClientPOSerializer,
-    UploadClientPOSerializer,
-    InsomeaPOSerializer,
-    StatusHistorySerializer,
 )
 
 __all__ = [
-    # Opportunity
-    'OpportunityListSerializer',
-    'OpportunityDetailSerializer',
-    'OpportunityCreateSerializer',
-    'OpportunityUpdateSerializer',
-    'OpportunityMinimalSerializer',
+    # ... (garder existants)
     
-    # OpportunityLine
-    'OpportunityLineSerializer',
-    'OpportunityLineCreateSerializer',
-    'OpportunityLineUpdateSerializer',
-    'OpportunityLineMinimalSerializer',
+    # 🆕 NOUVEAUX
+    'SubscriptionTermSerializer',
+    'SubscriptionListSerializer',
+    'SubscriptionDetailSerializer',
+    'SubscriptionCreateSerializer',
+    'SubscriptionUpdateSerializer',
+    'CreateRenewalSerializer',
+    'RenewalDataSerializer',
     
-    # Quotes
-    'SupplierQuoteSerializer',
-    'SupplierQuoteLineSerializer',
-    'CreateSupplierQuoteSerializer',
-    'InsomeaQuoteSerializer',
-    'InsomeaQuoteLineSerializer',
-    'CreateInsomeaQuoteSerializer',
-    
-    # Provision
-    'ProvisionSerializer',
-    'ProvisionMinimalSerializer',
-    'StartProvisioningSerializer',
+    # 🆕 MODIFIÉS
+    'ProvisionListSerializer',
+    'ProvisionDetailSerializer',
     'CompleteProvisioningSerializer',
-    'FailProvisioningSerializer',
-    'SubscriptionSerializer',
-    
-    # Workflow
-    'ClientPOSerializer',
-    'UploadClientPOSerializer',
-    'InsomeaPOSerializer',
-    'StatusHistorySerializer',
 ]

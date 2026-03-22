@@ -40,15 +40,12 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+pytest-cache-files-*/
 
 
 
 #not now
 frontend
-backend/insomea_crm/apps/clients
-backend/insomea_crm/apps/core
-backend/insomea_crm/apps/suppliers
-backend/insomea_crm/apps/ventes
 
 
 

@@ -1,68 +1,77 @@
-from rest_framework import serializers
-from decimal import Decimal
+"""
+OPPORTUNITY SERIALIZERS - MODIFIÉ
 
-from ..models import Opportunity, OpportunityStatus
+Support renewal workflow
+"""
+
+from rest_framework import serializers
+from django.db import transaction
+
+from ..models import (
+    Opportunity,
+    OpportunityStatus,
+    OpportunityType,  # 🆕 NOUVEAU
+)
 from ..validators import (
-    validate_opportunity_data,
-    normalize_opportunity_name,
+    validate_opportunity_name,
+    validate_opportunity_editable,
 )
 
-# Import serializers from other apps
-from ...clients.serializers import ClientMinimalSerializer
-from ...users.api.serializers import UserMinimalSerializer
-
 
 # ═══════════════════════════════════════════════════════════
-# MINIMAL (pour nested)
-# ═══════════════════════════════════════════════════════════
-
-class OpportunityMinimalSerializer(serializers.ModelSerializer):
-    """
-    Serializer minimal Opportunity
-    
-    Usage:
-        - Nested dans Provision, Subscription
-        - Références croisées
-    """
-    
-    client = ClientMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
-    class Meta:
-        model = Opportunity
-        fields = [
-            'id',
-            'reference',
-            'name',
-            'client',
-            'status',
-            'status_display',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-
-# ═══════════════════════════════════════════════════════════
-# LIST (léger, pour tableaux)
+# OPPORTUNITY LIST SERIALIZER
 # ═══════════════════════════════════════════════════════════
 
 class OpportunityListSerializer(serializers.ModelSerializer):
     """
-    Serializer liste opportunities (léger)
+    Serializer liste Opportunités (léger)
     
     Usage:
-        GET /opportunities/
-    
-    Optimisé pour performance
+        - GET /opportunities/
     """
     
-    client = ClientMinimalSerializer(read_only=True)
-    created_by = UserMinimalSerializer(read_only=True)
-    assigned_to = UserMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    # Relations
+    client_name = serializers.CharField(
+        source='client.company_name',
+        read_only=True
+    )
     
-    # Stats annotations (si préchargées par queryset)
-    lines_count = serializers.IntegerField(read_only=True, required=False)
+    assigned_to_name = serializers.CharField(
+        source='assigned_to.get_full_name',
+        read_only=True,
+        allow_null=True
+    )
+    
+    created_by_name = serializers.CharField(
+        source='created_by.get_full_name',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Type
+    type_display = serializers.CharField(
+        source='get_type_display',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Parent opportunity (si renewal)
+    parent_opportunity_reference = serializers.CharField(
+        source='related_opportunity.reference',
+        read_only=True,
+        allow_null=True
+    )
+    
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    # Computed
+    lines_count = serializers.IntegerField(read_only=True)
+    
+    # 🆕 NOUVEAU: Flags
+    is_renewal = serializers.BooleanField(read_only=True)
+    is_initial = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = Opportunity
@@ -70,51 +79,81 @@ class OpportunityListSerializer(serializers.ModelSerializer):
             'id',
             'reference',
             'name',
+            'type',  # 🆕 NOUVEAU
+            'type_display',  # 🆕 NOUVEAU
             'client',
-            'created_by',
-            'assigned_to',
+            'client_name',
             'status',
             'status_display',
+            'assigned_to',
+            'assigned_to_name',
+            'created_by',
+            'created_by_name',
+            'related_opportunity',  # 🆕 NOUVEAU
+            'parent_opportunity_reference',  # 🆕 NOUVEAU
             'lines_count',
+            'is_renewal',  # 🆕 NOUVEAU
+            'is_initial',  # 🆕 NOUVEAU
             'created_at',
             'updated_at',
         ]
-        read_only_fields = fields
 
 
 # ═══════════════════════════════════════════════════════════
-# DETAIL (complet, avec relations)
+# OPPORTUNITY DETAIL SERIALIZER
 # ═══════════════════════════════════════════════════════════
 
 class OpportunityDetailSerializer(serializers.ModelSerializer):
     """
-    Serializer détaillé opportunité
+    Serializer détail Opportunité (complet)
     
     Usage:
-        GET /opportunities/{id}/
-    
-    Tous les champs + relations nested
+        - GET /opportunities/:id/
     """
     
-    client = ClientMinimalSerializer(read_only=True)
-    created_by = UserMinimalSerializer(read_only=True)
-    assigned_to = UserMinimalSerializer(read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    # Relations (nested)
+    client = serializers.SerializerMethodField()
+    assigned_to = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
     
-    # Relations nested (préchargées via prefetch_related)
-    # NOTE: Importés dynamiquement pour éviter circular imports
+    # 🆕 NOUVEAU: Type
+    type_display = serializers.CharField(
+        source='get_type_display',
+        read_only=True
+    )
+    
+    # 🆕 NOUVEAU: Related opportunities
+    related_opportunity = serializers.SerializerMethodField()
+    child_opportunities = serializers.SerializerMethodField()
+    
+    # Lines (nested)
     lines = serializers.SerializerMethodField()
+    
+    # Quotes
     supplier_quotes = serializers.SerializerMethodField()
     insomea_quote = serializers.SerializerMethodField()
-    client_purchase_order = serializers.SerializerMethodField()
-    status_history = serializers.SerializerMethodField()
     
-    # Stats
-    lines_count = serializers.IntegerField(read_only=True, source='lines.count')
+    # PO
+    client_po = serializers.SerializerMethodField()
+    insomea_pos = serializers.SerializerMethodField()
     
-    # Helpers
-    can_edit = serializers.BooleanField(read_only=True, source='can_edit')
-    can_add_items = serializers.BooleanField(read_only=True, source='can_add_items')
+    # Status
+    status_display = serializers.CharField(
+        source='get_status_display',
+        read_only=True
+    )
+    
+    # Computed
+    lines_count = serializers.IntegerField(read_only=True)
+    total_amount_estimate = serializers.SerializerMethodField()
+    
+    # 🆕 NOUVEAU: Flags
+    is_renewal = serializers.BooleanField(read_only=True)
+    is_initial = serializers.BooleanField(read_only=True)
+    
+    # Permissions
+    can_edit = serializers.SerializerMethodField()
+    can_add_items = serializers.SerializerMethodField()
     
     class Meta:
         model = Opportunity
@@ -122,27 +161,28 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             'id',
             'reference',
             'name',
+            'type',  # 🆕 NOUVEAU
+            'type_display',  # 🆕 NOUVEAU
             'client',
-            'created_by',
-            'assigned_to',
             'status',
             'status_display',
-            
-            # Relations
+            'assigned_to',
+            'created_by',
+            'related_opportunity',  # 🆕 NOUVEAU
+            'child_opportunities',  # 🆕 NOUVEAU
+            'notes',
+            'cancellation_reason',
             'lines',
             'lines_count',
             'supplier_quotes',
             'insomea_quote',
-            'client_purchase_order',
-            'status_history',
-            
-            # Helpers
+            'client_po',
+            'insomea_pos',
+            'total_amount_estimate',
+            'is_renewal',  # 🆕 NOUVEAU
+            'is_initial',  # 🆕 NOUVEAU
             'can_edit',
             'can_add_items',
-            
-            # Metadata
-            'notes',
-            'cancellation_reason',
             'created_at',
             'updated_at',
         ]
@@ -150,127 +190,163 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             'id',
             'reference',
             'status',
-            'status_display',
             'created_at',
             'updated_at',
         ]
     
+    def get_client(self, obj):
+        """Client info"""
+        from ...clients.serializers import ClientListSerializer
+        return ClientListSerializer(obj.client).data
+    
+    def get_assigned_to(self, obj):
+        """Assigned to user"""
+        if obj.assigned_to:
+            from ...users.api.serializers import UserSerializer
+            return UserSerializer(obj.assigned_to).data
+        return None
+    
+    def get_created_by(self, obj):
+        """Created by user"""
+        from ...users.api.serializers import UserSerializer
+        return UserSerializer(obj.created_by).data
+    
+    # 🆕 NOUVEAU
+    def get_related_opportunity(self, obj):
+        """Parent opportunity (si renewal)"""
+        if obj.related_opportunity:
+            return OpportunityListSerializer(obj.related_opportunity).data
+        return None
+    
+    # 🆕 NOUVEAU
+    def get_child_opportunities(self, obj):
+        """Child opportunities (renewals, upsells)"""
+        children = obj.get_child_opportunities()
+        return OpportunityListSerializer(children, many=True).data
+    
     def get_lines(self, obj):
-        """Retourne lignes (minimal)"""
-        if hasattr(obj, 'lines'):
-            from .line_serializers import OpportunityLineMinimalSerializer
-            return OpportunityLineMinimalSerializer(
-                obj.lines.all(),
-                many=True,
-                context=self.context
-            ).data
-        return []
+        """OpportunityLines"""
+        from .line_serializers import OpportunityLineListSerializer
+        lines = obj.lines.all().order_by('created_at')
+        return OpportunityLineListSerializer(lines, many=True).data
     
     def get_supplier_quotes(self, obj):
-        """Retourne devis fournisseurs (minimal)"""
-        if hasattr(obj, 'supplier_quotes'):
-            from .quote_serializers import SupplierQuoteSerializer
-            return SupplierQuoteSerializer(
-                obj.supplier_quotes.all(),
-                many=True,
-                context=self.context
-            ).data
-        return []
+        """SupplierQuotes"""
+        from .quote_serializers import SupplierQuoteListSerializer
+        
+        # Get unique supplier quotes via lines
+        quotes = []
+        seen_ids = set()
+        
+        for line in obj.lines.all():
+            if hasattr(line, 'supplier_quote_line') and line.supplier_quote_line:
+                quote = line.supplier_quote_line.supplier_quote
+                if quote.id not in seen_ids:
+                    quotes.append(quote)
+                    seen_ids.add(quote.id)
+        
+        return SupplierQuoteListSerializer(quotes, many=True).data
     
     def get_insomea_quote(self, obj):
-        """Retourne devis Insomea (si existe)"""
+        """InsomeaQuote"""
         if hasattr(obj, 'insomea_quote') and obj.insomea_quote:
-            from .quote_serializers import InsomeaQuoteSerializer
-            return InsomeaQuoteSerializer(
-                obj.insomea_quote,
-                context=self.context
-            ).data
+            from .quote_serializers import InsomeaQuoteDetailSerializer
+            return InsomeaQuoteDetailSerializer(obj.insomea_quote).data
         return None
     
-    def get_client_purchase_order(self, obj):
-        """Retourne BC client (si existe)"""
-        if hasattr(obj, 'client_purchase_order') and obj.client_purchase_order:
+    def get_client_po(self, obj):
+        """Client PO"""
+        if hasattr(obj, 'client_po') and obj.client_po:
             from .workflow_serializers import ClientPOSerializer
-            return ClientPOSerializer(
-                obj.client_purchase_order,
-                context=self.context
-            ).data
+            return ClientPOSerializer(obj.client_po).data
         return None
     
-    def get_status_history(self, obj):
-        """Retourne historique statuts (limité à 20)"""
-        if hasattr(obj, 'status_history'):
-            from .workflow_serializers import StatusHistorySerializer
-            return StatusHistorySerializer(
-                obj.status_history.all()[:20],
-                many=True,
-                context=self.context
-            ).data
-        return []
+    def get_insomea_pos(self, obj):
+        """Insomea POs"""
+        from .workflow_serializers import InsomeaPurchaseOrderListSerializer
+        pos = obj.insomea_purchase_orders.all()
+        return InsomeaPurchaseOrderListSerializer(pos, many=True).data
+    
+    def get_total_amount_estimate(self, obj):
+        """Total estimated (from InsomeaQuote if exists)"""
+        if hasattr(obj, 'insomea_quote') and obj.insomea_quote:
+            return float(obj.insomea_quote.total_sale)
+        return None
+    
+    def get_can_edit(self, obj):
+        """Check if user can edit"""
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        return obj.can_edit()
+    
+    def get_can_add_items(self, obj):
+        """Check if can add items"""
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        return obj.can_add_items()
 
 
 # ═══════════════════════════════════════════════════════════
-# CREATE
+# OPPORTUNITY CREATE/UPDATE SERIALIZERS
 # ═══════════════════════════════════════════════════════════
 
 class OpportunityCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer pour création opportunité
+    Serializer création Opportunité
     
     Usage:
-        POST /opportunities/
-    """
+        - POST /opportunities/
     
-    client_id = serializers.UUIDField(write_only=True)
+    🆕 MODIFIÉ: Support type + related_opportunity
+    """
     
     class Meta:
         model = Opportunity
         fields = [
             'name',
-            'client_id',
+            'client',
+            'type',  # 🆕 NOUVEAU
+            'related_opportunity',  # 🆕 NOUVEAU
+            'assigned_to',
             'notes',
         ]
     
     def validate_name(self, value):
-        """Valide et normalise nom"""
-        return normalize_opportunity_name(value)
+        """Validate name"""
+        validate_opportunity_name(value)
+        return value
     
-    def validate_client_id(self, value):
-        """Valide que client existe"""
-        from ...clients.models import Client
+    def validate(self, attrs):
+        """Validation"""
         
-        try:
-            Client.objects.get(id=value)
-            return value
-        except Client.DoesNotExist:
-            raise serializers.ValidationError('Client introuvable')
-    
-    def validate(self, data):
-        """Validation globale"""
-        validate_opportunity_data(data)
-        return data
-    
-    def create(self, validated_data):
-        """
-        NE PAS utiliser directement
+        # 🆕 NOUVEAU: Si RENEWAL, related_opportunity requis
+        if attrs.get('type') == OpportunityType.RENEWAL:
+            if not attrs.get('related_opportunity'):
+                raise serializers.ValidationError({
+                    'related_opportunity': 'Required for RENEWAL type'
+                })
         
-        Utiliser le service: create_opportunity()
-        """
-        raise NotImplementedError(
-            'Utiliser opportunities.services.create_opportunity() au lieu de serializer.save()'
-        )
+        # 🆕 NOUVEAU: Si type != RENEWAL, related_opportunity pas permis
+        if attrs.get('type') != OpportunityType.RENEWAL:
+            if attrs.get('related_opportunity'):
+                raise serializers.ValidationError({
+                    'related_opportunity': 'Only allowed for RENEWAL type'
+                })
+        
+        return attrs
 
-
-# ═══════════════════════════════════════════════════════════
-# UPDATE
-# ═══════════════════════════════════════════════════════════
 
 class OpportunityUpdateSerializer(serializers.ModelSerializer):
     """
-    Serializer pour mise à jour opportunité
+    Serializer update Opportunité
     
     Usage:
-        PUT/PATCH /opportunities/{id}/
+        - PATCH /opportunities/:id/
+    
+    Note:
+        Type et related_opportunity non modifiables après création
     """
     
     class Meta:
@@ -281,17 +357,65 @@ class OpportunityUpdateSerializer(serializers.ModelSerializer):
             'notes',
         ]
     
-    def validate(self, data):
-        """Validation globale"""
-        validate_opportunity_data(data, opportunity=self.instance)
-        return data
-    
-    def update(self, instance, validated_data):
-        """
-        NE PAS utiliser directement
+    def validate(self, attrs):
+        """Validation"""
+        opportunity = self.instance
         
-        Utiliser le service: update_opportunity()
-        """
-        raise NotImplementedError(
-            'Utiliser opportunities.services.update_opportunity() au lieu de serializer.save()'
-        )
+        # Check if editable
+        validate_opportunity_editable(opportunity)
+        
+        return attrs
+
+
+# ═══════════════════════════════════════════════════════════
+# WORKFLOW SERIALIZERS
+# ═══════════════════════════════════════════════════════════
+
+class RequestSupplierQuotesSerializer(serializers.Serializer):
+    """
+    Serializer request supplier quotes
+    
+    Usage:
+        POST /opportunities/:id/request_supplier_quotes/
+    
+    Input: (vide)
+    """
+    pass
+
+
+class RequestClientPOSerializer(serializers.Serializer):
+    """
+    Serializer request client PO
+    
+    Usage:
+        POST /opportunities/:id/request_client_po/
+    
+    Input: (vide)
+    """
+    pass
+
+
+class ApproveOpportunitySerializer(serializers.Serializer):
+    """
+    Serializer approve opportunity
+    
+    Usage:
+        POST /opportunities/:id/approve/
+    
+    Input: (vide)
+    """
+    pass
+
+
+class CancelOpportunitySerializer(serializers.Serializer):
+    """
+    Serializer cancel opportunity
+    
+    Usage:
+        POST /opportunities/:id/cancel/
+    """
+    
+    reason = serializers.CharField(
+        required=True,
+        help_text="Raison annulation"
+    )
