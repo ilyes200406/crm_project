@@ -345,3 +345,66 @@ CACHES = {
         # 'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ... (autres settings existants)
+
+# ═══════════════════════════════════════════════════════════
+# CELERY CONFIGURATION
+# ═══════════════════════════════════════════════════════════
+
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Celery Beat Schedule (cron jobs)
+CELERY_BEAT_SCHEDULE = {
+    # Vérifie subscriptions expirant (daily 8am UTC)
+    'check-expiring-subscriptions': {
+        'task': 'opportunities.tasks.check_expiring_subscriptions',
+        'schedule': crontab(hour=8, minute=0),  # 8:00 AM UTC daily
+    },
+    
+    # Expire subscriptions non renouvelées (daily 9am UTC)
+    'expire-unrenewed-subscriptions': {
+        'task': 'opportunities.tasks.expire_unrenewed_subscriptions',
+        'schedule': crontab(hour=9, minute=0),  # 9:00 AM UTC daily
+    },
+}
+
+# ═══════════════════════════════════════════════════════════
+# EMAIL CONFIGURATION (si pas déjà configuré)
+# ═══════════════════════════════════════════════════════════
+
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@insomea.com')
+
+# Email addresses teams
+FINANCE_TEAM_EMAIL = env('FINANCE_TEAM_EMAIL', default='finance@insomea.com')
+TECH_TEAM_EMAIL = env('TECH_TEAM_EMAIL', default='tech@insomea.com')
+ADMIN_EMAIL = env('ADMIN_EMAIL', default='admin@insomea.com')

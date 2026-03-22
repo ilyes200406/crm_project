@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #2196F3; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Action Requise: Approuver Opportunité</h1>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour {{ recipient.get_full_name }},</p>
+            
+            <p>Le bon de commande client a été reçu pour l'opportunité <strong>{{ notification.opportunity.reference }}</strong>.</p>
+            
+            <p><strong>Détails:</strong></p>
+            <ul>
+                <li>Client: {{ notification.opportunity.client.company_name }}</li>
+                <li>Opportunité: {{ notification.opportunity.name }}</li>
+                <li>Référence: {{ notification.opportunity.reference }}</li>
+            </ul>
+            
+            <p><strong>Action requise:</strong> Approuver l'opportunité pour lancer le provisionnement.</p>
+            
+            <p style="text-align: center; margin-top: 30px;">
+                <a href="{{ site_url }}{{ notification.action_url }}" class="button">Voir l'opportunité</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

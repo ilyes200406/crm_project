@@ -12,3 +12,8 @@ django-fsm=3.0.1
 pytest==9.0.2
 pytest-cov==7.0.0
 pytest-django==4.12.0
+celery==
+redis==7.3.0
+django-celery-beat==2.9.0
+django-celery-results==2.6.0
+flower=2.0.1

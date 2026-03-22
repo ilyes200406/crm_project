@@ -1,0 +1,139 @@
+"""
+WORKFLOW SERVICE - MODIFIÉ
+
+Ajout envoi emails automatiques
+"""
+
+# ... (garder tous les imports existants)
+
+# 🆕 NOUVEAU IMPORT
+from ..emails.services import (
+    send_supplier_quote_request,
+    send_client_quote_with_pdf,
+)
+
+
+# ═══════════════════════════════════════════════════════════
+# BATCH TRANSITIONS (TOUTES LIGNES ENSEMBLE)
+# ═══════════════════════════════════════════════════════════
+
+@transaction.atomic
+def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
+    """
+    Demande devis fournisseurs pour TOUTES les lignes
+    
+    🆕 MODIFIÉ: Envoi emails fournisseurs après transitions
+    
+    Args:
+        opportunity_id: UUID Opportunity
+        user: User instance (COMMERCIAL)
+        ip_address: str
+    
+    Returns:
+        Opportunity mise à jour
+    
+    Raises:
+        ValidationError: Si opportunité vide ou lignes dans mauvais statut
+        PermissionDenied: Si pas COMMERCIAL
+    
+    Business Rules:
+        - Pour TOUTES OpportunityLines en DRAFT:
+        - Transition FSM line: request_supplier_quote()
+        - DRAFT → SUPPLIER_QUOTE_REQUEST
+        - Trigger update_opportunity_status_from_lines() via signal
+        - 🆕 Envoi emails fournisseurs (par supplier)
+        - Result: Opportunity.status = SUPPLIER_QUOTE_REQUEST (si toutes lignes = même statut)
+    """
+    
+    # ... (garder toute la logique existante jusqu'à la fin)
+    
+    # ───────────────────────────────────────────────────────
+    # 🆕 NOUVEAU: Envoi emails fournisseurs
+    # ───────────────────────────────────────────────────────
+    
+    # Groupe lignes par fournisseur (via product.supplier si existe)
+    from collections import defaultdict
+    lines_by_supplier = defaultdict(list)
+    
+    for line in opportunity.lines.all():
+        # Get supplier depuis product (si FK existe)
+        # Sinon, skip email (supplier sera choisi lors création SupplierQuote)
+        if hasattr(line.product, 'supplier') and line.product.supplier:
+            supplier = line.product.supplier
+            lines_by_supplier[supplier].append(line)
+    
+    # Envoi email par fournisseur
+    for supplier, lines in lines_by_supplier.items():
+        try:
+            send_supplier_quote_request(
+                opportunity=opportunity,
+                supplier=supplier,
+                lines=lines
+            )
+        except Exception as e:
+            # Log error mais continue (email pas critique)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending email to supplier {supplier.name}: {e}")
+    
+    # Recharge opportunity (status recalculé via signal)
+    opportunity.refresh_from_db()
+    
+    return opportunity
+
+
+@transaction.atomic
+def request_client_po(*, opportunity_id, user, ip_address=None):
+    """
+    Marque devis Insomea comme envoyé au client
+    
+    🆕 MODIFIÉ: Envoi email client avec PDF
+    
+    Args:
+        opportunity_id: UUID
+        user: User instance (COMMERCIAL)
+        ip_address: str
+    
+    Returns:
+        Opportunity mise à jour
+    
+    Raises:
+        ValidationError: Si préconditions non remplies
+        PermissionDenied: Si pas COMMERCIAL
+    
+    Business Rules:
+        - Transition FSM Opportunity: INSOMEA_QUOTE_CREATED → CLIENT_PO_REQUEST
+        - 🆕 Envoi email client avec PDF InsomeaQuote
+    """
+    
+    # ... (garder toute la logique existante)
+    
+    # ───────────────────────────────────────────────────────
+    # 3. TRANSITION FSM
+    # ───────────────────────────────────────────────────────
+    
+    opportunity.request_client_po()
+    opportunity.save()
+    # Signal FSM → StatusHistory créé auto
+    
+    # ───────────────────────────────────────────────────────
+    # 🆕 NOUVEAU: Envoi email client avec PDF
+    # ───────────────────────────────────────────────────────
+    
+    # Get InsomeaQuote
+    if hasattr(opportunity, 'insomea_quote') and opportunity.insomea_quote:
+        try:
+            send_client_quote_with_pdf(
+                opportunity=opportunity,
+                insomea_quote=opportunity.insomea_quote
+            )
+        except Exception as e:
+            # Log error mais continue
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending email to client: {e}")
+    
+    return opportunity
+
+
+# ... (garder toutes les autres fonctions existantes)

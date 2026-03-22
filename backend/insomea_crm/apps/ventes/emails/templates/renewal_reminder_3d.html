@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRITIQUE - Expiration 3 jours</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #fff3e0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border: 3px solid #ff1744;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(255,23,68,0.3);
+        }
+        .header {
+            background: #d32f2f;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .critical-badge {
+            background-color: #ff1744;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            animation: shake 3s infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .critical-box {
+            background: linear-gradient(135deg, #ff1744 0%, #f50057 100%);
+            color: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .critical-box .number {
+            font-size: 72px;
+            font-weight: bold;
+            display: block;
+            line-height: 1;
+        }
+        .critical-box .label {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        .info-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+            border: 2px solid #ff1744;
+        }
+        .info-table tr {
+            border-bottom: 1px solid #ffcdd2;
+        }
+        .info-table td {
+            padding: 15px;
+        }
+        .info-table td:first-child {
+            font-weight: 600;
+            background-color: #ffebee;
+            width: 40%;
+        }
+        .button {
+            display: inline-block;
+            padding: 18px 50px;
+            background: #ff1744;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-top: 20px;
+            box-shadow: 0 6px 12px rgba(255,23,68,0.4);
+            animation: buttonPulse 2s infinite;
+        }
+        @keyframes buttonPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .contact-box {
+            background-color: #fff59d;
+            border: 2px solid #fbc02d;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .contact-box h3 {
+            margin: 0 0 10px 0;
+            color: #f57f17;
+        }
+        .contact-box p {
+            margin: 5px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .footer {
+            background-color: #ffebee;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 2px solid #ff1744;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔴 ALERTE CRITIQUE</h1>
+            <span class="critical-badge">⚠️ DERNIÈRE CHANCE</span>
+        </div>
+        
+        <div class="content">
+            <p style="font-size: 18px; font-weight: 600;">Bonjour <strong>{{ client.company_name }}</strong>,</p>
+            
+            <div class="critical-box">
+                <span class="number">3</span>
+                <span class="label">JOURS AVANT INTERRUPTION</span>
+            </div>
+            
+            <p style="font-size: 17px; text-align: center; color: #d32f2f; font-weight: 700; margin: 25px 0;">
+                ⏰ Votre subscription expire le {{ subscription.current_term_end|date:"d/m/Y" }} à minuit !
+            </p>
+            
+            <table class="info-table">
+                <tr>
+                    <td>Subscription ID</td>
+                    <td><strong>{{ subscription.subscription_number }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Produit</td>
+                    <td><strong>{{ subscription.product.title }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Licences</td>
+                    <td><strong>{{ subscription.quantity }}</strong></td>
+                </tr>
+                <tr style="background-color: #ffebee;">
+                    <td style="color: #d32f2f;">⚠️ EXPIRATION</td>
+                    <td><strong style="color: #d32f2f; font-size: 18px;">{{ subscription.current_term_end|date:"d/m/Y" }}</strong></td>
+                </tr>
+            </table>
+            
+            <h3 style="color: #d32f2f; text-align: center; margin: 30px 0 20px 0; font-size: 20px;">
+                🚨 CONSÉQUENCES IMMÉDIATES SI NON RENOUVELÉ
+            </h3>
+            
+            <div style="background-color: #ffebee; padding: 20px; border-radius: 8px; border-left: 5px solid #d32f2f;">
+                <ul style="margin: 0; padding-left: 20px; line-height: 2;">
+                    <li><strong>Accès aux services:</strong> Bloqué immédiatement</li>
+                    <li><strong>Emails / Documents:</strong> Inaccessibles</li>
+                    <li><strong>Collaboration équipe:</strong> Interrompue</li>
+                    <li><strong>Support technique:</strong> Suspendu</li>
+                    <li><strong>Données:</strong> Risque de perte après 90 jours</li>
+                </ul>
+            </div>
+            
+            <div class="contact-box">
+                <h3>📞 CONTACTEZ-NOUS IMMÉDIATEMENT</h3>
+                <p>☎️ Téléphone: <strong style="color: #d32f2f;">+216 XX XXX XXX</strong></p>
+                <p>📧 Email: <strong style="color: #d32f2f;">urgent@insomea.com</strong></p>
+                <p style="font-size: 14px; margin-top: 10px;">⏰ Disponible 24/7 pour traitement express</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ site_url }}" class="button">🚀 RENOUVELER EN URGENCE</a>
+            </div>
+            
+            <div style="background-color: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 4px solid #4caf50; margin-top: 25px;">
+                <strong>✅ Renouvellement Express :</strong> Notre équipe peut traiter votre dossier en moins de 2 heures pour éviter toute interruption.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong style="color: #d32f2f;">⚠️ SUPPORT CRITIQUE INSOMEA</strong></p>
+            <p>Ligne directe urgence: +216 XX XXX XXX (24/7)</p>
+            <p>{{ site_url }}</p>
+        </div>
+    </div>
+</body>
+</html>

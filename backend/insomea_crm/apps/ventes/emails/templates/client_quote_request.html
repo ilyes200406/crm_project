@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre devis Insomea</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 650px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px 25px;
+        }
+        .quote-ref {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .quote-ref .ref-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0078d4;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+        .summary-table th,
+        .summary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .summary-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+        .total-row {
+            background-color: #e3f2fd;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .attachment-notice {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Votre Devis Insomea</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Solutions Microsoft sur mesure</p>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ client.company_name }}</strong>,</p>
+            
+            <p>Suite à votre demande, nous avons le plaisir de vous transmettre notre devis pour vos licences Microsoft.</p>
+            
+            <div class="quote-ref">
+                <div style="font-size: 14px; color: #666; margin-bottom: 5px;">Référence devis</div>
+                <div class="ref-number">{{ insomea_quote.reference }}</div>
+                <div style="font-size: 14px; color: #666; margin-top: 5px;">{{ insomea_quote.created_at|date:"d/m/Y" }}</div>
+            </div>
+            
+            <h3>📦 Récapitulatif de votre commande :</h3>
+            
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th style="text-align: center;">Qté</th>
+                        <th style="text-align: right;">Prix unitaire</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr>
+                        <td><strong>{{ line.opportunity_line.product.title }}</strong></td>
+                        <td style="text-align: center;">{{ line.opportunity_line.quantity }}</td>
+                        <td style="text-align: right;">{{ line.unit_price_sale }} DT</td>
+                        <td style="text-align: right;"><strong>{{ line.line_total_sale }} DT</strong></td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">TOTAL HT</td>
+                        <td style="text-align: right;">{{ insomea_quote.total_sale }} DT</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="attachment-notice">
+                <strong>📎 Pièce jointe :</strong> Le devis détaillé au format PDF est joint à cet email.
+            </div>
+            
+            <h3>✅ Prochaines étapes :</h3>
+            <ol>
+                <li>Consulter le devis PDF ci-joint</li>
+                <li>Valider votre commande avec un bon de commande</li>
+                <li>Nous transmettre le BC signé</li>
+                <li>Provisionnement de vos licences sous 48h</li>
+            </ol>
+            
+            <div style="background-color: #e8f5e9; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                <strong>💚 Validité du devis :</strong> 30 jours à compter de ce jour
+            </div>
+            
+            <p><strong>Des questions ?</strong> Notre équipe commerciale se tient à votre disposition.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ site_url }}" class="button">Nous contacter</a>
+            </div>
+            
+            <p>Cordialement,<br>
+            <strong>{{ opportunity.assigned_to.get_full_name }}</strong><br>
+            Commercial Insomea<br>
+            📧 {{ opportunity.assigned_to.email }}<br>
+            📞 +216 XX XXX XXX</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Insomea</strong> - Partenaire Microsoft Certifié</p>
+            <p>{{ site_url }}</p>
+        </div>
+    </div>
+</body>
+</html>

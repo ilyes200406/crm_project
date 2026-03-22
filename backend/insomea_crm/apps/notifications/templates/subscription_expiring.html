@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 6px 6px 0 0;
+        }
+        .content {
+            background-color: #fff;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }
+        .warning-box {
+            background-color: #fff3e0;
+            padding: 20px;
+            border-left: 4px solid #ff9800;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .countdown {
+            background-color: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .countdown .number {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            margin: 15px 0;
+        }
+        table td {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        table td:first-child {
+            font-weight: 600;
+            width: 40%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0;">⏰ Subscription à Renouveler</h1>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ recipient.get_full_name }}</strong>,</p>
+            
+            <div class="warning-box">
+                <strong>🔔 Rappel de renouvellement</strong>
+                <p style="margin: 10px 0;">Une subscription client arrive à expiration prochainement</p>
+            </div>
+            
+            <div class="countdown">
+                <span class="number">{{ notification.subscription.days_until_expiration }}</span>
+                <div>JOURS RESTANTS</div>
+            </div>
+            
+            <h3>📦 Détails subscription :</h3>
+            
+            <table>
+                <tr>
+                    <td>Client</td>
+                    <td><strong>{{ notification.subscription.client.company_name }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Subscription</td>
+                    <td>{{ notification.subscription.subscription_number }}</td>
+                </tr>
+                <tr>
+                    <td>Produit</td>
+                    <td>{{ notification.subscription.product.title }}</td>
+                </tr>
+                <tr>
+                    <td>Quantité</td>
+                    <td>{{ notification.subscription.quantity }} licence(s)</td>
+                </tr>
+                <tr>
+                    <td>Date expiration</td>
+                    <td><strong style="color: #ff9800;">{{ notification.subscription.current_term_end|date:"d/m/Y" }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Auto-renouvellement</td>
+                    <td>{{ notification.subscription.auto_renew|yesno:"Activé,Désactivé" }}</td>
+                </tr>
+            </table>
+            
+            <div style="background-color: #e3f2fd; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <strong>✅ Actions requises :</strong>
+                <ol style="margin: 10px 0; padding-left: 20px;">
+                    <li>Contacter le client pour confirmer le renouvellement</li>
+                    <li>Créer une opportunité de renouvellement</li>
+                    <li>Obtenir le bon de commande client</li>
+                    <li>Lancer le processus de renouvellement</li>
+                </ol>
+            </div>
+            
+            {% if notification.subscription.days_until_expiration <= 7 %}
+            <div style="background-color: #ffebee; padding: 15px; border-radius: 4px; border-left: 4px solid #f44336; margin: 20px 0;">
+                <strong>⚠️ URGENT :</strong> Moins de 7 jours avant expiration. Action immédiate requise pour éviter toute interruption de service.
+            </div>
+            {% endif %}
+            
+            <div style="text-align: center;">
+                <a href="{{ site_url }}{{ notification.action_url }}" class="button">
+                    Créer renouvellement
+                </a>
+            </div>
+            
+            <p style="margin-top: 25px; font-size: 14px; color: #666;">
+                Rappel automatique - Insomea CRM
+            </p>
+        </div>
+    </div>
+</body>
+</html>
