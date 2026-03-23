@@ -4,6 +4,7 @@ OPPORTUNITY LINE SERIALIZERS - MODIFIÉ
 Support renewal workflow
 """
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from ..models import OpportunityLine, OpportunityLineStatus, BillingCycle
@@ -219,7 +220,7 @@ class OpportunityLineDetailSerializer(serializers.ModelSerializer):
     def _get_related(self, obj, field_name):
         try:
             return getattr(obj, field_name)
-        except Exception:
+        except (AttributeError, ObjectDoesNotExist):
             return None
 
 

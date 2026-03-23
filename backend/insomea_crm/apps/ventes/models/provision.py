@@ -54,8 +54,6 @@ class Provision(models.Model):
         if subscription_id:
             self.microsoft_subscription_id = subscription_id
         self.provisioning_completed_at = timezone.now()
-    def has_subscription(self):
-        return hasattr(self, 'subscription') and self.subscription is not None
     
     @transition(field=status, source=ProvisionStatus.PROVISIONING, target=ProvisionStatus.ERROR)
     def fail_provisioning(self, error_message):

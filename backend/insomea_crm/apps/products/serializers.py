@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 from .models import Product
-from suppliers.serializers import SupplierMinimalSerializer
+from ..suppliers.serializers import SupplierMinimalSerializer
 
 
 class ProductListSerializer(serializers.ModelSerializer):

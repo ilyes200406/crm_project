@@ -112,12 +112,14 @@ class CanViewOpportunity(permissions.BasePermission):
         # Détermine opportunity
         if isinstance(obj, Opportunity):
             opportunity = obj
-        elif hasattr(obj, 'opportunity'):
-            opportunity = obj.opportunity
-        elif hasattr(obj, 'opportunity_line'):
-            opportunity = obj.opportunity_line.opportunity
         else:
-            return False
+            try:
+                opportunity = obj.opportunity
+            except AttributeError:
+                try:
+                    opportunity = obj.opportunity_line.opportunity
+                except AttributeError:
+                    return False
         
         user = request.user
         

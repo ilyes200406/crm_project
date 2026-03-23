@@ -452,9 +452,7 @@ admin.site.register(InsomeaPurchaseOrder)
 # ... (garder tout le code existant)
 
 # 🆕 NOUVEAU IMPORT
-from ..notifications.models import Notification, NotificationType, NotificationStatus
-
-
+from .notifications.models import Notification, NotificationType, NotificationStatus
 # ═══════════════════════════════════════════════════════════
 # 🆕 NOTIFICATION ADMIN
 # ═══════════════════════════════════════════════════════════

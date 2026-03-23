@@ -163,7 +163,7 @@ def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
     from ..services.workflow_service import update_opportunity_status_from_lines
     
     # Évite boucle infinie
-    if hasattr(instance, '_updating_opportunity_status'):
+    if getattr(instance, '_updating_opportunity_status', False):
         return
     
     # Mark pour éviter récursion

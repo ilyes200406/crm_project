@@ -7,7 +7,7 @@ Business logic:
 """
 
 from django.db import transaction
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from collections import defaultdict
 
 from ..models import (
@@ -24,6 +24,13 @@ from ..validators import (
 from ..selectors import (
     get_opportunity_by_id,
 )
+
+
+def _get_related_or_none(instance, attr_name):
+    try:
+        return getattr(instance, attr_name)
+    except ObjectDoesNotExist:
+        return None
 
 
 # ═══════════════════════════════════════════════════════════
@@ -178,8 +185,9 @@ def create_insomea_pos(*, opportunity_id, user, ip_address=None):
     for line in opportunity.lines.all():
         # Récupère supplier depuis InsomeaQuoteLine
         # (car OpportunityLine n'a pas FK directe vers Supplier)
-        if hasattr(line, 'insomea_quote_line') and line.insomea_quote_line:
-            supplier_quote_line = line.insomea_quote_line.supplier_quote_line
+        insomea_quote_line = _get_related_or_none(line, 'insomea_quote_line')
+        if insomea_quote_line is not None:
+            supplier_quote_line = insomea_quote_line.supplier_quote_line
             supplier_id = supplier_quote_line.supplier_quote.supplier_id
             lines_by_supplier[supplier_id].append(line)
         else:

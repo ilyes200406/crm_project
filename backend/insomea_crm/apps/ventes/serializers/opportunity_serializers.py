@@ -4,6 +4,7 @@ OPPORTUNITY SERIALIZERS - MODIFIÉ
 Support renewal workflow
 """
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from django.db import transaction
 
@@ -236,7 +237,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     def _get_related(self, obj, field_name):
         try:
             return getattr(obj, field_name)
-        except Exception as e:
+        except (AttributeError, ObjectDoesNotExist):
             return None
     def _serialize_related(self, obj, field_name, serializer_class, many=False):
         related = self._get_related(obj, field_name)

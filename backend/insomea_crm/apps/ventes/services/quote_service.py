@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from decimal import Decimal
 
 from ..models import (
@@ -21,6 +21,13 @@ from ..selectors import (
     get_supplier_quote_by_id,
     get_insomea_quote_by_id,
 )
+
+
+def _get_related_or_none(instance, attr_name):
+    try:
+        return getattr(instance, attr_name)
+    except ObjectDoesNotExist:
+        return None
 
 
 @transaction.atomic
@@ -252,7 +259,7 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
         if not opp_line:
             raise ValidationError(f"Ligne {lp['line_id']} introuvable dans cette opportunité")
 
-        supplier_quote_line = getattr(opp_line, 'supplier_quote_line', None)
+        supplier_quote_line = _get_related_or_none(opp_line, 'supplier_quote_line')
 
         if supplier_quote_line is None:
             raise ValidationError(

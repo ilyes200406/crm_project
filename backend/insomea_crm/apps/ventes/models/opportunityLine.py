@@ -54,6 +54,15 @@ class OpportunityLine(models.Model):
     def __str__(self):
         return f"{self.product.title} x{self.quantity} - {self.opportunity.reference}"
 
+    def is_renewal(self):
+        return self.renewal_of_subscription is not None
+
+    def is_initial(self):
+        return not self.is_renewal()
+    
+    def get_original_subscription(self):
+        return self.renewal_of_subscription
+
     @transition(field=status, source=OpportunityLineStatus.DRAFT, target=OpportunityLineStatus.SUPPLIER_QUOTE_REQUEST)
     def request_supplier_quote(self):
         pass
@@ -73,18 +82,3 @@ class OpportunityLine(models.Model):
             self.notes = f"ANNULÉ : {reason}\n\n{self.notes}"
 
 
-
-
-
-
-
-
-
-    def is_renewal(self):
-        return self.renewal_of_subscription is not None
-
-    def is_initial(self):
-        return not self.is_renewal()
-    
-    def get_original_subscription(self):
-        return self.renewal_of_subscription

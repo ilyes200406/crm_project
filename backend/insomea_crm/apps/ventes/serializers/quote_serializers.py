@@ -6,6 +6,7 @@ Transformation Quotes ↔ JSON:
 - InsomeaQuote + InsomeaQuoteLine
 """
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from decimal import Decimal
 
@@ -27,6 +28,13 @@ from ..validators import (
 # Import serializers from other apps
 from ...suppliers.serializers import SupplierMinimalSerializer
 from ...users.api.serializers import UserMinimalSerializer
+
+
+def _get_related_or_none(instance, attr_name):
+    try:
+        return getattr(instance, attr_name)
+    except ObjectDoesNotExist:
+        return None
 
 
 # ═══════════════════════════════════════════════════════════
@@ -480,7 +488,7 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
 
         for lp in lines_pricing:
             line = line_map[str(lp['line_id'])]
-            supplier_quote_line = getattr(line, 'supplier_quote_line', None)
+            supplier_quote_line = _get_related_or_none(line, 'supplier_quote_line')
 
             if supplier_quote_line is None:
                 raise serializers.ValidationError({

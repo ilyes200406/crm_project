@@ -7,7 +7,7 @@ Ajout support renewal:
 """
 
 from django.db import transaction
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 from django.utils import timezone
 
 from ..models import (
@@ -29,6 +29,13 @@ from .subscription_service import (
     create_initial_subscription,
     renew_subscription,
 )
+
+
+def _get_related_or_none(instance, attr_name):
+    try:
+        return getattr(instance, attr_name)
+    except ObjectDoesNotExist:
+        return None
 
 
 # ═══════════════════════════════════════════════════════════
@@ -75,7 +82,7 @@ def create_provision_for_line(*, opportunity_line_id, user=None):
     # ───────────────────────────────────────────────────────
     
     # Vérifie que provision n'existe pas déjà
-    if hasattr(line, 'provision') and line.provision:
+    if _get_related_or_none(line, 'provision') is not None:
         raise ValidationError(
             f'Une provision existe déjà pour cette ligne : {line.product.title}'
         )
@@ -260,12 +267,12 @@ def complete_provisioning(
     
     opportunity_line = provision.opportunity_line
     
-    if not hasattr(opportunity_line, 'insomea_quote_line') or not opportunity_line.insomea_quote_line:
+    insomea_quote_line = _get_related_or_none(opportunity_line, 'insomea_quote_line')
+    if insomea_quote_line is None:
         raise ValidationError(
             'InsomeaQuoteLine requis pour récupérer pricing'
         )
-    
-    insomea_quote_line = opportunity_line.insomea_quote_line
+
     
     unit_price_purchase = insomea_quote_line.unit_price_purchase
     unit_price_sale = insomea_quote_line.unit_price_sale

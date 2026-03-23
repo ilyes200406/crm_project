@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
 
 from ..models import (
     Opportunity,
@@ -15,6 +15,13 @@ from ..selectors import (
 )
 from .provision_service import create_provision_for_line
 from ..emails.services import send_supplier_quote_request, send_client_quote_with_pdf
+
+
+def _get_related_or_none(instance, attr_name):
+    try:
+        return getattr(instance, attr_name)
+    except ObjectDoesNotExist:
+        return None
 
 
 # ═══════════════════════════════════════════════════════════
@@ -94,8 +101,8 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
     for line in opportunity.lines.all():
         # Get supplier depuis product (si FK existe)
         # Sinon, skip email (supplier sera choisi lors création SupplierQuote)
-        if hasattr(line.product, 'supplier') and line.product.supplier:
-            supplier = line.product.supplier
+        supplier = getattr(line.product, 'supplier', None)
+        if supplier:
             lines_by_supplier[supplier].append(line)
     
     # Envoi email par fournisseur
@@ -161,11 +168,12 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
     # Signal FSM → StatusHistory créé auto
 
     # Get InsomeaQuote
-    if hasattr(opportunity, 'insomea_quote') and opportunity.insomea_quote:
+    insomea_quote = _get_related_or_none(opportunity, 'insomea_quote')
+    if insomea_quote:
         try:
             send_client_quote_with_pdf(
                 opportunity=opportunity,
-                insomea_quote=opportunity.insomea_quote
+                insomea_quote=insomea_quote
             )
         except Exception as e:
             # Log error mais continue
@@ -238,7 +246,7 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
     
     for line in opportunity.lines.all():
         # Vérifie que provision n'existe pas déjà
-        if not hasattr(line, 'provision') or not line.provision:
+        if _get_related_or_none(line, 'provision') is None:
             provision = create_provision_for_line(
                 opportunity_line_id=line.id,
                 user=user
