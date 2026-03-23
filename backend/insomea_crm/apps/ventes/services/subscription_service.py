@@ -126,8 +126,6 @@ def create_initial_subscription(
     # 5. ACTIVATION (FSM)
     # ───────────────────────────────────────────────────────
     
-    subscription.activate()
-    subscription.save()
     # Signal FSM → StatusHistory créé auto
     
     return {

@@ -204,11 +204,11 @@ class SupplierQuoteFilter(django_filters.FilterSet):
         field_name='lines__opportunity_line__opportunity__id'
     )
     received_after = django_filters.DateFilter(
-        field_name='received_at',
+        field_name='recieved_at',
         lookup_expr='gte'
     )
     received_before = django_filters.DateFilter(
-        field_name='received_at',
+        field_name='recieved_at',
         lookup_expr='lte'
     )
     

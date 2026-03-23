@@ -31,6 +31,8 @@ class ClientPOSerializer(serializers.ModelSerializer):
     
     created_by = UserMinimalSerializer(read_only=True)
     document_url = serializers.SerializerMethodField()
+    received_at = serializers.DateTimeField(source='recieved_at', read_only=True)
+    created_at = serializers.DateTimeField(source='recieved_at', read_only=True)
     
     class Meta:
         model = ClientPO
@@ -125,6 +127,11 @@ class InsomeaPOSerializer(serializers.ModelSerializer):
     def get_lines_count(self, obj):
         """Nombre de lignes liées à ce PO"""
         return obj.opportunity_lines.count()
+
+
+class InsomeaPurchaseOrderListSerializer(InsomeaPOSerializer):
+    """Alias pour cohérence avec les serializers d'opportunity."""
+    pass
 
 
 # ═══════════════════════════════════════════════════════════

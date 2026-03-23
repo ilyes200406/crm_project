@@ -240,7 +240,7 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
         raise ValidationError('Au moins une ligne requise')
 
     line_ids = [lp['line_id'] for lp in lines_pricing]
-    opportunity_lines = opportunity.lines.filter(id__in=line_ids).prefetch_related('supplier_quote_lines')
+    opportunity_lines = opportunity.lines.filter(id__in=line_ids).select_related('supplier_quote_line')
 
     if opportunity_lines.count() != len(line_ids):
         raise ValidationError('Certaines lignes ne font pas partie de cette opportunité')
@@ -252,20 +252,12 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
         if not opp_line:
             raise ValidationError(f"Ligne {lp['line_id']} introuvable dans cette opportunité")
 
-        supplier_quote_lines = opp_line.supplier_quote_lines.all()
+        supplier_quote_line = getattr(opp_line, 'supplier_quote_line', None)
 
-        if supplier_quote_lines.count() == 0:
+        if supplier_quote_line is None:
             raise ValidationError(
                 f'Aucun devis fournisseur pour la ligne {opp_line.id}'
             )
-
-        if supplier_quote_lines.count() > 1:
-            raise ValidationError(
-                f'Plusieurs devis fournisseur pour la ligne {opp_line.id}. '
-                'Le workflow attendu impose un seul devis fournisseur par ligne.'
-            )
-
-        supplier_quote_line = supplier_quote_lines.first()
         lp['supplier_quote_line'] = supplier_quote_line
         lp['unit_price_purchase'] = supplier_quote_line.unit_price_purchase
 
@@ -301,6 +293,7 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
             supplier_quote_line=lp['supplier_quote_line'],
             unit_price_purchase=lp['unit_price_purchase'],
             unit_price_sale=lp['unit_price_sale'],
+            line_margin=lp['unit_price_sale'] - lp['unit_price_purchase'],
         )
         # NOTE: calculate totals appelé dans save() de InsomeaQuoteLine
     

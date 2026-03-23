@@ -12,3 +12,11 @@ class ClientPO(models.Model):
     po_number = models.CharField(max_length=100)
     document = models.FileField(upload_to="po/")
     recieved_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    @property
+    def received_at(self):
+        return self.recieved_at
+
+    @property
+    def created_at(self):
+        return self.recieved_at

@@ -119,12 +119,8 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        opportunity = Opportunity.objects.get(
-            id=serializer.validated_data['opportunity_id']
-        )
-        product = Product.objects.get(
-            id=serializer.validated_data['product_id']
-        )
+        opportunity = serializer.validated_data['opportunity']
+        product = serializer.validated_data['product']
         
         # Vérifie permissions sur opportunity
         if request.user.role == 'COMMERCIAL':

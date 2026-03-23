@@ -19,7 +19,7 @@ class SupplierQuoteLine(models.Model):
 
     def save(self, *args, **kwargs):
 
-        self.total_line_purchase = (
+        self.line_total_purchase = (
             Decimal(str(self.opportunity_line.quantity)) * self.unit_price_purchase
         ).quantize(Decimal('0.01'))
 

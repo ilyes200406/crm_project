@@ -2,9 +2,6 @@
 SELECTORS - APP OPPORTUNITIES
 """
 
-# ... (garder imports existants)
-
-# 🆕 NOUVEAU
 from .subscription_selectors import (
     get_all_subscriptions,
     get_subscription_by_id,
@@ -19,10 +16,26 @@ from .subscription_selectors import (
     get_subscription_stats,
 )
 
+from .opportunity_selectors import (
+    get_all_opportunities,
+    get_opportunity_by_id,
+)
+
+from .opportunity_line_selectors import (
+    get_line_by_id,
+)
+
+from .quote_selectors import (
+    get_supplier_quote_by_id,
+    get_insomea_quote_by_id,
+)
+
+from .proviosion_selectors import (
+    get_all_provisions,
+    get_provision_by_id,
+)
+
 __all__ = [
-    # ... (garder existants)
-    
-    # 🆕 NOUVEAUX
     'get_all_subscriptions',
     'get_subscription_by_id',
     'get_subscription_by_number',
@@ -34,4 +47,15 @@ __all__ = [
     'get_subscriptions_by_product',
     'get_subscriptions_needing_renewal',
     'get_subscription_stats',
+
+    'get_all_opportunities',
+    'get_opportunity_by_id',
+
+    'get_line_by_id',
+
+    'get_supplier_quote_by_id',
+    'get_insomea_quote_by_id',
+
+    'get_all_provisions',
+    'get_provision_by_id',
 ]

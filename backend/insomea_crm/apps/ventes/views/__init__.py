@@ -19,5 +19,4 @@ __all__ = [
     'ProvisionViewSet',
     'SubscriptionViewSet',
     'StatusHistoryViewSet',
-    'SubscriptionViewSet',
 ]

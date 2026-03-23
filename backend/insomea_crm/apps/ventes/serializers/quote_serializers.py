@@ -81,6 +81,8 @@ class SupplierQuoteSerializer(serializers.ModelSerializer):
     
     # Document URL
     document_url = serializers.SerializerMethodField()
+    received_at = serializers.DateTimeField(source='recieved_at', read_only=True)
+    created_at = serializers.DateTimeField(source='recieved_at', read_only=True)
     
     class Meta:
         model = SupplierQuote
@@ -467,7 +469,7 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
 
         lines = OpportunityLine.objects.filter(
             id__in=line_ids
-        ).prefetch_related('supplier_quote_lines')
+        ).select_related('supplier_quote_line')
 
         if lines.count() != len(line_ids):
             raise serializers.ValidationError({
@@ -478,23 +480,14 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
 
         for lp in lines_pricing:
             line = line_map[str(lp['line_id'])]
-            supplier_quote_lines = line.supplier_quote_lines.all()
+            supplier_quote_line = getattr(line, 'supplier_quote_line', None)
 
-            if supplier_quote_lines.count() == 0:
+            if supplier_quote_line is None:
                 raise serializers.ValidationError({
                     'lines_pricing': f'Aucun devis fournisseur pour la ligne {line.id}'
                 })
 
-            if supplier_quote_lines.count() > 1:
-                raise serializers.ValidationError({
-                    'lines_pricing': (
-                        f'Plusieurs devis fournisseur pour la ligne {line.id}. '
-                        'Le workflow attendu impose un seul devis fournisseur par ligne.'
-                    )
-                })
-
-            sql = supplier_quote_lines.first()
-            lp['unit_price_purchase'] = sql.unit_price_purchase
+            lp['unit_price_purchase'] = supplier_quote_line.unit_price_purchase
 
             validate_sale_price_greater_than_purchase(
                 lp['unit_price_purchase'],
@@ -513,3 +506,13 @@ class CreateInsomeaQuoteSerializer(serializers.Serializer):
         raise NotImplementedError(
             'Utiliser opportunities.services.create_insomea_quote()'
         )
+
+
+class SupplierQuoteListSerializer(SupplierQuoteSerializer):
+    """Alias pour nested opportunity detail."""
+    pass
+
+
+class InsomeaQuoteDetailSerializer(InsomeaQuoteSerializer):
+    """Alias pour nested opportunity detail."""
+    pass

@@ -45,8 +45,13 @@ class InsomeaQuote(models.Model):
     def calculate_totals(self):
         from django.db.models import Sum
 
-        aggregates = self.lines.aggregate(total_sale=Sum('line_total_sale'))
-        self.subtotal_sale = aggregates['total_sale'] or Decimal('0.00')
+        aggregates = self.lines.aggregate(
+            subtotal_purchase=Sum('line_total_purchase'),
+            subtotal_sale=Sum('line_total_sale')
+        )
+        self.subtotal_purchase = aggregates['subtotal_purchase'] or Decimal('0.00')
+        self.subtotal_sale = aggregates['subtotal_sale'] or Decimal('0.00')
+        self.total_purchase = self.subtotal_purchase
         
         if self.discount_percent > 0:
             self.discount_amount = (
@@ -54,7 +59,9 @@ class InsomeaQuote(models.Model):
             ).quantize(Decimal('0.01'))
         else:
             self.discount_amount = Decimal('0.00')
-        
+
+        self.total_sale = (self.subtotal_sale - self.discount_amount).quantize(Decimal('0.01'))
+
         self.margin = (self.total_sale - self.total_purchase).quantize(Decimal('0.01'))
         
         if self.total_purchase > 0:
@@ -65,6 +72,8 @@ class InsomeaQuote(models.Model):
             self.margin_percent = Decimal('0.00')
         
         self.save(update_fields=[
+            'subtotal_purchase',
+            'total_purchase',
             'subtotal_sale',
             'total_sale',
             'discount_amount',

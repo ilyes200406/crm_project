@@ -23,6 +23,7 @@ from .quote_service import (
 from .purchase_order_service import (
     upload_client_po,
     create_insomea_pos,
+    request_client_po_transition,
 )
 
 from .provision_service import (
@@ -44,8 +45,6 @@ from .subscription_service import (
     create_initial_subscription,
     renew_subscription,
     cancel_subscription,
-    suspend_subscription,
-    reactivate_subscription,
     check_subscription_expiring,
     get_subscription_revenue_metrics,
 )
@@ -74,6 +73,7 @@ __all__ = [
     # Purchase Orders
     'upload_client_po',
     'create_insomea_pos',
+    'request_client_po_transition',
     
     # Provision
     'create_provision_for_line',
@@ -91,8 +91,6 @@ __all__ = [
     'create_initial_subscription',
     'renew_subscription',
     'cancel_subscription',
-    'suspend_subscription',
-    'reactivate_subscription',
     'check_subscription_expiring',
     'get_subscription_revenue_metrics',
     

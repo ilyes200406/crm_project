@@ -35,6 +35,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 
 from ..models import Opportunity, OpportunityStatus, OpportunityType  # 🆕 OpportunityType
 from ..serializers import (
+    CreateInsomeaQuoteSerializer,
     OpportunityListSerializer,
     OpportunityDetailSerializer,
     OpportunityCreateSerializer,
@@ -45,6 +46,7 @@ from ..serializers import (
     CancelOpportunitySerializer,
     ProvisionDetailSerializer,
     InsomeaPOSerializer,
+    UploadClientPOSerializer,
 )
 from ..selectors import (
     get_all_opportunities,
@@ -52,11 +54,13 @@ from ..selectors import (
 )
 from ..services import (
     create_opportunity,
+    create_insomea_quote,
     update_opportunity,
     delete_opportunity,
     request_all_supplier_quotes,
     request_client_po,
     approve_opportunity,
+    upload_client_po,
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
@@ -110,6 +114,10 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             return RequestSupplierQuotesSerializer
         elif self.action == 'request_client_po':
             return RequestClientPOSerializer
+        elif self.action == 'create_insomea_quote':
+            return CreateInsomeaQuoteSerializer
+        elif self.action == 'upload_client_po':
+            return UploadClientPOSerializer
         elif self.action == 'approve':
             return ApproveOpportunitySerializer
         elif self.action == 'cancel':
@@ -311,6 +319,28 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
+    def create_insomea_quote(self, request, pk=None):
+        """Créer le devis client global pour l'opportunité."""
+        opportunity = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        insomea_quote = create_insomea_quote(
+            opportunity_id=opportunity.id,
+            lines_pricing=serializer.validated_data['lines_pricing'],
+            discount_percent=serializer.validated_data.get('discount_percent', 0),
+            notes=serializer.validated_data.get('notes', ''),
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        refreshed = get_opportunity_by_id(opportunity.id, user=request.user)
+        return Response({
+            'opportunity': OpportunityDetailSerializer(refreshed).data,
+            'insomea_quote_id': str(insomea_quote.id),
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
     def request_client_po(self, request, pk=None):
         """
         Demander BC client
@@ -353,6 +383,27 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'provisions': ProvisionDetailSerializer(result['provisions'], many=True).data,
             'insomea_pos': InsomeaPOSerializer(result['insomea_pos'], many=True).data,
         })
+
+    @action(detail=True, methods=['post'])
+    def upload_client_po(self, request, pk=None):
+        """Uploader le BC client reçu et faire avancer le workflow."""
+        opportunity = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        client_po = upload_client_po(
+            opportunity_id=opportunity.id,
+            document=serializer.validated_data['document'],
+            po_number=serializer.validated_data['po_number'],
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        refreshed = get_opportunity_by_id(opportunity.id, user=request.user)
+        return Response({
+            'opportunity': OpportunityDetailSerializer(refreshed).data,
+            'client_po_id': str(client_po.id),
+        }, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):

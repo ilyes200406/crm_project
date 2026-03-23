@@ -49,6 +49,13 @@ jobs:
             pip install -r "${{ inputs.working-directory }}/requirements.txt"
           fi
   
+#      - name: Check Django migrations 
+#        run: | 
+#          cd "${{ inputs.working-directory }}"
+#          if [ -f "manage.py"]; then 
+#            python manage.py makemigrations --check --dry-run
+#          fi
+
       - name: Run Python tests
         if: ${{ inputs.run-tests }}
         run: |

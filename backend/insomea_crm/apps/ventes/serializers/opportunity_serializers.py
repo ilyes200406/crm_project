@@ -229,49 +229,62 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         from .line_serializers import OpportunityLineListSerializer
         lines = obj.lines.all().order_by('created_at')
         return OpportunityLineListSerializer(lines, many=True).data
+
+    # ═══════════════════════════════════════════════════════════
+    # HELPERS
+    # ═══════════════════════════════════════════════════════════
+    def _get_related(self, obj, field_name):
+        try:
+            return getattr(obj, field_name)
+        except Exception as e:
+            return None
+    def _serialize_related(self, obj, field_name, serializer_class, many=False):
+        related = self._get_related(obj, field_name)
+        if not related:
+            return None if not many else []
+        return serializer_class(related, many=many).data
+    
     
     def get_supplier_quotes(self, obj):
-        """SupplierQuotes"""
         from .quote_serializers import SupplierQuoteListSerializer
-        
-        # Get unique supplier quotes via lines
-        quotes = []
-        seen_ids = set()
-        
-        for line in obj.lines.all():
-            if hasattr(line, 'supplier_quote_line') and line.supplier_quote_line:
-                quote = line.supplier_quote_line.supplier_quote
-                if quote.id not in seen_ids:
-                    quotes.append(quote)
-                    seen_ids.add(quote.id)
-        
-        return SupplierQuoteListSerializer(quotes, many=True).data
+        quotes = (
+            obj.lines
+            .filter(supplier_quote_line__isnull=False)
+            .select_related('supplier_quote_line__supplier_quote')
+            .values_list('supplier_quote_line__supplier_quote', flat=True)
+            .distinct()
+        )
+        from ..models import SupplierQuote
+        queryset = SupplierQuote.objects.filter(id__in=quotes)
+        return SupplierQuoteListSerializer(queryset, many=True).data
     
     def get_insomea_quote(self, obj):
         """InsomeaQuote"""
-        if hasattr(obj, 'insomea_quote') and obj.insomea_quote:
-            from .quote_serializers import InsomeaQuoteDetailSerializer
-            return InsomeaQuoteDetailSerializer(obj.insomea_quote).data
-        return None
+        from .quote_serializers import InsomeaQuoteDetailSerializer
+        return self._serialize_related(obj, 'insomea_quote', InsomeaQuoteDetailSerializer)
     
     def get_client_po(self, obj):
         """Client PO"""
-        if hasattr(obj, 'client_po') and obj.client_po:
-            from .workflow_serializers import ClientPOSerializer
-            return ClientPOSerializer(obj.client_po).data
-        return None
+        from .workflow_serializers import ClientPOSerializer
+        return self._serialize_related(obj, 'client_purchase_order', ClientPOSerializer)
     
     def get_insomea_pos(self, obj):
         """Insomea POs"""
         from .workflow_serializers import InsomeaPurchaseOrderListSerializer
-        pos = obj.insomea_purchase_orders.all()
+        from ..models import InsomeaPurchaseOrder
+
+        po_ids = (
+            obj.lines.exclude(insomea_purchase_order__isnull=True)
+            .values_list('insomea_purchase_order_id', flat=True)
+            .distinct()
+        )
+        pos = InsomeaPurchaseOrder.objects.filter(id__in=po_ids)
         return InsomeaPurchaseOrderListSerializer(pos, many=True).data
     
     def get_total_amount_estimate(self, obj):
         """Total estimated (from InsomeaQuote if exists)"""
-        if hasattr(obj, 'insomea_quote') and obj.insomea_quote:
-            return float(obj.insomea_quote.total_sale)
-        return None
+        quote = self._get_related(obj, 'insomea_quote')
+        return quote.total_sale if quote else None
     
     def get_can_edit(self, obj):
         """Check if user can edit"""
@@ -419,3 +432,11 @@ class CancelOpportunitySerializer(serializers.Serializer):
         required=True,
         help_text="Raison annulation"
     )
+
+
+class OpportunityMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour nested quote payloads."""
+
+    class Meta:
+        model = Opportunity
+        fields = ['id', 'reference', 'name', 'status', 'type']

@@ -285,7 +285,13 @@ def validate_can_request_client_po(opportunity):
         )
     
     # Vérifie InsomeaQuote existe
-    if not hasattr(opportunity, 'insomea_quote') or not opportunity.insomea_quote:
+    try:
+        if not opportunity.insomea_quote:
+            raise ValidationError(
+                _('Devis Insomea requis'),
+                code='missing_insomea_quote'
+            )
+    except opportunity.__class__.insomea_quote.RelatedObjectDoesNotExist:
         raise ValidationError(
             _('Devis Insomea requis'),
             code='missing_insomea_quote'

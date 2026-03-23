@@ -209,11 +209,10 @@ class SupplierQuoteAdmin(admin.ModelAdmin):
         'supplier',
         'created_by',
         'total_purchase',
-        'received_at',
-        'created_at',
+        'recieved_at',
     )
     
-    list_filter = ('supplier', 'created_at', 'received_at')
+    list_filter = ('supplier', 'recieved_at')
     
     search_fields = ('reference', 'supplier__name')
     
@@ -221,7 +220,7 @@ class SupplierQuoteAdmin(admin.ModelAdmin):
         'subtotal_purchase',
         'discount_amount',
         'total_purchase',
-        'created_at',
+        'recieved_at',
     )
     
     inlines = [SupplierQuoteLineInline]

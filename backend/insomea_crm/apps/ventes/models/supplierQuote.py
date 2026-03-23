@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import datetime
 
 from ...users.models.users import User
 from ...suppliers.models import Supplier
@@ -20,6 +21,33 @@ class SupplierQuote(models.Model):
     total_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Total achat")
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Montant remise")
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))], help_text="Remise globale en %")
+
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            self.reference = self._generate_reference()
+        super().save(*args, **kwargs)
+
+    def _generate_reference(self):
+        current_year = datetime.now().year
+        last_quote = SupplierQuote.objects.filter(
+            reference__startswith=f'SUP-{current_year}'
+        ).order_by('-reference').first()
+
+        if last_quote:
+            last_num = int(last_quote.reference.split('-')[-1])
+            new_num = last_num + 1
+        else:
+            new_num = 1
+
+        return f'SUP-{current_year}-{new_num:05d}'
+
+    @property
+    def received_at(self):
+        return self.recieved_at
+
+    @property
+    def created_at(self):
+        return self.recieved_at
 
     def calculate_totals(self):
         from django.db.models import Sum

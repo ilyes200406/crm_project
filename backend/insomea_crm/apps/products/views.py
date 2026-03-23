@@ -6,11 +6,11 @@ from .serializers import (
     ProductListSerializer, ProductDetailSerializer,
     ProductCreateSerializer
 )
-from .permissions import ProductPermission
-from .filters import ProductFilter
+
 from .selectors import get_products_queryset
 from .services import create_product, update_product
-
+from .permessions import ProductPermission
+from .filters import ProductFilter
 
 class ProductViewSet(viewsets.ModelViewSet):
     """ViewSet products"""

@@ -62,7 +62,10 @@ class OpportunityLine(models.Model):
     def supplier_quote_received(self):
         pass
     def has_supplier_quote(self):
-        return self.supplier_quote_lines.exists()
+        try:
+            return self.supplier_quote_line is not None
+        except self.__class__.supplier_quote_line.RelatedObjectDoesNotExist:
+            return False
     
     @transition(field=status, source="*", target=OpportunityLineStatus.CANCELLED)
     def cancel(self, reason=''):
@@ -79,6 +82,9 @@ class OpportunityLine(models.Model):
 
     def is_renewal(self):
         return self.renewal_of_subscription is not None
+
+    def is_initial(self):
+        return not self.is_renewal()
     
     def get_original_subscription(self):
         return self.renewal_of_subscription

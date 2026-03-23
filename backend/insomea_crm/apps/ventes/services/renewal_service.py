@@ -98,6 +98,9 @@ def create_renewal_opportunity(*, subscription, user, quantity=None, notes='', i
     # 3. CRÉATION OPPORTUNITY RENEWAL
     # ───────────────────────────────────────────────────────
 
+    final_quantity = quantity or subscription.quantity
+    final_notes = notes or f"Renouvellement subscription {subscription.subscription_number}"
+
     renewal_opportunity = Opportunity.objects.create(
         type=OpportunityType.RENEWAL,
         related_opportunity=original_opportunity,
@@ -106,16 +109,13 @@ def create_renewal_opportunity(*, subscription, user, quantity=None, notes='', i
         created_by=user,
         assigned_to=original_opportunity.assigned_to or user,
         status=OpportunityStatus.DRAFT,
-        notes=f"Renouvellement subscription {subscription.subscription_number}",
+        notes=final_notes,
     )
     # reference auto-généré dans save()
     
     # ───────────────────────────────────────────────────────
     # 4. CRÉATION OPPORTUNITY LINE
     # ───────────────────────────────────────────────────────
-
-    final_quantity = quantity or subscription.quantity
-    final_notes = notes or f"Renouvellement subscription {subscription.subscription_number}"
 
     renewal_line = OpportunityLine.objects.create(
         opportunity=renewal_opportunity,

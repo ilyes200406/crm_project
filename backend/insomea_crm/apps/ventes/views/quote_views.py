@@ -46,8 +46,8 @@ class SupplierQuoteViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = SupplierQuoteFilter
     search_fields = ['reference', 'supplier__name']
-    ordering_fields = ['created_at', 'received_at']
-    ordering = ['-created_at']
+    ordering_fields = ['recieved_at']
+    ordering = ['-recieved_at']
     
     # READ-ONLY après création (pas de update/delete)
     http_method_names = ['get', 'post', 'head', 'options']

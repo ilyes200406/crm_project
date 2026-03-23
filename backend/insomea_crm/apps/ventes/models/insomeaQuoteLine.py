@@ -10,7 +10,7 @@ from .supplierQuoteLine import SupplierQuoteLine
 class InsomeaQuoteLine(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     insomea_quote = models.ForeignKey(InsomeaQuote, on_delete=models.CASCADE, related_name='lines', help_text="InsomeaQuote parent")
-    opportunity_line = models.OneToOneField(OpportunityLine, on_delete=models.CASCADE)
+    opportunity_line = models.OneToOneField(OpportunityLine, on_delete=models.CASCADE, related_name='insomea_quote_line')
     supplier_quote_line = models.OneToOneField(SupplierQuoteLine, on_delete=models.CASCADE, related_name="insomea_quote_line")
 
     # snapshot of purchase price (copied from selected SupplierQuoteLine)
@@ -20,13 +20,22 @@ class InsomeaQuoteLine(models.Model):
     # sale price
     unit_price_sale = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))], help_text="Prix unitaire vente")
     line_total_sale = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), help_text="Total vente calculé")
-    line_margin = models.DecimalField(max_digits=12, decimal_places=2)
+    line_margin = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     line_discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        quantity = Decimal(str(self.opportunity_line.quantity))
+
+        self.line_total_purchase = (
+            quantity * self.unit_price_purchase
+        ).quantize(Decimal('0.01'))
 
         self.line_total_sale = (
-            Decimal(str(self.opportunity_line.quantity)) * self.unit_price_sale
+            quantity * self.unit_price_sale
+        ).quantize(Decimal('0.01'))
+
+        self.line_margin = (
+            self.line_total_sale - self.line_total_purchase
         ).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)

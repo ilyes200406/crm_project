@@ -43,18 +43,34 @@ def get_provisions_in_progress(user=None):
     return queryset.order_by('provisioning_started_at')
 
 
-def get_provision_by_id(provision_id):
-    return get_object_or_404(
-        Provision.objects.select_related(
-            'opportunity_line',
-            'opportunity_line__opportunity',
-            'opportunity_line__product',
-            'provisionned_by',
-        ).prefetch_related(
-            'subscription',
-        ),
-        id=provision_id
-    )
+def get_provision_by_id(provision_id, *, user=None):
+    queryset = Provision.objects.select_related(
+        'opportunity_line',
+        'opportunity_line__opportunity',
+        'opportunity_line__product',
+        'provisionned_by',
+    ).prefetch_related('subscription')
+    
+    if user and user.role == 'TECHNICIEN':
+        queryset = queryset.filter(Q(provisionned_by=user) | Q(opportunity_line__opportunity__assigned_to=user))
+    
+    return get_object_or_404(queryset, id=provision_id)
+
+def get_all_provisions(*, user=None):
+    qs = Provision.objects.select_related(
+        'opportunity_line',
+        'opportunity_line__opportunity',
+        'opportunity_line__product',
+        'provisionned_by',
+    ).prefetch_related('subscription')
+
+    if user and user.role == 'TECHNICIEN':
+        qs = qs.filter(
+            Q(provisionned_by=user) |
+            Q(opportunity_line__opportunity__assigned_to=user)
+        )
+
+    return qs.order_by('-created_at')
 
 
 # ═══════════════════════════════════════════════════════════

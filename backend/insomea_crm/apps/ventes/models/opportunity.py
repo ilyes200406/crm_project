@@ -22,10 +22,8 @@ class OpportunityStatus(models.TextChoices):
     INSOMEA_QUOTE_CREATED = 'INSOMEA_QUOTE_CREATED', _('Devis Insomea créé')
     CLIENT_PO_REQUEST = 'CLIENT_PO_REQUEST', _('BC client demandé')
     CLIENT_PO_RECIEVED = 'CLIENT_PO_RECIEVED', _('BC client reçu')
-    APPROUVED = 'APPROUVEd', _('approuvée')
-    CANCELLED = 'CANCELLED', _('Annulé')     
-
-    # has                 
+    APPROUVED = 'APPROUVED', _('approuvée')
+    CANCELLED = 'CANCELLED', _('Annulé')                    
 
 class Opportunity(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -127,7 +125,10 @@ class Opportunity(models.Model):
     def create_insomea_quote(self):
         pass
     def has_insomea_quote(self):
-        return hasattr(self, 'insomea_quote') and self.insomea_quote is not None
+        try:
+            return self.insomea_quote is not None
+        except self.__class__.insomea_quote.RelatedObjectDoesNotExist:
+            return False
     
     @transition(field=status, source=OpportunityStatus.INSOMEA_QUOTE_CREATED, target=OpportunityStatus.CLIENT_PO_REQUEST)
     def request_client_po(self):
@@ -137,7 +138,10 @@ class Opportunity(models.Model):
     def receive_client_po(self):
         pass
     def opportunity_has_client_po(self):
-        return self.client_purchase_order.exists()
+        try:
+            return self.client_purchase_order is not None
+        except self.__class__.client_purchase_order.RelatedObjectDoesNotExist:
+            return False
     
     @transition(field=status, source=OpportunityStatus.CLIENT_PO_RECIEVED, target=OpportunityStatus.APPROUVED)
     def approuve(self):
