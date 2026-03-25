@@ -104,7 +104,6 @@ def create_initial_subscription(
     term = SubscriptionTerm.objects.create(
         subscription=subscription,
         opportunity=opportunity_line.opportunity,
-        provision=provision,
         term_number=1,
         start_date=start_date,
         end_date=end_date,
@@ -217,7 +216,6 @@ def renew_subscription(
     term = SubscriptionTerm.objects.create(
         subscription=subscription,
         opportunity=opportunity,
-        provision=provision,
         term_number=new_term_number,
         start_date=start_date,
         end_date=end_date,

@@ -15,10 +15,9 @@ from ..models import (
     Opportunity,
     OpportunityLine,
     OpportunityStatus,
-    OpportunityLineStatus,
 )
 
-from ..models import StatusHistory
+#from ..models import StatusHistory
 
 
 # ═══════════════════════════════════════════════════════════
@@ -43,11 +42,10 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
     
     if prefetch_quotes:
         queryset = queryset.prefetch_related(
-            'supplier_quotes',
             'insomea_quote',
             'client_purchase_order',
         )
-    
+    """
     if prefetch_history:
         queryset = queryset.prefetch_related(
             Prefetch(
@@ -55,7 +53,7 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
                 queryset=StatusHistory.objects.select_related('changed_by').order_by('-created_at')[:20]
             )
         )
-    
+    """
     # Filtre cancelled
     if not include_cancelled:
         queryset = queryset.exclude(status=OpportunityStatus.CANCELLED)
@@ -133,12 +131,11 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
                 queryset=OpportunityLine.objects.select_related(
                     'product',
                     'insomea_purchase_order',
-                ).prefetch_related(
                     'supplier_quote_line',
                     'provision',
+                ).prefetch_related(
                 ).order_by('created_at')
             ),
-            'supplier_quotes',
             'insomea_quote',
             'client_purchase_order',
         )

@@ -1,9 +1,7 @@
 from django.db import transaction
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.utils import timezone
 
-from ..models.opportunity import Opportunity, OpportunityStatus
-from ..models.opportunityLine import OpportunityLine, OpportunityLineStatus
+from ..models.opportunityLine import OpportunityLine
 
 from ..validators import (
     validate_opportunity_line_data,

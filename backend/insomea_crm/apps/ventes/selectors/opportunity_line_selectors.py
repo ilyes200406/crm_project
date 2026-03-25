@@ -8,7 +8,7 @@ from ..models import (
     OpportunityLineStatus,
 )
 
-from ..models import StatusHistory
+#from ..models import StatusHistory
 
 
 def get_lines_for_opportunity(opportunity_id):

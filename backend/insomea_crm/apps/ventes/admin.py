@@ -3,7 +3,7 @@ DJANGO ADMIN - APP OPPORTUNITIES
 
 Interface admin pour gestion backend
 """
-
+"""
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
@@ -29,7 +29,6 @@ from .models import (
 # ═══════════════════════════════════════════════════════════
 
 class OpportunityLineInline(admin.TabularInline):
-    """Inline OpportunityLines dans Opportunity"""
     model = OpportunityLine
     extra = 0
     readonly_fields = ('status', 'created_at')
@@ -38,7 +37,6 @@ class OpportunityLineInline(admin.TabularInline):
 
 
 class SupplierQuoteLineInline(admin.TabularInline):
-    """Inline SupplierQuoteLines dans SupplierQuote"""
     model = SupplierQuoteLine
     extra = 0
     readonly_fields = ('line_total_purchase',)
@@ -47,7 +45,6 @@ class SupplierQuoteLineInline(admin.TabularInline):
 
 
 class InsomeaQuoteLineInline(admin.TabularInline):
-    """Inline InsomeaQuoteLines dans InsomeaQuote"""
     model = InsomeaQuoteLine
     extra = 0
     readonly_fields = ('line_total_purchase', 'line_total_sale', 'line_margin')
@@ -69,7 +66,6 @@ class InsomeaQuoteLineInline(admin.TabularInline):
 
 @admin.register(Opportunity)
 class OpportunityAdmin(admin.ModelAdmin):
-    """Admin Opportunity"""
     
     list_display = (
         'reference',
@@ -112,7 +108,6 @@ class OpportunityAdmin(admin.ModelAdmin):
     inlines = [OpportunityLineInline]
     
     def client_link(self, obj):
-        """Lien vers client"""
         if obj.client:
             url = reverse('admin:clients_client_change', args=[obj.client.id])
             return format_html('<a href="{}">{}</a>', url, obj.client.company_name)
@@ -120,7 +115,6 @@ class OpportunityAdmin(admin.ModelAdmin):
     client_link.short_description = 'Client'
     
     def status_badge(self, obj):
-        """Badge coloré statut"""
         colors = {
             'DRAFT': 'gray',
             'SUPPLIER_QUOTE_REQUEST': 'blue',
@@ -140,7 +134,6 @@ class OpportunityAdmin(admin.ModelAdmin):
     status_badge.short_description = 'Statut'
     
     def lines_count(self, obj):
-        """Nombre de lignes"""
         return obj.lines.count()
     lines_count.short_description = 'Lignes'
 
@@ -151,7 +144,6 @@ class OpportunityAdmin(admin.ModelAdmin):
 
 @admin.register(OpportunityLine)
 class OpportunityLineAdmin(admin.ModelAdmin):
-    """Admin OpportunityLine"""
     
     list_display = (
         'id',
@@ -174,13 +166,11 @@ class OpportunityLineAdmin(admin.ModelAdmin):
     readonly_fields = ('status', 'created_at', 'updated_at')
     
     def opportunity_link(self, obj):
-        """Lien vers opportunity"""
         url = reverse('admin:opportunities_opportunity_change', args=[obj.opportunity.id])
         return format_html('<a href="{}">{}</a>', url, obj.opportunity.reference)
     opportunity_link.short_description = 'Opportunité'
     
     def status_badge(self, obj):
-        """Badge statut"""
         colors = {
             'DRAFT': 'gray',
             'SUPPLIER_QUOTE_REQUEST': 'blue',
@@ -202,7 +192,6 @@ class OpportunityLineAdmin(admin.ModelAdmin):
 
 @admin.register(SupplierQuote)
 class SupplierQuoteAdmin(admin.ModelAdmin):
-    """Admin SupplierQuote"""
     
     list_display = (
         'reference',
@@ -228,7 +217,6 @@ class SupplierQuoteAdmin(admin.ModelAdmin):
 
 @admin.register(InsomeaQuote)
 class InsomeaQuoteAdmin(admin.ModelAdmin):
-    """Admin InsomeaQuote"""
     
     list_display = (
         'reference',
@@ -259,7 +247,6 @@ class InsomeaQuoteAdmin(admin.ModelAdmin):
     inlines = [InsomeaQuoteLineInline]
     
     def opportunity_link(self, obj):
-        """Lien vers opportunity"""
         url = reverse('admin:opportunities_opportunity_change', args=[obj.opportunity.id])
         return format_html('<a href="{}">{}</a>', url, obj.opportunity.reference)
     opportunity_link.short_description = 'Opportunité'
@@ -271,7 +258,6 @@ class InsomeaQuoteAdmin(admin.ModelAdmin):
 
 @admin.register(Provision)
 class ProvisionAdmin(admin.ModelAdmin):
-    """Admin Provision"""
     
     list_display = (
         'id',
@@ -300,12 +286,10 @@ class ProvisionAdmin(admin.ModelAdmin):
     )
     
     def opportunity_line_info(self, obj):
-        """Info ligne"""
         return f"{obj.opportunity_line.opportunity.reference} - {obj.opportunity_line.product.title}"
     opportunity_line_info.short_description = 'Ligne'
     
     def status_badge(self, obj):
-        """Badge statut"""
         colors = {
             'WAITING_PROVISION': 'orange',
             'PROVISIONING': 'blue',
@@ -323,7 +307,6 @@ class ProvisionAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    """Admin Subscription"""
     
     list_display = (
         'subscription_number',
@@ -345,13 +328,11 @@ class SubscriptionAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     
     def provision_info(self, obj):
-        """Info provision"""
         line = obj.provision.opportunity_line
         return f"{line.opportunity.reference} - {line.product.title}"
     provision_info.short_description = 'Provision'
     
     def is_active_badge(self, obj):
-        """Badge actif/inactif"""
         from datetime import date
         today = date.today()
         is_active = obj.start_date <= today <= obj.end_date
@@ -373,7 +354,6 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(StatusHistory)
 class StatusHistoryAdmin(admin.ModelAdmin):
-    """Admin StatusHistory (audit trail)"""
     
     list_display = (
         'created_at',
@@ -408,12 +388,10 @@ class StatusHistoryAdmin(admin.ModelAdmin):
     )
     
     def entity_type(self, obj):
-        """Type entité"""
         return obj.get_entity_type()
     entity_type.short_description = 'Type'
     
     def entity_info(self, obj):
-        """Info entité"""
         entity = obj.get_entity()
         if obj.opportunity:
             return obj.opportunity.reference
@@ -425,7 +403,6 @@ class StatusHistoryAdmin(admin.ModelAdmin):
     entity_info.short_description = 'Entité'
     
     def status_change(self, obj):
-        """Changement statut"""
         return format_html(
             '{} <span style="color: gray;">→</span> {}',
             obj.status_precedent,
@@ -459,7 +436,6 @@ from .notifications.models import Notification, NotificationType, NotificationSt
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    """Admin Notification"""
     
     list_display = (
         'created_at',
@@ -514,7 +490,6 @@ class NotificationAdmin(admin.ModelAdmin):
     )
     
     def type_badge(self, obj):
-        """Badge type"""
         colors = {
             'FINANCE_APPROVE': '#2196F3',
             'TECH_PROVISION_WAITING': '#FF9800',
@@ -531,7 +506,6 @@ class NotificationAdmin(admin.ModelAdmin):
     type_badge.short_description = 'Type'
     
     def status_badge(self, obj):
-        """Badge statut"""
         colors = {
             'PENDING': '#9E9E9E',
             'SENT': '#2196F3',
@@ -555,3 +529,4 @@ class NotificationAdmin(admin.ModelAdmin):
     
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser  # Seulement superuser peut supprimer
+"""

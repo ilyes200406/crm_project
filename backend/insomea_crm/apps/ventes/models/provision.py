@@ -29,6 +29,8 @@ class Provision(models.Model):
     provisioning_error = models.TextField(blank=True, help_text="Erreur provisionnement (si échec)")
 
     status = FSMField(max_length=50, choices=ProvisionStatus.choices, default=ProvisionStatus.WAITING_PROVISION, protected=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'provisions'

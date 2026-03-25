@@ -1,10 +1,10 @@
 """
-SIGNALS - APP OPPORTUNITIES
+SIGNALS - ventes
 
-Auto-logging des transitions FSM + Notifications automatiques
+Auto logging des transitions FSM et notifications metier.
 """
 
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django_fsm.signals import post_transition
 
@@ -14,42 +14,21 @@ from ..models import (
     OpportunityStatus,
     Provision,
     ProvisionStatus,
-    StatusHistory,
+#    StatusHistory,
 )
 
-
-# ═══════════════════════════════════════════════════════════
-# SIGNAL FSM : AUTO-LOG TOUTES TRANSITIONS
-# ═══════════════════════════════════════════════════════════
-
+"""
 @receiver(post_transition)
 def log_fsm_transition(sender, instance, name, source, target, **kwargs):
-    """
-    Signal django-fsm : log automatique TOUTES transitions FSM
-    
-    Déclenché après CHAQUE transition @transition
-    
-    Args:
-        sender: Model class (Opportunity, OpportunityLine, Provision, Subscription)
-        instance: Instance de l'objet transitionné
-        name: Nom de la transition (ex: 'request_supplier_quote')
-        source: État source
-        target: État cible
-        kwargs: method_kwargs (user, ip_address, etc.)
-    """
-    
-    from ..models import Subscription  # Import ici pour éviter circular
-    
-    # Filtre seulement nos models FSM
+    from ..models import Subscription
+
     if sender not in [Opportunity, OpportunityLine, Provision, Subscription]:
         return
-    
-    # Récupère user/ip depuis method_kwargs si passé
+
     method_kwargs = kwargs.get('method_kwargs', {})
-    user = method_kwargs.get('user', None)
-    ip_address = method_kwargs.get('ip_address', None)
-    
-    # Détermine quelle FK remplir
+    user = method_kwargs.get('user')
+    ip_address = method_kwargs.get('ip_address')
+
     history_data = {
         'status_precedent': source,
         'status_suivant': target,
@@ -61,10 +40,9 @@ def log_fsm_transition(sender, instance, name, source, target, **kwargs):
             'transition_name': name,
             'source': source,
             'target': target,
-        }
+        },
     }
-    
-    # Polymorphique : détermine FK selon sender
+
     if sender == OpportunityLine:
         history_data['opportunity_line'] = instance
     elif sender == Opportunity:
@@ -72,125 +50,56 @@ def log_fsm_transition(sender, instance, name, source, target, **kwargs):
     elif sender == Provision:
         history_data['provision'] = instance
     elif sender == Subscription:
-        # Subscription n'a pas FK dans StatusHistory actuellement
-        # Si nécessaire, ajouter subscription FK dans StatusHistory model
-        pass
-    
-    # Crée log
+        history_data['subscription'] = instance
+
     StatusHistory.objects.create(**history_data)
-
-
-# ═══════════════════════════════════════════════════════════
-# 🆕 OPPORTUNITY TRANSITIONS → NOTIFICATIONS
-# ═══════════════════════════════════════════════════════════
+"""
 
 @receiver(post_transition, sender=Opportunity)
 def notify_on_opportunity_transition(sender, instance, name, source, target, **kwargs):
-    """
-    Notifications automatiques après transitions Opportunity
-    
-    Triggers:
-        - CLIENT_PO_RECEIVED → Notif Finance (approuver)
-    """
-    
+    """Finance notification when client PO is received."""
     from ..notifications.services import notify_finance_to_approve
-    
-    # Notif Finance: Approuver opportunité
+
     if target == OpportunityStatus.CLIENT_PO_RECIEVED:
         notify_finance_to_approve(instance)
 
 
-# ═══════════════════════════════════════════════════════════
-# 🆕 PROVISION CREATION → NOTIFICATION TECHNICIENS
-# ═══════════════════════════════════════════════════════════
-
 @receiver(post_save, sender=Provision)
 def notify_on_provision_created(sender, instance, created, **kwargs):
-    """
-    Notification Techniciens: Provision créée (WAITING_PROVISION)
-    
-    Trigger:
-        - Provision créée avec status WAITING_PROVISION
-    """
-    
+    """Technician notification when a provision is created."""
     from ..notifications.services import notify_techniciens_provision_waiting
-    
+
     if created and instance.status == ProvisionStatus.WAITING_PROVISION:
         notify_techniciens_provision_waiting(instance)
 
 
-# ═══════════════════════════════════════════════════════════
-# 🆕 PROVISION TRANSITIONS → NOTIFICATIONS
-# ═══════════════════════════════════════════════════════════
-
 @receiver(post_transition, sender=Provision)
 def notify_on_provision_transition(sender, instance, name, source, target, **kwargs):
-    """
-    Notifications automatiques après transitions Provision
-    
-    Triggers:
-        - PROVISIONED → Notif tous (subscription créée)
-    """
-    
+    """Global notification when a provision completes."""
     from ..notifications.services import notify_all_provisioned
-    
-    # Notif tous: Subscription provisionnée
+
     if target == ProvisionStatus.PROVISIONED:
         notify_all_provisioned(instance)
 
 
-# ═══════════════════════════════════════════════════════════
-# AUTO-UPDATE OPPORTUNITY STATUS (COMPUTED)
-# ═══════════════════════════════════════════════════════════
-
 @receiver(post_save, sender=OpportunityLine)
 def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
-    """
-    Trigger : Quand OpportunityLine sauvegardée
-    
-    Action : Recalcule Opportunity.status basé sur toutes les lignes
-    
-    Flow:
-        1. Ligne créée/modifiée/transition FSM
-        2. Signal post_save déclenché
-        3. update_opportunity_status_from_lines() appelée
-        4. Opportunity.status recalculé (computed)
-    
-    IMPORTANT:
-        Évite boucle infinie avec flag _updating_opportunity_status
-    """
-    
-    from ..services.workflow_service import update_opportunity_status_from_lines
-    
-    # Évite boucle infinie
+    """Keep opportunity status in sync with line statuses."""
+    from ..services.opportunity_service import update_opportunity_status_from_lines
+
     if getattr(instance, '_updating_opportunity_status', False):
         return
-    
-    # Mark pour éviter récursion
+
     instance._updating_opportunity_status = True
-    
-    # Recalcule status
     update_opportunity_status_from_lines(instance.opportunity)
-    
-    # Cleanup
     delattr(instance, '_updating_opportunity_status')
 
 
 @receiver(post_delete, sender=OpportunityLine)
 def update_opportunity_status_on_line_delete(sender, instance, **kwargs):
-    """
-    Trigger : Quand OpportunityLine supprimée
-    
-    Action : Recalcule Opportunity.status basé sur lignes restantes
-    
-    Cas d'usage:
-        - Ligne supprimée → recalcule status
-        - Si 0 lignes → Opportunity.status = DRAFT
-    """
-    
-    from ..services.workflow_service import update_opportunity_status_from_lines
-    
-    # Vérifie que opportunity existe encore
+    """Recompute opportunity status after deleting a line."""
+    from ..services.opportunity_service import update_opportunity_status_from_lines
+
     if instance.opportunity_id:
         try:
             update_opportunity_status_from_lines(instance.opportunity)

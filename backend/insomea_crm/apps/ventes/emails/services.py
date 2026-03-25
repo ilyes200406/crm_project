@@ -31,8 +31,9 @@ def send_supplier_quote_request(opportunity, supplier, lines):
     Triggered by:
         workflow_service.request_all_supplier_quotes()
     """
-    
-    if not supplier.email:
+
+
+    if not supplier.support_email:
         logger.warning(f"⚠️  Supplier {supplier.name} has no email")
         return
     
@@ -50,7 +51,7 @@ def send_supplier_quote_request(opportunity, supplier, lines):
         subject=f"Demande de devis - {opportunity.reference}",
         message=f"Bonjour, nous souhaitons obtenir un devis pour les produits suivants...",
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[supplier.email],
+        recipient_list=[supplier.support_email],
         html_message=html_message,
         fail_silently=False,
     )
@@ -73,7 +74,7 @@ def send_client_quote_with_pdf(opportunity, insomea_quote):
     Triggered by:
         purchase_order_service.request_client_po_transition()
     """
-    
+
     client = opportunity.client
     
     if not client.email:

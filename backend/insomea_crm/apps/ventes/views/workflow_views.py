@@ -7,7 +7,7 @@ StatusHistoryViewSet:
 - GET    /status-history/by-opportunity/{id}/ → filter par opportunity
 - GET    /status-history/by-user/{id}/       → filter par user
 """
-
+"""
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -25,11 +25,11 @@ from ..filters import StatusHistoryFilter
 # ═══════════════════════════════════════════════════════════
 
 class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet pour StatusHistory (audit trail)
+
+    #ViewSet pour StatusHistory (audit trail)
     
-    READ-ONLY (auto-créé via signals FSM)
-    """
+    #READ-ONLY (auto-créé via signals FSM)
+
     
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -45,9 +45,9 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = StatusHistorySerializer
     
     def get_queryset(self):
-        """
-        Queryset avec RBAC + optimisation
-        """
+  
+        #Queryset avec RBAC + optimisation
+
         user = self.request.user
         
         queryset = StatusHistory.objects.select_related(
@@ -115,16 +115,16 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         url_path='by-opportunity/(?P<opportunity_id>[^/.]+)'
     )
     def by_opportunity(self, request, opportunity_id=None):
-        """
-        GET /status-history/by-opportunity/{opportunity_id}/
         
-        Historique complet d'une opportunité
+        #GET /status-history/by-opportunity/{opportunity_id}/
         
-        Inclut:
-        - Transitions Opportunity
-        - Transitions OpportunityLines
-        - Transitions Provisions
-        """
+        #Historique complet d'une opportunité
+        
+        #Inclut:
+        #- Transitions Opportunity
+        #- Transitions OpportunityLines
+        #- Transitions Provisions
+    
         from ..models import Opportunity
         from django.db.models import Q
         
@@ -166,13 +166,13 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         url_path='by-user/(?P<user_id>[^/.]+)'
     )
     def by_user(self, request, user_id=None):
-        """
-        GET /status-history/by-user/{user_id}/
         
-        Historique des actions d'un user
+        #GET /status-history/by-user/{user_id}/
         
-        Utile pour audit: "Qui a fait quoi ?"
-        """
+        #Historique des actions d'un user
+        
+        #Utile pour audit: "Qui a fait quoi ?"
+        
         from ...users.models import User
         
         try:
@@ -206,13 +206,13 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='recent')
     def recent(self, request):
-        """
-        GET /status-history/recent/
         
-        Historique récent (24h)
+        #GET /status-history/recent/
         
-        Dashboard activity feed
-        """
+        #Historique récent (24h)
+        
+        #Dashboard activity feed
+        
         from datetime import timedelta
         from django.utils import timezone
         
@@ -227,30 +227,30 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='stats')
     def stats(self, request):
-        """
-        GET /status-history/stats/
+    
+        #GET /status-history/stats/
         
-        Statistiques audit trail
+        #Statistiques audit trail
         
-        Returns:
-            {
-                "total_changes": 1250,
-                "changes_today": 45,
-                "by_entity_type": {
-                    "Opportunity": 400,
-                    "OpportunityLine": 600,
-                    "Provision": 250
-                },
-                "by_user": [
-                    {"user": "John Doe", "count": 150},
-                    ...
-                ],
-                "most_common_transitions": [
-                    {"transition": "request_supplier_quote", "count": 120},
-                    ...
-                ]
-            }
-        """
+        #Returns:
+        #    {
+        #        "total_changes": 1250,
+        #        "changes_today": 45,
+        #        "by_entity_type": {
+        #            "Opportunity": 400,
+        #            "OpportunityLine": 600,
+        #            "Provision": 250
+        #        },
+        #        "by_user": [
+        #            {"user": "John Doe", "count": 150},
+        #            ...
+        #        ],
+        #        "most_common_transitions": [
+        #            {"transition": "request_supplier_quote", "count": 120},
+        #            ...
+        #        ]
+        #    }
+
         from datetime import date
         from django.db.models import Count
         
@@ -308,3 +308,4 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             'by_user': by_user_formatted,
             'most_common_transitions': transitions_formatted,
         })
+"""

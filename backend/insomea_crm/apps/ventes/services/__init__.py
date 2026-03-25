@@ -8,6 +8,14 @@ from .opportunity_service import (
     create_opportunity,
     update_opportunity,
     delete_opportunity,
+    request_all_supplier_quotes,
+    request_client_po,
+    approve_opportunity,
+    update_opportunity_status_from_lines,
+    request_client_po_transition,
+)
+
+from .opportunity_line_service import (
     add_line_to_opportunity,
     update_opportunity_line,
     remove_line_from_opportunity,
@@ -23,7 +31,6 @@ from .quote_service import (
 from .purchase_order_service import (
     upload_client_po,
     create_insomea_pos,
-    request_client_po_transition,
 )
 
 from .provision_service import (
@@ -31,13 +38,6 @@ from .provision_service import (
     start_provisioning,
     complete_provisioning,
     fail_provisioning,
-)
-
-from .workflow_service import (
-    request_all_supplier_quotes,
-    request_client_po,
-    approve_opportunity,
-    update_opportunity_status_from_lines,
 )
 
 # 🆕 NOUVEAUX

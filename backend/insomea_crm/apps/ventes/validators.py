@@ -324,6 +324,16 @@ def validate_can_receive_client_po(opportunity):
         )
 
 
+def validate_can_upload_client_po(opportunity):
+    from .models import OpportunityStatus
+    
+    if opportunity.status != OpportunityStatus.CLIENT_PO_REQUEST:
+        raise ValidationError(
+            _('La demande BC client doit être envoyée'),
+            code='invalid_status'
+        )
+
+
 def validate_can_approve(opportunity):
     """
     Précondition : Approuver opportunité
@@ -551,6 +561,15 @@ def validate_opportunity_line_data(data, opportunity, line=None):
     return data
 
 
+def validate_line_editable(line):
+    """Valide qu'une ligne reste modifiable."""
+    if not line.opportunity.can_edit():
+        raise ValidationError(
+            _('Cette ligne ne peut plus etre modifiee'),
+            code='line_not_editable'
+        )
+
+
 def validate_insomea_quote_lines_pricing(lines_pricing):
     """
     Valide cohérence pricing pour création devis Insomea
@@ -598,3 +617,23 @@ def normalize_opportunity_name(name):
     if name:
         name = name[0].upper() + name[1:]
     return name
+
+
+def validate_opportunity_name(name):
+    """Valide un nom d'opportunite simple et le normalise pour les serializers."""
+    normalized = normalize_opportunity_name(name)
+    if not normalized or len(normalized) < 3:
+        raise ValidationError(
+            _('Le nom doit contenir au moins 3 caracteres'),
+            code='invalid_name'
+        )
+    return normalized
+
+
+def validate_opportunity_editable(opportunity):
+    """Valide qu'une opportunite est encore editable."""
+    if not opportunity.can_edit():
+        raise ValidationError(
+            _('Cette opportunite ne peut plus etre modifiee'),
+            code='opportunity_not_editable'
+        )

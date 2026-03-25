@@ -332,7 +332,6 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.files.base import ContentFile
-from weasyprint import HTML
 
 
 def generate_quote_pdf(insomea_quote):
@@ -361,6 +360,8 @@ def generate_quote_pdf(insomea_quote):
     )
 
     # 🔹 4. Generate PDF (important: base_url for static files)
+    from weasyprint import HTML
+
     pdf_bytes = HTML(
         string=html_string,
         base_url=settings.BASE_DIR  # or STATIC_ROOT if needed

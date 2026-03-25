@@ -8,7 +8,7 @@ Audit trail pour TOUTES les transitions FSM:
 
 Auto-créé via signal post_transition de django-fsm
 """
-
+"""
 import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -17,117 +17,49 @@ from django.db.models import Q
 from .opportunity import Opportunity
 from .opportunityLine import OpportunityLine
 from .provision import Provision
+from .subscription import Subscription
 from ...users.models.users import User
 
 
 class StatusHistory(models.Model):
-    """
-    Historique des changements de statut FSM
-    
-    Relation polymorphique : peut logger Opportunity OU OpportunityLine OU Provision
-    """
-    
+
     # ───────────────────────────────────────────────────────
     # IDENTIFICATION
     # ───────────────────────────────────────────────────────
     
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     # ───────────────────────────────────────────────────────
     # RELATIONS POLYMORPHIQUES
     # (1 seul sera rempli à la fois)
     # ───────────────────────────────────────────────────────
     
-    opportunity = models.ForeignKey(
-        Opportunity,
-        on_delete=models.CASCADE,
-        related_name='status_history',
-        null=True,
-        blank=True,
-        help_text="Opportunité (si transition Opportunity FSM)"
-    )
-    
-    opportunity_line = models.ForeignKey(
-        OpportunityLine,
-        on_delete=models.CASCADE,
-        related_name='status_history',
-        null=True,
-        blank=True,
-        help_text="Ligne (si transition OpportunityLine FSM)"
-    )
-    
-    provision = models.ForeignKey(
-        Provision,
-        on_delete=models.CASCADE,
-        related_name='status_history',
-        null=True,
-        blank=True,
-        help_text="Provision (si transition Provision FSM)"
-    )
-    
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name='status_history', null=True, blank=True, help_text="Opportunité (si transition Opportunity FSM)")
+    opportunity_line = models.ForeignKey(OpportunityLine, on_delete=models.CASCADE, related_name='status_history', null=True, blank=True, help_text="Ligne (si transition OpportunityLine FSM)")
+    provision = models.ForeignKey(Provision, on_delete=models.CASCADE, related_name='status_history', null=True, blank=True, help_text="Provision (si transition Provision FSM)")
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, related_name='status_history', null=True, blank=True)
     # ───────────────────────────────────────────────────────
     # STATUS CHANGE
     # ───────────────────────────────────────────────────────
     
-    status_precedent = models.CharField(
-        max_length=50,
-        help_text="Statut AVANT transition"
-    )
-    
-    status_suivant = models.CharField(
-        max_length=50,
-        help_text="Statut APRÈS transition"
-    )
-    
-    transition_name = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Nom de la transition FSM (ex: 'request_supplier_quote')"
-    )
+    status_precedent = models.CharField(max_length=50, help_text="Statut AVANT transition")
+    status_suivant = models.CharField(max_length=50, help_text="Statut APRÈS transition")
+    transition_name = models.CharField(max_length=100, blank=True, help_text="Nom de la transition FSM (ex: 'request_supplier_quote')")
     
     # ───────────────────────────────────────────────────────
     # METADATA
     # ───────────────────────────────────────────────────────
     
-    changed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='status_changes',
-        help_text="Utilisateur ayant effectué le changement"
-    )
-    
-    description = models.TextField(
-        blank=True,
-        help_text="Description détaillée du changement"
-    )
-    
-    metadata = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Données additionnelles (JSON)"
-    )
-    
-    ip_address = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        help_text="Adresse IP de l'utilisateur"
-    )
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='status_changes', help_text="Utilisateur ayant effectué le changement")
+    description = models.TextField(blank=True, help_text="Description détaillée du changement")
+    metadata = models.JSONField(default=dict, blank=True, help_text="Données additionnelles (JSON)")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="Adresse IP de l'utilisateur")
     
     # ───────────────────────────────────────────────────────
     # TIMESTAMP
     # ───────────────────────────────────────────────────────
     
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        db_index=True,
-        help_text="Date/heure du changement"
-    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, help_text="Date/heure du changement")
     
     # ───────────────────────────────────────────────────────
     # META
@@ -147,7 +79,7 @@ class StatusHistory(models.Model):
         ]
         constraints = [
         models.CheckConstraint(
-            check=(
+            condition=(
                 Q(opportunity__isnull=False, opportunity_line__isnull=True, provision__isnull=True) |
                 Q(opportunity__isnull=True, opportunity_line__isnull=False, provision__isnull=True) |
                 Q(opportunity__isnull=True, opportunity_line__isnull=True, provision__isnull=False)
@@ -164,6 +96,8 @@ class StatusHistory(models.Model):
             return f"{self.opportunity}: {self.status_precedent} → {self.status_suivant}"
         elif self.provision:
             return f"Provision {self.provision.id}: {self.status_precedent} → {self.status_suivant}"
+        elif self.subscription:
+            return f"Subscription {self.subscription.id}: {self.status_precedent} → {self.status_suivant}"
         return f"Status change: {self.status_precedent} → {self.status_suivant}"
     
     # ───────────────────────────────────────────────────────
@@ -171,21 +105,24 @@ class StatusHistory(models.Model):
     # ───────────────────────────────────────────────────────
     
     def get_entity(self):
-        """Retourne l'entité liée (Opportunity, OpportunityLine ou Provision)"""
         if self.opportunity_line:
             return self.opportunity_line
         elif self.opportunity:
             return self.opportunity
         elif self.provision:
             return self.provision
+        elif self.subscription:
+            return self.subscription
         return None
     
     def get_entity_type(self):
-        """Retourne type d'entité"""
         if self.opportunity_line:
             return 'OpportunityLine'
         elif self.opportunity:
             return 'Opportunity'
         elif self.provision:
             return 'Provision'
+        elif self.subscription:
+            return 'Subscription'
         return None
+"""

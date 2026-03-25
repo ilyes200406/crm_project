@@ -3,7 +3,7 @@ ADMIN - APP SUPPLIERS
 
 Interface Django Admin pour gestion suppliers
 """
-
+"""
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
@@ -18,17 +18,6 @@ from .models import Supplier, SupplierType
 
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
-    """
-    Admin pour modèle Supplier
-    
-    Features :
-    - Liste avec filtres et recherche
-    - Badges colorés pour type et statut
-    - Actions bulk (activate, deactivate)
-    - Export CSV
-    - Fieldsets organisés
-    """
-    
     # ───────────────────────────────────────────────────────
     # LIST DISPLAY
     # ───────────────────────────────────────────────────────
@@ -131,13 +120,6 @@ class SupplierAdmin(admin.ModelAdmin):
     
     @admin.display(description='Type', ordering='type')
     def type_badge(self, obj):
-        """
-        Badge coloré pour type
-        
-        DIRECT → Bleu
-        DISTRIBUTOR → Vert
-        RESELLER → Orange
-        """
         colors = {
             SupplierType.DIRECT: '#2563eb',      # Bleu
             SupplierType.DISTRIBUTOR: '#16a34a', # Vert
@@ -155,7 +137,6 @@ class SupplierAdmin(admin.ModelAdmin):
     
     @admin.display(description='Actif', boolean=True, ordering='is_active')
     def is_active_badge(self, obj):
-        """Badge actif/inactif"""
         return obj.is_active
     
     # ───────────────────────────────────────────────────────
@@ -164,7 +145,6 @@ class SupplierAdmin(admin.ModelAdmin):
     
     @admin.action(description='Activer les fournisseurs sélectionnés')
     def activate_suppliers(self, request, queryset):
-        """Action bulk : activer suppliers"""
         updated = queryset.update(is_active=True)
         self.message_user(
             request,
@@ -173,7 +153,6 @@ class SupplierAdmin(admin.ModelAdmin):
     
     @admin.action(description='Désactiver les fournisseurs sélectionnés')
     def deactivate_suppliers(self, request, queryset):
-        """Action bulk : désactiver suppliers"""
         updated = queryset.update(is_active=False)
         self.message_user(
             request,
@@ -182,7 +161,6 @@ class SupplierAdmin(admin.ModelAdmin):
     
     @admin.action(description='Exporter en CSV')
     def export_csv(self, request, queryset):
-        """Action bulk : export CSV"""
         import csv
         from django.http import HttpResponse
         
@@ -220,7 +198,7 @@ class SupplierAdmin(admin.ModelAdmin):
     # ───────────────────────────────────────────────────────
     
     def get_queryset(self, request):
-        """Optimise queryset"""
         qs = super().get_queryset(request)
         # Pas de select_related nécessaire (pas de FK)
         return qs
+"""

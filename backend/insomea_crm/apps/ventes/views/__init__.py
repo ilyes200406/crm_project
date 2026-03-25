@@ -9,7 +9,7 @@ from .line_views import OpportunityLineViewSet
 from .quote_views import SupplierQuoteViewSet, InsomeaQuoteViewSet
 from .provision_views import ProvisionViewSet
 from .subscription_views import SubscriptionViewSet
-from .workflow_views import StatusHistoryViewSet
+#from .workflow_views import StatusHistoryViewSet
 
 __all__ = [
     'OpportunityViewSet',
@@ -18,5 +18,5 @@ __all__ = [
     'InsomeaQuoteViewSet',
     'ProvisionViewSet',
     'SubscriptionViewSet',
-    'StatusHistoryViewSet',
+#    'StatusHistoryViewSet',
 ]

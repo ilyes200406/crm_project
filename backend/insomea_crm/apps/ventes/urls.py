@@ -14,7 +14,7 @@ from .views import (
     InsomeaQuoteViewSet,
     ProvisionViewSet,
     SubscriptionViewSet,
-    StatusHistoryViewSet,
+#    StatusHistoryViewSet,
 )
 
 # Router principal
@@ -27,7 +27,7 @@ router.register(r'supplier-quotes', SupplierQuoteViewSet, basename='supplierquot
 router.register(r'insomea-quotes', InsomeaQuoteViewSet, basename='insomeaquote')
 router.register(r'provisions', ProvisionViewSet, basename='provision')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
-router.register(r'status-history', StatusHistoryViewSet, basename='statushistory')
+#router.register(r'status-history', StatusHistoryViewSet, basename='statushistory')
 
 # URL patterns
 urlpatterns = [

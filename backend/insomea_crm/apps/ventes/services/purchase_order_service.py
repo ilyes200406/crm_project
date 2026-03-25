@@ -18,8 +18,8 @@ from ..models import (
 from ..validators import (
     validate_pdf_file,
     validate_file_size,
-    validate_can_request_client_po,
     validate_can_receive_client_po,
+    validate_can_upload_client_po,
 )
 from ..selectors import (
     get_opportunity_by_id,
@@ -87,7 +87,8 @@ def upload_client_po(
     # 2. VALIDATION PRÉCONDITIONS
     # ───────────────────────────────────────────────────────
     
-    validate_can_receive_client_po(opportunity)
+    if opportunity.status != OpportunityStatus.CLIENT_PO_REQUEST:
+        validate_can_upload_client_po(opportunity)
     
     # ───────────────────────────────────────────────────────
     # 3. VALIDATION FICHIER
@@ -106,6 +107,8 @@ def upload_client_po(
         po_number=po_number,
         document=document,
     )
+
+    validate_can_receive_client_po(opportunity)
     
     # ───────────────────────────────────────────────────────
     # 5. TRANSITION FSM OPPORTUNITY
@@ -242,57 +245,6 @@ def create_insomea_pos(*, opportunity_id, user, ip_address=None):
     
     return created_pos
 
-
-@transaction.atomic
-def request_client_po_transition(*, opportunity_id, user, ip_address=None):
-    """
-    Transition Opportunity: INSOMEA_QUOTE_CREATED → CLIENT_PO_REQUEST
-    
-    Args:
-        opportunity_id: UUID
-        user: User instance (COMMERCIAL)
-        ip_address: str
-    
-    Returns:
-        Opportunity mise à jour
-    
-    Raises:
-        ValidationError: Si préconditions non remplies
-        PermissionDenied: Si pas COMMERCIAL
-    
-    Business Rules:
-        - Marque devis Insomea comme envoyé au client
-        - Transition FSM: request_client_po()
-    """
-    
-    # ───────────────────────────────────────────────────────
-    # 1. RÉCUPÉRATION + PERMISSIONS
-    # ───────────────────────────────────────────────────────
-    
-    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-    
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent demander un BC client')
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Action non autorisée')
-    
-    # ───────────────────────────────────────────────────────
-    # 2. VALIDATION PRÉCONDITIONS
-    # ───────────────────────────────────────────────────────
-    
-    validate_can_request_client_po(opportunity)
-    
-    # ───────────────────────────────────────────────────────
-    # 3. TRANSITION FSM
-    # ───────────────────────────────────────────────────────
-    
-    opportunity.request_client_po()
-    opportunity.save()
-    # Signal FSM → StatusHistory créé auto
-    
-    return opportunity
 
 
 

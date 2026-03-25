@@ -33,7 +33,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from ..models import Opportunity, OpportunityStatus, OpportunityType  # 🆕 OpportunityType
+from ..models import OpportunityType  # 🆕 OpportunityType
 from ..serializers import (
     CreateInsomeaQuoteSerializer,
     OpportunityListSerializer,
@@ -68,6 +68,7 @@ from ..permissions import (
     IsFinanceOrAdmin,
     IsOpportunityOwnerOrAdmin,
 )
+
 
 
 class OpportunityViewSet(viewsets.ModelViewSet):

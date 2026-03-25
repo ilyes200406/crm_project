@@ -18,6 +18,10 @@ from .opportunity_serializers import (
     OpportunityUpdateSerializer,
     RequestClientPOSerializer,
     RequestSupplierQuotesSerializer,
+    ClientPOSerializer,
+    InsomeaPOSerializer,
+    InsomeaPurchaseOrderListSerializer,
+    UploadClientPOSerializer,
 )
 from .provision_serializers import (
     CompleteProvisioningSerializer,
@@ -44,13 +48,6 @@ from .subscription_serializers import (
     SubscriptionListSerializer,
     SubscriptionTermSerializer,
     SubscriptionUpdateSerializer,
-)
-from .workflow_serializers import (
-    ClientPOSerializer,
-    InsomeaPOSerializer,
-    InsomeaPurchaseOrderListSerializer,
-    StatusHistorySerializer,
-    UploadClientPOSerializer,
 )
 
 __all__ = [
@@ -84,7 +81,6 @@ __all__ = [
     'RequestClientPOSerializer',
     'RequestSupplierQuotesSerializer',
     'StartProvisioningSerializer',
-    'StatusHistorySerializer',
     'SubscriptionCreateSerializer',
     'SubscriptionDetailSerializer',
     'SubscriptionListSerializer',

@@ -33,7 +33,6 @@ from ..services import (
     cancel_subscription,
 )
 from ..filters import SubscriptionFilter
-from ..permissions import IsAuthenticated
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):

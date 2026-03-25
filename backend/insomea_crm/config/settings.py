@@ -100,6 +100,10 @@ INSTALLED_APPS = [
     # Local apps
     'apps.users.apps.UsersConfig',
     'apps.authentication.apps.AuthenticationConfig',
+    'apps.clients.apps.ClientsConfig',
+    'apps.products.apps.ProductsConfig',
+    'apps.suppliers.apps.SuppliersConfig',
+    'apps.ventes.apps.VentesConfig',
 ]
 
 MIDDLEWARE = [

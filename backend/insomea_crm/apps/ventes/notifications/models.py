@@ -73,7 +73,7 @@ class Notification(models.Model):
     # ───────────────────────────────────────────────────────
     
     recipient = models.ForeignKey(
-        'authentication.User',
+        'users.User',
         on_delete=models.CASCADE,
         related_name='notifications',
         help_text="Destinataire"

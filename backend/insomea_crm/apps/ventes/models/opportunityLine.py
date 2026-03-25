@@ -3,13 +3,8 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, transition
-from decimal import Decimal
-from django.utils import timezone
 
-from .opportunity import Opportunity
 from ...products.models import Product
-from .insomeaPurchaseOrder import InsomeaPurchaseOrder
-from ...users.models.users import User
 
 class OpportunityLineStatus(models.TextChoices):
     DRAFT = 'DRAFT', _('Brouillon')
@@ -23,9 +18,9 @@ class BillingCycle(models.TextChoices):
 
 class OpportunityLine(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name='lines', help_text="Opportunity parent")
+    opportunity = models.ForeignKey('Opportunity', on_delete=models.CASCADE, related_name='lines', help_text="Opportunity parent")
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
-    insomea_purchase_order = models.ForeignKey(InsomeaPurchaseOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='Insomea_purchase_order')
+    insomea_purchase_order = models.ForeignKey('InsomeaPurchaseOrder', on_delete=models.SET_NULL, null=True, blank=True, related_name='Insomea_purchase_order')
     renewal_of_subscription = models.ForeignKey('Subscription', on_delete=models.SET_NULL, null=True, blank=True, related_name='renewal_lines', help_text="Subscription renouvelée (si Opportunity.type=RENEWAL)")
 
     billing_cycle = models.CharField(max_length=20, choices=BillingCycle.choices, default=BillingCycle.ANNUAL, help_text="Cycle de facturation")

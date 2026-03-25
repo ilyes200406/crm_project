@@ -7,7 +7,6 @@ from datetime import datetime
 
 from ...users.models.users import User
 from ...clients.models import Client
-from .opportunityLine import OpportunityLineStatus
 
 class OpportunityType(models.TextChoices):
     INITIAL = 'INITIAL', _('Vente initiale')

@@ -19,7 +19,7 @@ from .models import (
     ProvisionStatus,
     Subscription,
     SubscriptionStatus,  # 🆕 NOUVEAU
-    StatusHistory,
+#    StatusHistory,
 )
 
 
@@ -266,9 +266,9 @@ class ProvisionFilter(django_filters.FilterSet):
         model = Provision
         fields = ['status', 'opportunity', 'provisionned_by', 'product', 'subscription']
 
-
+"""
 class StatusHistoryFilter(django_filters.FilterSet):
-    """Filters pour StatusHistory"""
+
     
     opportunity = django_filters.UUIDFilter(field_name='opportunity__id')
     opportunity_line = django_filters.UUIDFilter(field_name='opportunity_line__id')
@@ -295,3 +295,4 @@ class StatusHistoryFilter(django_filters.FilterSet):
             'changed_by',
             'transition_name',
         ]
+"""

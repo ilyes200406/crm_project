@@ -133,18 +133,18 @@ class Product(models.Model):
     
     class Meta:
         db_table = 'products'
-        ordering = ['name', 'version']
+        ordering = ['title', 'version']
         verbose_name = 'Produit'
         verbose_name_plural = 'Produits'
         
         indexes = [
             models.Index(fields=['sku']),
-            models.Index(fields=['name']),
+            models.Index(fields=['title']),
             models.Index(fields=['category', 'is_active']),
             models.Index(fields=['supplier', 'is_active']),
         ]
     
     def __str__(self):
         if self.version:
-            return f"{self.name} {self.version}"
-        return self.name
+            return f"{self.title} {self.version}"
+        return self.title

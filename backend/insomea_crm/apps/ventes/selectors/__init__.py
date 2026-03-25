@@ -30,7 +30,7 @@ from .quote_selectors import (
     get_insomea_quote_by_id,
 )
 
-from .proviosion_selectors import (
+from .provision_selectors import (
     get_all_provisions,
     get_provision_by_id,
 )

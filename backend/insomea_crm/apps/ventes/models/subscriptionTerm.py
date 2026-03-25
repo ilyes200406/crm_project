@@ -47,7 +47,7 @@ class SubscriptionTerm(models.Model):
                 name='unique_subscription_term_number'
             ),
             models.CheckConstraint(
-                check=models.Q(end_date__gt=models.F('start_date')),
+                condition=models.Q(end_date__gt=models.F('start_date')),
                 name='term_end_after_start'
             ),
         ]

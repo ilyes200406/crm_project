@@ -9,8 +9,7 @@ from decimal import Decimal
 
 from ..models import (
     Subscription,
-    SubscriptionTerm,
-    SubscriptionStatus,
+    SubscriptionTerm
 )
 
 
