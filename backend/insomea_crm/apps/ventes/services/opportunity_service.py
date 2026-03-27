@@ -502,6 +502,48 @@ def handle_opportunity_line_save(opportunity_line):
 
 
 @transaction.atomic
+def update_insomea_quote_transition(*, opportunity_id, user, ip_address=None):
+    """
+    Transition Opportunity: CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED
+
+    Called when the client comes back with feedback/negotiation and the
+    commercial needs to revise the Insomea quote before re-sending.
+
+    Args:
+        opportunity_id: UUID
+        user: User instance (COMMERCIAL or ADMIN)
+        ip_address: str
+
+    Returns:
+        Opportunity mise à jour
+
+    Raises:
+        ValidationError: Si statut != CLIENT_PO_REQUEST
+        PermissionDenied: Si pas COMMERCIAL ou ADMIN
+    """
+
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
+
+    if user.role not in ['ADMIN', 'COMMERCIAL']:
+        raise PermissionDenied('Seuls les commerciaux peuvent mettre à jour le devis')
+
+    if user.role == 'COMMERCIAL':
+        if opportunity.created_by != user and opportunity.assigned_to != user:
+            raise PermissionDenied('Action non autorisée')
+
+    if opportunity.status != OpportunityStatus.CLIENT_PO_REQUEST:
+        raise ValidationError(
+            f'L\'opportunité doit être en CLIENT_PO_REQUEST pour mettre à jour le devis. '
+            f'Statut actuel : {opportunity.get_status_display()}'
+        )
+
+    opportunity.update_insomea_quote()
+    opportunity.save()
+
+    return opportunity
+
+
+@transaction.atomic
 def request_client_po_transition(*, opportunity_id, user, ip_address=None):
     """
     Transition Opportunity: INSOMEA_QUOTE_CREATED → CLIENT_PO_REQUEST

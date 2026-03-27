@@ -61,6 +61,7 @@ from ..services import (
     request_client_po,
     approve_opportunity,
     upload_client_po,
+    update_insomea_quote_transition,
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
@@ -406,6 +407,26 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'client_po_id': str(client_po.id),
         }, status=status.HTTP_201_CREATED)
     
+    @action(detail=True, methods=['post'])
+    def update_insomea_quote(self, request, pk=None):
+        """
+        Retract PO request to revise the Insomea quote (client negotiation)
+
+        POST /opportunities/:id/update_insomea_quote/
+
+        Transitions: CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED
+        """
+        opportunity = self.get_object()
+
+        opportunity = update_insomea_quote_transition(
+            opportunity_id=opportunity.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        serializer = OpportunityDetailSerializer(opportunity)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """

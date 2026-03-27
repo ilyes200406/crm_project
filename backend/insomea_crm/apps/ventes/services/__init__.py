@@ -13,6 +13,7 @@ from .opportunity_service import (
     approve_opportunity,
     update_opportunity_status_from_lines,
     request_client_po_transition,
+    update_insomea_quote_transition,
 )
 
 from .opportunity_line_service import (
@@ -74,6 +75,7 @@ __all__ = [
     'upload_client_po',
     'create_insomea_pos',
     'request_client_po_transition',
+    'update_insomea_quote_transition',
     
     # Provision
     'create_provision_for_line',
