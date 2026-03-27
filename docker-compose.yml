@@ -31,6 +31,18 @@
 #      - celery_worker
 #    env_file:
 #      - .env
+#  web:
+#    build: .
+#    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+#    volumes:
+#      - .:/app
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - db
+#      - redis
+#    env_file:
+#      - .env
 #
 #volumes:
 #  # ... (volumes existants)

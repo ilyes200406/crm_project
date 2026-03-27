@@ -5,7 +5,6 @@ Serializers pour Subscriptions et SubscriptionTerms
 """
 
 from rest_framework import serializers
-from decimal import Decimal
 
 from ..models import (
     Subscription,
@@ -230,7 +229,6 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
             'quantity',
             'billing_cycle',
             'billing_cycle_display',
-            'provision',
             'current_term_start',
             'current_term_end',
             'auto_renew',
@@ -264,13 +262,13 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
         """Product info"""
         from ...products.serializers import ProductListSerializer
         return ProductListSerializer(obj.product).data
-    
+
     def get_provisions(self, obj):
-        """Provisions list (light)"""
+        # Provisions list (light)
         from .provision_serializers import ProvisionListSerializer
         provisions = obj.provisions.all().order_by('-created_at')
         return ProvisionListSerializer(provisions, many=True).data
-    
+
     def get_is_expiring_soon(self, obj):
         """Check expiring"""
         return obj.is_expiring_soon(days=30)

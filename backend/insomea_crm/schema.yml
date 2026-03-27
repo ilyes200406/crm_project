@@ -1,0 +1,4135 @@
+openapi: 3.0.3
+info:
+  title: InsomeaCRM API
+  version: 1.0.0
+  description: a custom web application designed to automate the licensing lifecycle
+    management
+paths:
+  /api/auth/admin/create-user/:
+    post:
+      operationId: auth_admin_create_user_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUser'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCreateUser'
+          description: ''
+  /api/auth/change-password/:
+    put:
+      operationId: auth_change_password_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePassword'
+          description: ''
+  /api/auth/forgot-password/:
+    post:
+      operationId: auth_forgot_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgotPassword'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdate'
+          description: ''
+    put:
+      operationId: auth_me_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdate'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdate'
+          description: ''
+  /api/auth/reset-password/:
+    post:
+      operationId: auth_reset_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPassword'
+          description: ''
+  /api/auth/setup/:
+    post:
+      operationId: auth_setup_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SetupAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SetupAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupAccount'
+          description: ''
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/users/:
+    get:
+      operationId: auth_users_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: auth_users_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/users/{id}/:
+    get:
+      operationId: auth_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Utilisateur.
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: auth_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Utilisateur.
+        required: true
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Utilisateur.
+        required: true
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: auth_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Utilisateur.
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/users/{id}/activate/:
+    post:
+      operationId: auth_users_activate_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Utilisateur.
+        required: true
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/users/stats/:
+    get:
+      operationId: auth_users_stats_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/ventes/insomea-quotes/:
+    get:
+      operationId: ventes_insomea_quotes_list
+      description: |-
+        ViewSet pour InsomeaQuote (devis Insomea)
+
+        READ-ONLY (création via OpportunityViewSet.create_insomea_quote)
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInsomeaQuoteList'
+          description: ''
+  /api/ventes/insomea-quotes/{id}/:
+    get:
+      operationId: ventes_insomea_quotes_retrieve
+      description: |-
+        ViewSet pour InsomeaQuote (devis Insomea)
+
+        READ-ONLY (création via OpportunityViewSet.create_insomea_quote)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsomeaQuote'
+          description: ''
+  /api/ventes/insomea-quotes/{id}/download/:
+    get:
+      operationId: ventes_insomea_quotes_download_retrieve
+      description: |-
+        GET /insomea-quotes/{id}/download/
+
+        Télécharge PDF devis Insomea
+
+        Note:
+            Si document pas encore généré, retourne 404
+            (génération PDF à implémenter dans service)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsomeaQuote'
+          description: ''
+  /api/ventes/insomea-quotes/{id}/preview/:
+    get:
+      operationId: ventes_insomea_quotes_preview_retrieve
+      description: |-
+        GET /insomea-quotes/{id}/preview/
+
+        Retourne données pour preview devis (sans générer PDF)
+
+        Frontend peut utiliser ces données pour afficher preview HTML
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsomeaQuote'
+          description: ''
+  /api/ventes/insomea-quotes/by-opportunity/{opportunity_id}/:
+    get:
+      operationId: ventes_insomea_quotes_by_opportunity_retrieve
+      description: |-
+        GET /insomea-quotes/by-opportunity/{opportunity_id}/
+
+        Récupère devis Insomea pour une opportunité
+
+        Returns: InsomeaQuote ou 404
+      parameters:
+      - in: path
+        name: opportunity_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsomeaQuote'
+          description: ''
+  /api/ventes/opportunities/:
+    get:
+      operationId: ventes_opportunities_list
+      description: Liste opportunités
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOpportunityListList'
+          description: ''
+    post:
+      operationId: ventes_opportunities_create
+      description: "Créer opportunité\n\nBody:\n    {\n        \"name\": \"Nom\",\n
+        \       \"client\": \"uuid\",\n        \"type\": \"INITIAL\",  // \U0001F195
+        INITIAL, RENEWAL, UPSELL, DOWNGRADE\n        \"related_opportunity\": \"uuid\",
+        \ // \U0001F195 Si RENEWAL\n        \"assigned_to\": \"uuid\",\n        \"notes\":
+        \"\"\n    }"
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityCreate'
+          description: ''
+  /api/ventes/opportunities/{id}/:
+    get:
+      operationId: ventes_opportunities_retrieve
+      description: Détail opportunité
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityDetail'
+          description: ''
+    put:
+      operationId: ventes_opportunities_update
+      description: "ViewSet Opportunités\n\nEndpoints:\n    GET    /opportunities/
+        \             - Liste\n    POST   /opportunities/              - Créer\n    GET
+        \   /opportunities/:id/          - Détail\n    PATCH  /opportunities/:id/
+        \         - Update\n    DELETE /opportunities/:id/          - Delete\n\n    \U0001F195
+        GET    /opportunities/renewals/     - Liste RENEWAL\n    \U0001F195 GET    /opportunities/initials/
+        \    - Liste INITIAL\n    \U0001F195 GET    /opportunities/upsells/      -
+        Liste UPSELL\n\n    POST   /opportunities/:id/request_supplier_quotes/\n    POST
+        \  /opportunities/:id/request_client_po/\n    POST   /opportunities/:id/approve/\n
+        \   POST   /opportunities/:id/cancel/"
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityUpdate'
+          description: ''
+    patch:
+      operationId: ventes_opportunities_partial_update
+      description: Update opportunité
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityUpdate'
+          description: ''
+    delete:
+      operationId: ventes_opportunities_destroy
+      description: Delete opportunité
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/ventes/opportunities/{id}/approve/:
+    post:
+      operationId: ventes_opportunities_approve_create
+      description: |-
+        Approuver opportunité (Finance)
+
+        POST /opportunities/:id/approve/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ventes/opportunities/{id}/cancel/:
+    post:
+      operationId: ventes_opportunities_cancel_create
+      description: |-
+        Annuler opportunité
+
+        POST /opportunities/:id/cancel/
+
+        Body:
+            {
+                "reason": "Raison annulation"
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOpportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CancelOpportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CancelOpportunity'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelOpportunity'
+          description: ''
+  /api/ventes/opportunities/{id}/create_insomea_quote/:
+    post:
+      operationId: ventes_opportunities_create_insomea_quote_create
+      description: Créer le devis client global pour l'opportunité.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInsomeaQuote'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateInsomeaQuote'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateInsomeaQuote'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInsomeaQuote'
+          description: ''
+  /api/ventes/opportunities/{id}/request_client_po/:
+    post:
+      operationId: ventes_opportunities_request_client_po_create
+      description: |-
+        Demander BC client
+
+        POST /opportunities/:id/request_client_po/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ventes/opportunities/{id}/request_supplier_quotes/:
+    post:
+      operationId: ventes_opportunities_request_supplier_quotes_create
+      description: |-
+        Demander devis fournisseurs
+
+        POST /opportunities/:id/request_supplier_quotes/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ventes/opportunities/{id}/upload_client_po/:
+    post:
+      operationId: ventes_opportunities_upload_client_po_create
+      description: Uploader le BC client reçu et faire avancer le workflow.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadClientPO'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UploadClientPO'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadClientPO'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadClientPO'
+          description: ''
+  /api/ventes/opportunities/initials/:
+    get:
+      operationId: ventes_opportunities_initials_retrieve
+      description: |-
+        Liste opportunités INITIAL
+
+        GET /opportunities/initials/
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityDetail'
+          description: ''
+  /api/ventes/opportunities/renewals/:
+    get:
+      operationId: ventes_opportunities_renewals_retrieve
+      description: |-
+        Liste opportunités RENEWAL
+
+        GET /opportunities/renewals/
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityDetail'
+          description: ''
+  /api/ventes/opportunities/upsells/:
+    get:
+      operationId: ventes_opportunities_upsells_retrieve
+      description: |-
+        Liste opportunités UPSELL
+
+        GET /opportunities/upsells/
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityDetail'
+          description: ''
+  /api/ventes/opportunity-lines/:
+    get:
+      operationId: ventes_opportunity_lines_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOpportunityLineList'
+          description: ''
+    post:
+      operationId: ventes_opportunity_lines_create
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLineCreate'
+          description: ''
+  /api/ventes/opportunity-lines/{id}/:
+    get:
+      operationId: ventes_opportunity_lines_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLine'
+          description: ''
+    put:
+      operationId: ventes_opportunity_lines_update
+      description: |-
+        PUT/PATCH /opportunity-lines/{id}/
+
+        Met à jour ligne
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityLineUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLineUpdate'
+          description: ''
+    patch:
+      operationId: ventes_opportunity_lines_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityLineUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityLineUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunityLineUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLineUpdate'
+          description: ''
+    delete:
+      operationId: ventes_opportunity_lines_destroy
+      description: |-
+        DELETE /opportunity-lines/{id}/
+
+        Supprime ligne
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/ventes/opportunity-lines/{id}/cancel/:
+    post:
+      operationId: ventes_opportunity_lines_cancel_create
+      description: |-
+        POST /opportunity-lines/{id}/cancel/
+
+        Annule ligne (FSM transition → CANCELLED)
+
+        Input (optionnel):
+            {
+                "reason": "Produit non disponible"
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLine'
+          description: ''
+  /api/ventes/opportunity-lines/{id}/request-supplier-quote/:
+    post:
+      operationId: ventes_opportunity_lines_request_supplier_quote_create
+      description: |-
+        POST /opportunity-lines/{id}/request-supplier-quote/
+
+        Transition FSM: DRAFT → SUPPLIER_QUOTE_REQUEST
+
+        Note:
+            Généralement appelé via batch sur toutes lignes
+            (OpportunityViewSet.request_supplier_quotes)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpportunityLine'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityLine'
+          description: ''
+  /api/ventes/provisions/:
+    get:
+      operationId: ventes_provisions_list
+      description: Liste provisions
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProvisionListList'
+          description: ''
+  /api/ventes/provisions/{id}/:
+    get:
+      operationId: ventes_provisions_retrieve
+      description: Détail provision
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvisionDetail'
+          description: ''
+  /api/ventes/provisions/{id}/complete/:
+    post:
+      operationId: ventes_provisions_complete_create
+      description: "Complete provisioning\n\n\U0001F195 MODIFIÉ: Support initial vs
+        renewal\n\nPOST /provisions/:id/complete/\n\nBody INITIAL:\n    {\n        \"subscription_number\":
+        \"MS-123\",\n        \"start_date\": \"2024-01-01\",\n        \"end_date\":
+        \"2025-01-01\"\n    }\n\nBody RENEWAL:\n    {\n        \"start_date\": \"2025-01-01\",\n
+        \       \"end_date\": \"2026-01-01\"\n    }"
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteProvisioning'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompleteProvisioning'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompleteProvisioning'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteProvisioning'
+          description: ''
+  /api/ventes/provisions/{id}/fail/:
+    post:
+      operationId: ventes_provisions_fail_create
+      description: |-
+        Fail provisioning
+
+        POST /provisions/:id/fail/
+
+        Body:
+            {
+                "error_message": "Error description"
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailProvisioning'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FailProvisioning'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FailProvisioning'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailProvisioning'
+          description: ''
+  /api/ventes/provisions/{id}/start/:
+    post:
+      operationId: ventes_provisions_start_create
+      description: |-
+        Start provisioning
+
+        POST /provisions/:id/start/
+
+        Body: (vide)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ventes/subscriptions/:
+    get:
+      operationId: ventes_subscriptions_list
+      description: |-
+        Liste subscriptions
+
+        Query params:
+            - status: ACTIVE, PENDING_RENEWAL, EXPIRED, CANCELLED
+            - client: UUID
+            - product: UUID
+            - expiring: bool (si true, filtre expiring 30j)
+      parameters:
+      - in: query
+        name: auto_renew
+        schema:
+          type: boolean
+      - in: query
+        name: billing_cycle
+        schema:
+          type: string
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: client_name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: product_name
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - CANCELLED
+          - EXPIRED
+          - PENDING_RENEWAL
+        description: |-
+          * `ACTIVE` - Active
+          * `PENDING_RENEWAL` - En attente renouvellement
+          * `EXPIRED` - Expirée
+          * `CANCELLED` - Annulée
+      - in: query
+        name: term_end_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: term_end_before
+        schema:
+          type: string
+          format: date
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSubscriptionListList'
+          description: ''
+    post:
+      operationId: ventes_subscriptions_create
+      description: |-
+        ViewSet Subscriptions
+
+        Endpoints:
+            GET    /subscriptions/                 - Liste
+            GET    /subscriptions/:id/             - Détail
+            PATCH  /subscriptions/:id/             - Update (auto_renew only)
+
+            GET    /subscriptions/active/          - Actives
+            GET    /subscriptions/expiring/        - Expirant bientôt
+            GET    /subscriptions/pending_renewal/ - Pending renewal
+            GET    /subscriptions/stats/           - Stats globales
+
+            POST   /subscriptions/:id/create_renewal/  - Créer renewal
+            GET    /subscriptions/:id/renewal_data/    - Data pré-remplies
+            POST   /subscriptions/:id/cancel/          - Annuler
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/subscriptions/{id}/:
+    get:
+      operationId: ventes_subscriptions_retrieve
+      description: Détail subscription
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+    put:
+      operationId: ventes_subscriptions_update
+      description: |-
+        ViewSet Subscriptions
+
+        Endpoints:
+            GET    /subscriptions/                 - Liste
+            GET    /subscriptions/:id/             - Détail
+            PATCH  /subscriptions/:id/             - Update (auto_renew only)
+
+            GET    /subscriptions/active/          - Actives
+            GET    /subscriptions/expiring/        - Expirant bientôt
+            GET    /subscriptions/pending_renewal/ - Pending renewal
+            GET    /subscriptions/stats/           - Stats globales
+
+            POST   /subscriptions/:id/create_renewal/  - Créer renewal
+            GET    /subscriptions/:id/renewal_data/    - Data pré-remplies
+            POST   /subscriptions/:id/cancel/          - Annuler
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionUpdate'
+          description: ''
+    patch:
+      operationId: ventes_subscriptions_partial_update
+      description: |-
+        Update subscription (auto_renew seulement)
+
+        Body:
+            {
+                "auto_renew": true/false
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionUpdate'
+          description: ''
+    delete:
+      operationId: ventes_subscriptions_destroy
+      description: |-
+        ViewSet Subscriptions
+
+        Endpoints:
+            GET    /subscriptions/                 - Liste
+            GET    /subscriptions/:id/             - Détail
+            PATCH  /subscriptions/:id/             - Update (auto_renew only)
+
+            GET    /subscriptions/active/          - Actives
+            GET    /subscriptions/expiring/        - Expirant bientôt
+            GET    /subscriptions/pending_renewal/ - Pending renewal
+            GET    /subscriptions/stats/           - Stats globales
+
+            POST   /subscriptions/:id/create_renewal/  - Créer renewal
+            GET    /subscriptions/:id/renewal_data/    - Data pré-remplies
+            POST   /subscriptions/:id/cancel/          - Annuler
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/ventes/subscriptions/{id}/cancel/:
+    post:
+      operationId: ventes_subscriptions_cancel_create
+      description: |-
+        Annuler subscription
+
+        POST /subscriptions/:id/cancel/
+
+        Body:
+            {
+                "reason": "Raison annulation"
+            }
+
+        Note:
+            Seulement si EXPIRED
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/subscriptions/{id}/create_renewal/:
+    post:
+      operationId: ventes_subscriptions_create_renewal_create
+      description: |-
+        Créer opportunité renewal
+
+        POST /subscriptions/:id/create_renewal/
+
+        Body (optionnel):
+            {
+                "quantity": 15,  // Modifier quantité (optionnel)
+                "notes": "Notes"
+            }
+
+        Returns:
+            {
+                "opportunity": {...},
+                "line": {...}
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRenewal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateRenewal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateRenewal'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRenewal'
+          description: ''
+  /api/ventes/subscriptions/{id}/renewal_data/:
+    get:
+      operationId: ventes_subscriptions_renewal_data_retrieve
+      description: |-
+        Données pré-remplies pour renewal
+
+        GET /subscriptions/:id/renewal_data/
+
+        Returns:
+            {
+                "subscription_id": "...",
+                "client_name": "...",
+                "product_name": "...",
+                "quantity": 10,
+                "last_unit_price_sale": 150.00,
+                ...
+            }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Subscription.
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenewalData'
+          description: ''
+  /api/ventes/subscriptions/active/:
+    get:
+      operationId: ventes_subscriptions_active_retrieve
+      description: |-
+        Liste subscriptions actives
+
+        GET /subscriptions/active/
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/subscriptions/expiring/:
+    get:
+      operationId: ventes_subscriptions_expiring_retrieve
+      description: |-
+        Liste subscriptions expirant bientôt
+
+        GET /subscriptions/expiring/?days=30
+
+        Query params:
+            - days: int (default 30)
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/subscriptions/pending_renewal/:
+    get:
+      operationId: ventes_subscriptions_pending_renewal_retrieve
+      description: |-
+        Liste subscriptions pending renewal
+
+        GET /subscriptions/pending_renewal/
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/subscriptions/stats/:
+    get:
+      operationId: ventes_subscriptions_stats_retrieve
+      description: |-
+        Stats globales subscriptions
+
+        GET /subscriptions/stats/
+
+        Returns:
+            {
+                "total": 150,
+                "active": 120,
+                "pending_renewal": 20,
+                "expired": 10,
+                "expiring_30d": 15,
+                "expiring_7d": 5
+            }
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+  /api/ventes/supplier-quotes/:
+    get:
+      operationId: ventes_supplier_quotes_list
+      description: |-
+        ViewSet pour SupplierQuote (devis fournisseur)
+
+        CRUD (read-only après création)
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierQuoteList'
+          description: ''
+    post:
+      operationId: ventes_supplier_quotes_create
+      description: |-
+        POST /supplier-quotes/
+
+        Upload devis fournisseur + créé lignes
+
+        Input (multipart/form-data):
+            {
+                "supplier_id": "uuid",
+                "reference": "REF-FOURNISSEUR-123",
+                "document": <file>,
+                "discount_percent": 5.00,
+                "lines": [
+                    {
+                        "line_id": "uuid",
+                        "unit_price_purchase": 100.00,
+                        "sku": "CFQ...",
+                        "currency": "EUR",
+                        "delivery_time": 7
+                    },
+                    ...
+                ]
+            }
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSupplierQuote'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateSupplierQuote'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateSupplierQuote'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSupplierQuote'
+          description: ''
+  /api/ventes/supplier-quotes/{id}/:
+    get:
+      operationId: ventes_supplier_quotes_retrieve
+      description: |-
+        ViewSet pour SupplierQuote (devis fournisseur)
+
+        CRUD (read-only après création)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierQuote'
+          description: ''
+  /api/ventes/supplier-quotes/{id}/download/:
+    get:
+      operationId: ventes_supplier_quotes_download_retrieve
+      description: |-
+        GET /supplier-quotes/{id}/download/
+
+        Télécharge PDF devis fournisseur
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - ventes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierQuote'
+          description: ''
+components:
+  schemas:
+    AdminCreateUser:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+      required:
+      - email
+    BillingCycleEnum:
+      enum:
+      - MONTHLY
+      - ANNUAL
+      type: string
+      description: |-
+        * `MONTHLY` - Mensuel
+        * `ANNUAL` - Annuel
+    CancelOpportunity:
+      type: object
+      description: |-
+        Serializer cancel opportunity
+
+        Usage:
+            POST /opportunities/:id/cancel/
+      properties:
+        reason:
+          type: string
+          description: Raison annulation
+      required:
+      - reason
+    ChangePassword:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+        new_password:
+          type: string
+          writeOnly: true
+        new_password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - new_password
+      - new_password_confirm
+      - old_password
+    CompleteProvisioning:
+      type: object
+      description: "Serializer complete provisioning\n\n\U0001F195 MODIFIÉ: Support
+        INITIAL vs RENEWAL\n\nUsage:\n    POST /provisions/:id/complete/\n\nInput:\n
+        \   CAS INITIAL:\n    {\n        \"subscription_number\": \"MS-123\",\n        \"start_date\":
+        \"2024-01-01\",\n        \"end_date\": \"2025-01-01\"\n    }\n\n    CAS RENEWAL:\n
+        \   {\n        \"start_date\": \"2025-01-01\",\n        \"end_date\": \"2026-01-01\"\n
+        \       # PAS de subscription_number\n    }"
+      properties:
+        subscription_number:
+          type: string
+          description: Microsoft Subscription ID (requis si INITIAL)
+          maxLength: 200
+        start_date:
+          type: string
+          format: date
+          description: Date début terme
+        end_date:
+          type: string
+          format: date
+          description: Date fin terme
+      required:
+      - end_date
+      - start_date
+    CreateInsomeaQuote:
+      type: object
+      description: |-
+        Serializer pour création devis Insomea
+
+        Usage:
+            POST /opportunities/{id}/create-insomea-quote/
+
+        Input:
+            {
+                "discount_percent": 10.00,
+                "notes": "...",
+                "lines_pricing": [
+                    {
+                        "line_id": "uuid",
+                        "unit_price_sale": 120.00
+                    },
+                    ...
+                ]
+            }
+      properties:
+        discount_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          default: '0.00'
+        notes:
+          type: string
+          maxLength: 2000
+        lines_pricing:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          minItems: 1
+      required:
+      - lines_pricing
+    CreateRenewal:
+      type: object
+      description: |-
+        Serializer création opportunité renewal
+
+        Usage:
+            - POST /subscriptions/:id/create_renewal/
+
+        Input:
+            (vide - tout auto depuis subscription)
+
+        Output:
+            - opportunity: Opportunity créée
+            - line: OpportunityLine créée
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Nouvelle quantité (optionnel, sinon garde existante)
+        notes:
+          type: string
+          description: Notes opportunité renewal
+    CreateSupplierQuote:
+      type: object
+      description: |-
+        Serializer pour création devis fournisseur
+
+        Usage:
+            POST /supplier-quotes/
+
+        Input:
+            {
+                "supplier_id": "uuid",
+                "reference": "REF-123",
+                "document": <file>,
+                "discount_percent": 5.00,
+                "lines": [
+                    {
+                        "line_id": "uuid",
+                        "unit_price_purchase": 100.00,
+                        "sku": "CFQ...",
+                        "currency": "EUR",
+                        "delivery_time": 7
+                    },
+                    ...
+                ]
+            }
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          writeOnly: true
+        reference:
+          type: string
+          maxLength: 100
+        document:
+          type: string
+          format: uri
+          writeOnly: true
+        discount_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          default: '0.00'
+        lines:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          minItems: 1
+      required:
+      - document
+      - lines
+      - supplier_id
+    FailProvisioning:
+      type: object
+      description: |-
+        Serializer fail provisioning
+
+        Usage:
+            POST /provisions/:id/fail/
+      properties:
+        error_message:
+          type: string
+          description: Error message
+      required:
+      - error_message
+    ForgotPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    InsomeaQuote:
+      type: object
+      description: |-
+        Serializer devis Insomea
+
+        Usage:
+            GET /insomea-quotes/
+            GET /insomea-quotes/{id}/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity:
+          type: string
+          readOnly: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserMinimal'
+          readOnly: true
+        reference:
+          type: string
+          readOnly: true
+          description: 'Référence unique InsomeaQuote (ex: INSOMEA-2024-00001)'
+        document:
+          type: string
+          format: uri
+        document_url:
+          type: string
+          readOnly: true
+        subtotal_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Sous-total achat
+        total_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total achat
+        subtotal_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Sous-total vente
+        discount_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          description: Remise globale en %
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Montant remise
+        total_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total vente
+        margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        margin_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsomeaQuoteLine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - discount_amount
+      - document
+      - document_url
+      - id
+      - lines
+      - margin
+      - margin_percent
+      - opportunity
+      - reference
+      - subtotal_purchase
+      - subtotal_sale
+      - total_purchase
+      - total_sale
+    InsomeaQuoteLine:
+      type: object
+      description: Serializer ligne devis Insomea
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity_line:
+          type: string
+          readOnly: true
+        supplier_quote_line:
+          type: string
+          readOnly: true
+        unit_price_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Prix unitaire achat
+        line_total_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total achat calculé
+        unit_price_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Prix unitaire vente
+        line_total_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total vente calculé
+        line_margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        line_discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - id
+      - line_margin
+      - line_total_purchase
+      - line_total_sale
+      - opportunity_line
+      - supplier_quote_line
+      - unit_price_purchase
+      - unit_price_sale
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    OpportunityCreate:
+      type: object
+      description: "Serializer création Opportunité\n\nUsage:\n    - POST /opportunities/\n\n\U0001F195
+        MODIFIÉ: Support type + related_opportunity"
+      properties:
+        name:
+          type: string
+          description: Nom descriptif du Opportunity
+          maxLength: 255
+        client:
+          type: string
+          format: uuid
+          description: Client concerné
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type89aEnum'
+          description: |-
+            Type opportunité
+
+            * `INITIAL` - Vente initiale
+            * `RENEWAL` - Renouvellement
+            * `UPSELL` - Vente additionnelle
+            * `DOWNGRADE` - Réduction
+        related_opportunity:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opportunité parente (si renewal/upsell/downgrade)
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+          description: Utilisateur assigné (responsable actuel)
+        notes:
+          type: string
+          description: Notes internes
+      required:
+      - client
+      - name
+    OpportunityDetail:
+      type: object
+      description: |-
+        Serializer détail Opportunité (complet)
+
+        Usage:
+            - GET /opportunities/:id/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        reference:
+          type: string
+          readOnly: true
+          description: 'Référence unique Opportunity (ex: OPP-2024-00001)'
+        name:
+          type: string
+          description: Nom descriptif du Opportunity
+          maxLength: 255
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type89aEnum'
+          description: |-
+            Type opportunité
+
+            * `INITIAL` - Vente initiale
+            * `RENEWAL` - Renouvellement
+            * `UPSELL` - Vente additionnelle
+            * `DOWNGRADE` - Réduction
+        type_display:
+          type: string
+          readOnly: true
+        client:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusB78Enum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        assigned_to:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+          readOnly: true
+        related_opportunity:
+          type: string
+          readOnly: true
+        child_opportunities:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+          description: Notes internes
+        cancellation_reason:
+          type: string
+          description: Raison annulation
+        lines:
+          type: string
+          readOnly: true
+        lines_count:
+          type: integer
+          readOnly: true
+        supplier_quotes:
+          type: string
+          readOnly: true
+        insomea_quote:
+          type: string
+          readOnly: true
+        client_po:
+          type: string
+          readOnly: true
+        insomea_pos:
+          type: string
+          readOnly: true
+        total_amount_estimate:
+          type: string
+          readOnly: true
+        is_renewal:
+          type: boolean
+          readOnly: true
+        is_initial:
+          type: boolean
+          readOnly: true
+        can_edit:
+          type: string
+          readOnly: true
+        can_add_items:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - can_add_items
+      - can_edit
+      - child_opportunities
+      - client
+      - client_po
+      - created_at
+      - created_by
+      - id
+      - insomea_pos
+      - insomea_quote
+      - is_initial
+      - is_renewal
+      - lines
+      - lines_count
+      - name
+      - reference
+      - related_opportunity
+      - status
+      - status_display
+      - supplier_quotes
+      - total_amount_estimate
+      - type_display
+      - updated_at
+    OpportunityLine:
+      type: object
+      description: Alias backward-compatible pour le ViewSet lignes.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity:
+          type: string
+          readOnly: true
+        product:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité de licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        billing_cycle_display:
+          type: string
+          readOnly: true
+        renewal_of_subscription:
+          type: string
+          readOnly: true
+        insomea_purchase_order:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/OpportunityLineStatusEnum'
+          readOnly: true
+          description: |-
+            Statut FSM de la ligne
+
+            * `DRAFT` - Brouillon
+            * `SUPPLIER_QUOTE_REQUEST` - Devis fournisseur demandé
+            * `SUPPLIER_QUOTE_RECIEVED` - Devis fournisseur reçu
+            * `CANCELLED` - Annulé
+        status_display:
+          type: string
+          readOnly: true
+        supplier_quote_line:
+          type: string
+          readOnly: true
+        insomea_quote_line:
+          type: string
+          readOnly: true
+        provision:
+          type: string
+          readOnly: true
+        is_renewal:
+          type: boolean
+          readOnly: true
+        notes:
+          type: string
+          description: Notes spécifiques ligne
+        can_edit:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - billing_cycle_display
+      - can_edit
+      - created_at
+      - id
+      - insomea_quote_line
+      - is_renewal
+      - opportunity
+      - product
+      - provision
+      - renewal_of_subscription
+      - status
+      - status_display
+      - supplier_quote_line
+      - updated_at
+    OpportunityLineCreate:
+      type: object
+      description: "Serializer création OpportunityLine\n\nUsage:\n    - POST /opportunity-lines/\n
+        \   - Via add_line_to_opportunity service\n\n\U0001F195 MODIFIÉ: renewal_of_subscription
+        en read-only (géré par service)"
+      properties:
+        opportunity:
+          type: string
+          format: uuid
+          description: Opportunity parent
+        product:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité de licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        renewal_of_subscription:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Subscription renouvelée (si Opportunity.type=RENEWAL)
+        notes:
+          type: string
+          description: Notes spécifiques ligne
+      required:
+      - opportunity
+      - product
+      - renewal_of_subscription
+    OpportunityLineStatusEnum:
+      enum:
+      - DRAFT
+      - SUPPLIER_QUOTE_REQUEST
+      - SUPPLIER_QUOTE_RECIEVED
+      - CANCELLED
+      type: string
+      description: |-
+        * `DRAFT` - Brouillon
+        * `SUPPLIER_QUOTE_REQUEST` - Devis fournisseur demandé
+        * `SUPPLIER_QUOTE_RECIEVED` - Devis fournisseur reçu
+        * `CANCELLED` - Annulé
+    OpportunityLineUpdate:
+      type: object
+      description: |-
+        Serializer update OpportunityLine
+
+        Usage:
+            - PATCH /opportunity-lines/:id/
+
+        Note:
+            renewal_of_subscription non modifiable
+      properties:
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité de licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        notes:
+          type: string
+          description: Notes spécifiques ligne
+    OpportunityList:
+      type: object
+      description: |-
+        Serializer liste Opportunités (léger)
+
+        Usage:
+            - GET /opportunities/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        reference:
+          type: string
+          description: 'Référence unique Opportunity (ex: OPP-2024-00001)'
+          maxLength: 50
+        name:
+          type: string
+          description: Nom descriptif du Opportunity
+          maxLength: 255
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type89aEnum'
+          description: |-
+            Type opportunité
+
+            * `INITIAL` - Vente initiale
+            * `RENEWAL` - Renouvellement
+            * `UPSELL` - Vente additionnelle
+            * `DOWNGRADE` - Réduction
+        type_display:
+          type: string
+          readOnly: true
+        client:
+          type: string
+          format: uuid
+          description: Client concerné
+        client_name:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusB78Enum'
+        status_display:
+          type: string
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+          description: Utilisateur assigné (responsable actuel)
+        assigned_to_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Commercial créateur
+        created_by_name:
+          type: string
+          readOnly: true
+        related_opportunity:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opportunité parente (si renewal/upsell/downgrade)
+        parent_opportunity_reference:
+          type: string
+          readOnly: true
+          nullable: true
+        lines_count:
+          type: integer
+          readOnly: true
+        is_renewal:
+          type: boolean
+          readOnly: true
+        is_initial:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to_name
+      - client
+      - client_name
+      - created_at
+      - created_by_name
+      - id
+      - is_initial
+      - is_renewal
+      - lines_count
+      - name
+      - parent_opportunity_reference
+      - reference
+      - status_display
+      - type_display
+      - updated_at
+    OpportunityUpdate:
+      type: object
+      description: |-
+        Serializer update Opportunité
+
+        Usage:
+            - PATCH /opportunities/:id/
+
+        Note:
+            Type et related_opportunity non modifiables après création
+      properties:
+        name:
+          type: string
+          description: Nom descriptif du Opportunity
+          maxLength: 255
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+          description: Utilisateur assigné (responsable actuel)
+        notes:
+          type: string
+          description: Notes internes
+      required:
+      - name
+    PaginatedInsomeaQuoteList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsomeaQuote'
+    PaginatedOpportunityLineList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpportunityLine'
+    PaginatedOpportunityListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpportunityList'
+    PaginatedProvisionListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProvisionList'
+    PaginatedSubscriptionListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionList'
+    PaginatedSupplierQuoteList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierQuote'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedOpportunityLineUpdate:
+      type: object
+      description: |-
+        Serializer update OpportunityLine
+
+        Usage:
+            - PATCH /opportunity-lines/:id/
+
+        Note:
+            renewal_of_subscription non modifiable
+      properties:
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité de licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        notes:
+          type: string
+          description: Notes spécifiques ligne
+    PatchedOpportunityUpdate:
+      type: object
+      description: |-
+        Serializer update Opportunité
+
+        Usage:
+            - PATCH /opportunities/:id/
+
+        Note:
+            Type et related_opportunity non modifiables après création
+      properties:
+        name:
+          type: string
+          description: Nom descriptif du Opportunity
+          maxLength: 255
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+          description: Utilisateur assigné (responsable actuel)
+        notes:
+          type: string
+          description: Notes internes
+    PatchedSubscriptionUpdate:
+      type: object
+      description: |-
+        Serializer update Subscription
+
+        Usage:
+            - PATCH /subscriptions/:id/
+
+        Note:
+            Seulement auto_renew modifiable
+      properties:
+        auto_renew:
+          type: boolean
+          description: Renouvellement automatique activé
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        is_active:
+          type: boolean
+          title: Actif
+        is_verified:
+          type: boolean
+          readOnly: true
+          title: Email vérifié
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date d'inscription
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Dernière connexion
+    PatchedUserUpdate:
+      type: object
+      properties:
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+    ProvisionDetail:
+      type: object
+      description: Serializer détail Provision (complet)
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity_line:
+          type: string
+          readOnly: true
+        subscription:
+          type: string
+          readOnly: true
+        subscription_term:
+          type: string
+          readOnly: true
+        provisionned_by:
+          type: string
+          readOnly: true
+        microsoft_subscription_id:
+          type: string
+          description: Subscription ID Microsoft
+          maxLength: 255
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status502Enum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        is_renewal:
+          type: boolean
+          readOnly: true
+        is_initial:
+          type: boolean
+          readOnly: true
+        provisioning_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date début provisionnement
+        provisioning_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date fin provisionnement
+        provisioning_error:
+          type: string
+          description: Erreur provisionnement (si échec)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - is_initial
+      - is_renewal
+      - opportunity_line
+      - provisionned_by
+      - status
+      - status_display
+      - subscription
+      - subscription_term
+      - updated_at
+    ProvisionList:
+      type: object
+      description: Serializer liste Provisions (léger)
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity_line:
+          type: string
+          format: uuid
+        product_title:
+          type: string
+          readOnly: true
+        client_name:
+          type: string
+          readOnly: true
+        opportunity_reference:
+          type: string
+          readOnly: true
+        subscription:
+          type: string
+          format: uuid
+          nullable: true
+        subscription_number:
+          type: string
+          readOnly: true
+          nullable: true
+        subscription_term:
+          type: string
+          format: uuid
+          nullable: true
+        provisionned_by:
+          type: string
+          format: uuid
+          nullable: true
+        provisionned_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        microsoft_subscription_id:
+          type: string
+          description: Subscription ID Microsoft
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/Status502Enum'
+        status_display:
+          type: string
+          readOnly: true
+        is_renewal:
+          type: boolean
+          readOnly: true
+        is_initial:
+          type: boolean
+          readOnly: true
+        provisioning_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date début provisionnement
+        provisioning_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date fin provisionnement
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - client_name
+      - created_at
+      - id
+      - is_initial
+      - is_renewal
+      - opportunity_line
+      - opportunity_reference
+      - product_title
+      - provisionned_by_name
+      - status_display
+      - subscription_number
+    RenewalData:
+      type: object
+      description: |-
+        Serializer données pré-remplies renewal
+
+        Usage:
+            - GET /subscriptions/:id/renewal_data/
+
+        Output:
+            Données pour pré-remplir form renewal
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+          readOnly: true
+        subscription_number:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+          format: uuid
+          readOnly: true
+        client_name:
+          type: string
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+        billing_cycle:
+          type: string
+          readOnly: true
+        current_term_end:
+          type: string
+          format: date
+          readOnly: true
+        days_until_expiration:
+          type: integer
+          readOnly: true
+        last_unit_price_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        last_unit_price_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        original_opportunity_id:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        original_opportunity_reference:
+          type: string
+          readOnly: true
+          nullable: true
+        auto_renew:
+          type: boolean
+          readOnly: true
+      required:
+      - auto_renew
+      - billing_cycle
+      - client_id
+      - client_name
+      - current_term_end
+      - days_until_expiration
+      - last_unit_price_purchase
+      - last_unit_price_sale
+      - original_opportunity_id
+      - original_opportunity_reference
+      - product_id
+      - product_name
+      - quantity
+      - subscription_id
+      - subscription_number
+    ResetPassword:
+      type: object
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+          writeOnly: true
+        new_password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - new_password
+      - new_password_confirm
+      - token
+    RoleEnum:
+      enum:
+      - ADMIN
+      - COMMERCIAL
+      - TECHNICIEN
+      - FINANCE
+      type: string
+      description: |-
+        * `ADMIN` - Administrateur
+        * `COMMERCIAL` - Commercial
+        * `TECHNICIEN` - Technicien
+        * `FINANCE` - Finance
+    SetupAccount:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token recu par email
+        password:
+          type: string
+          writeOnly: true
+          description: Nouveau mot de passe (min 8 caracteres)
+        password_confirm:
+          type: string
+          writeOnly: true
+          description: Confirmation du mot de passe
+        first_name:
+          type: string
+        last_name:
+          type: string
+      required:
+      - password
+      - password_confirm
+      - token
+    Status502Enum:
+      enum:
+      - WAITING_PROVISION
+      - PROVISIONING
+      - PROVISIONED
+      - ERROR
+      type: string
+      description: |-
+        * `WAITING_PROVISION` - À approvisionner
+        * `PROVISIONING` - En cours approvisionnement
+        * `PROVISIONED` - Terminé
+        * `ERROR` - erreur
+    Status703Enum:
+      enum:
+      - ACTIVE
+      - PENDING_RENEWAL
+      - EXPIRED
+      - CANCELLED
+      type: string
+      description: |-
+        * `ACTIVE` - Active
+        * `PENDING_RENEWAL` - En attente renouvellement
+        * `EXPIRED` - Expirée
+        * `CANCELLED` - Annulée
+    StatusB78Enum:
+      enum:
+      - DRAFT
+      - SUPPLIER_QUOTE_REQUEST
+      - SUPPLIER_QUOTE_RECIEVED
+      - INSOMEA_QUOTE_CREATED
+      - CLIENT_PO_REQUEST
+      - CLIENT_PO_RECIEVED
+      - APPROUVED
+      - CANCELLED
+      type: string
+      description: |-
+        * `DRAFT` - Brouillon
+        * `SUPPLIER_QUOTE_REQUEST` - Devis fournisseur demandé
+        * `SUPPLIER_QUOTE_RECIEVED` - Devis fournisseur reçu
+        * `INSOMEA_QUOTE_CREATED` - Devis Insomea créé
+        * `CLIENT_PO_REQUEST` - BC client demandé
+        * `CLIENT_PO_RECIEVED` - BC client reçu
+        * `APPROUVED` - approuvée
+        * `CANCELLED` - Annulé
+    SubscriptionDetail:
+      type: object
+      description: |-
+        Serializer détail Subscription (complet)
+
+        Usage:
+            - GET /subscriptions/:id/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        subscription_number:
+          type: string
+          readOnly: true
+        client:
+          type: string
+          readOnly: true
+        product:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        billing_cycle_display:
+          type: string
+          readOnly: true
+        current_term_start:
+          type: string
+          format: date
+        current_term_end:
+          type: string
+          format: date
+        auto_renew:
+          type: boolean
+          description: Renouvellement automatique activé
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status703Enum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        days_until_expiration:
+          type: integer
+          readOnly: true
+        is_expiring_soon:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        terms:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionTerm'
+          readOnly: true
+        current_term:
+          allOf:
+          - $ref: '#/components/schemas/SubscriptionTerm'
+          readOnly: true
+        latest_term:
+          allOf:
+          - $ref: '#/components/schemas/SubscriptionTerm'
+          readOnly: true
+        provisions:
+          type: string
+          readOnly: true
+        revenue_metrics:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - billing_cycle
+      - billing_cycle_display
+      - client
+      - created_at
+      - current_term
+      - current_term_end
+      - current_term_start
+      - days_until_expiration
+      - id
+      - is_active
+      - is_expiring_soon
+      - latest_term
+      - product
+      - provisions
+      - quantity
+      - revenue_metrics
+      - status
+      - status_display
+      - subscription_number
+      - terms
+      - updated_at
+    SubscriptionList:
+      type: object
+      description: |-
+        Serializer liste Subscriptions (léger)
+
+        Usage:
+            - GET /subscriptions/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        subscription_number:
+          type: string
+          maxLength: 100
+        client:
+          type: string
+          format: uuid
+          description: Client propriétaire
+        client_name:
+          type: string
+          readOnly: true
+        product:
+          type: string
+          format: uuid
+        product_title:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Quantité licences
+        billing_cycle:
+          allOf:
+          - $ref: '#/components/schemas/BillingCycleEnum'
+          description: |-
+            Cycle de facturation
+
+            * `MONTHLY` - Mensuel
+            * `ANNUAL` - Annuel
+        billing_cycle_display:
+          type: string
+          readOnly: true
+        current_term_start:
+          type: string
+          format: date
+        current_term_end:
+          type: string
+          format: date
+        auto_renew:
+          type: boolean
+          description: Renouvellement automatique activé
+        status:
+          $ref: '#/components/schemas/Status703Enum'
+        status_display:
+          type: string
+          readOnly: true
+        days_until_expiration:
+          type: integer
+          readOnly: true
+        is_expiring_soon:
+          type: string
+          readOnly: true
+        current_term:
+          allOf:
+          - $ref: '#/components/schemas/SubscriptionTerm'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - billing_cycle
+      - billing_cycle_display
+      - client
+      - client_name
+      - created_at
+      - current_term
+      - current_term_end
+      - current_term_start
+      - days_until_expiration
+      - id
+      - is_expiring_soon
+      - product
+      - product_title
+      - quantity
+      - status_display
+      - subscription_number
+    SubscriptionTerm:
+      type: object
+      description: |-
+        Serializer SubscriptionTerm (terme de subscription)
+
+        Usage:
+            - Liste termes d'une subscription
+            - Détail terme
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        subscription:
+          type: string
+          format: uuid
+        subscription_number:
+          type: string
+          readOnly: true
+        opportunity:
+          type: string
+          format: uuid
+          description: Opportunité ayant généré ce terme (INITIAL ou RENEWAL)
+        opportunity_reference:
+          type: string
+          readOnly: true
+        provision:
+          type: array
+          items:
+            type: string
+            format: uuid
+        term_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        unit_price_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        unit_price_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total_sale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        margin_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+        duration_days:
+          type: integer
+          readOnly: true
+        is_current:
+          type: string
+          readOnly: true
+        is_past:
+          type: string
+          readOnly: true
+        is_future:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - duration_days
+      - end_date
+      - id
+      - is_current
+      - is_future
+      - is_past
+      - margin
+      - margin_percent
+      - opportunity
+      - opportunity_reference
+      - provision
+      - start_date
+      - subscription
+      - subscription_number
+      - term_number
+      - total_purchase
+      - total_sale
+      - unit_price_purchase
+      - unit_price_sale
+    SubscriptionUpdate:
+      type: object
+      description: |-
+        Serializer update Subscription
+
+        Usage:
+            - PATCH /subscriptions/:id/
+
+        Note:
+            Seulement auto_renew modifiable
+      properties:
+        auto_renew:
+          type: boolean
+          description: Renouvellement automatique activé
+    SupplierMinimal:
+      type: object
+      description: |-
+        Serializer minimal pour utilisation nested
+
+        Usage :
+        Dans Product, Opportunity, etc.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+          description: Nom du fournisseur
+        type:
+          allOf:
+          - $ref: '#/components/schemas/SupplierMinimalTypeEnum'
+          readOnly: true
+          description: |-
+            Type de fournisseur
+
+            * `DIRECT` - Direct (Microsoft)
+            * `DISTRIBUTOR` - Distributeur
+            * `RESELLER` - Revendeur
+        type_display:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - type
+      - type_display
+    SupplierMinimalTypeEnum:
+      enum:
+      - DIRECT
+      - DISTRIBUTOR
+      - RESELLER
+      type: string
+      description: |-
+        * `DIRECT` - Direct (Microsoft)
+        * `DISTRIBUTOR` - Distributeur
+        * `RESELLER` - Revendeur
+    SupplierQuote:
+      type: object
+      description: |-
+        Serializer devis fournisseur
+
+        Usage:
+            GET /supplier-quotes/
+            GET /supplier-quotes/{id}/
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        supplier:
+          allOf:
+          - $ref: '#/components/schemas/SupplierMinimal'
+          readOnly: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserMinimal'
+          readOnly: true
+        reference:
+          type: string
+          description: Référence unique SupplierQuote
+          maxLength: 50
+        document:
+          type: string
+          format: uri
+        document_url:
+          type: string
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+        subtotal_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Sous-total achat
+        discount_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          description: Remise globale en %
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Montant remise
+        total_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total achat
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierQuoteLine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - discount_amount
+      - document
+      - document_url
+      - id
+      - lines
+      - received_at
+      - reference
+      - subtotal_purchase
+      - supplier
+      - total_purchase
+    SupplierQuoteLine:
+      type: object
+      description: Serializer ligne devis fournisseur
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        opportunity_line:
+          type: string
+          readOnly: true
+        unit_price_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Prix unitaire achat
+        line_total_purchase:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total achat calculé
+        currency:
+          type: string
+          maxLength: 10
+        delivery_time:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+          maxLength: 100
+      required:
+      - currency
+      - id
+      - line_total_purchase
+      - opportunity_line
+      - unit_price_purchase
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    Type89aEnum:
+      enum:
+      - INITIAL
+      - RENEWAL
+      - UPSELL
+      - DOWNGRADE
+      type: string
+      description: |-
+        * `INITIAL` - Vente initiale
+        * `RENEWAL` - Renouvellement
+        * `UPSELL` - Vente additionnelle
+        * `DOWNGRADE` - Réduction
+    UploadClientPO:
+      type: object
+      description: |-
+        Serializer action: Upload BC client
+
+        Usage:
+            POST /opportunities/{id}/upload-client-po/
+
+        Input:
+            {
+                "po_number": "BC-CLIENT-2024-001",
+                "document": <file>
+            }
+      properties:
+        po_number:
+          type: string
+          maxLength: 100
+        document:
+          type: string
+          format: uri
+      required:
+      - document
+      - po_number
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        is_active:
+          type: boolean
+          title: Actif
+        is_verified:
+          type: boolean
+          readOnly: true
+          title: Email vérifié
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date d'inscription
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Dernière connexion
+      required:
+      - date_joined
+      - email
+      - full_name
+      - id
+      - is_verified
+      - last_login
+    UserMinimal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+      required:
+      - email
+      - full_name
+      - id
+    UserUpdate:
+      type: object
+      properties:
+        first_name:
+          type: string
+          title: Prénom
+          maxLength: 150
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Adresse email
+          maxLength: 255
+      required:
+      - email
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

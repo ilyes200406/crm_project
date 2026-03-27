@@ -20,7 +20,7 @@ class Provision(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     opportunity_line = models.OneToOneField(OpportunityLine, on_delete=models.PROTECT, related_name="provision")
     subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, null=True, blank=True, related_name="provisions")
-    subscription_term = models.ForeignKey('SubscriptionTerm', null=True, blank=True, on_delete=models.CASCADE, related_name='provision')
+    subscription_term = models.OneToOneField('SubscriptionTerm', null=True, blank=True, on_delete=models.CASCADE, related_name='provision')
     provisionned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'TECHNICIEN'})
     
     microsoft_subscription_id = models.CharField(max_length=255, blank=True, help_text="Subscription ID Microsoft")
@@ -75,9 +75,10 @@ class Provision(models.Model):
             bool
         """
         return self.subscription is not None
-    
+    @property
     def is_renewal(self):
         return self.subscription is not None
     
+    @property
     def is_initial(self):
         return self.subscription is None

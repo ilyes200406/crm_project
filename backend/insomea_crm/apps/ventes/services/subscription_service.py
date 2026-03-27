@@ -188,9 +188,9 @@ def renew_subscription(
     if end_date <= start_date:
         raise ValidationError('end_date doit être après start_date')
     
-    if subscription.status not in [SubscriptionStatus.PENDING_RENEWAL, SubscriptionStatus.ACTIVE]:
+    if subscription.status not in [SubscriptionStatus.PENDING_RENEWAL, SubscriptionStatus.EXPIRED]:
         raise ValidationError(
-            f'Subscription doit être ACTIVE ou PENDING_RENEWAL pour renouveler. '
+            f'Subscription doit être EXPIRED ou PENDING_RENEWAL pour renouveler. '
             f'Status actuel : {subscription.get_status_display()}'
         )
     

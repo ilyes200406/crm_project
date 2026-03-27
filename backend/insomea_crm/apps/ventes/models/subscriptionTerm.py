@@ -12,7 +12,6 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 
 from .subscription import Subscription
-from .provision import Provision
 
 
 class SubscriptionTerm(models.Model):
@@ -86,7 +85,7 @@ class SubscriptionTerm(models.Model):
     def margin_percent(self):
         """Marge % ce terme"""
         if self.total_purchase > 0:
-            return (self.margin / self.total_purchase) * Decimal('100.00')
+            return (self.margin / self.total_sale) * Decimal('100.00')
         return Decimal('0.00')
     
     @property

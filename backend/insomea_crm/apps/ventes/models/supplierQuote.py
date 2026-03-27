@@ -7,6 +7,8 @@ from datetime import datetime
 from ...users.models.users import User
 from ...suppliers.models import Supplier
 
+def get_upload_path(instance, filename):
+    return f'quotes/supplier/{instance.supplier.name}/{filename}'
 
 class SupplierQuote(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -14,13 +16,18 @@ class SupplierQuote(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
 
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique SupplierQuote")
-    document = models.FileField()
+    document = models.FileField(upload_to=get_upload_path)
     recieved_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     subtotal_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Sous-total achat")
     total_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Total achat")
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Montant remise")
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))], help_text="Remise globale en %")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['reference']),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.reference:

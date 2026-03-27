@@ -281,8 +281,8 @@ def complete_provisioning(
     # 5. DÉTECTE INITIAL VS RENEWAL
     # ───────────────────────────────────────────────────────
     
-    is_renewal = provision.is_renewal()
-    
+    is_renewal = provision.is_renewal
+
     # ═══════════════════════════════════════════════════════
     # CAS A: INITIAL (création subscription)
     # ═══════════════════════════════════════════════════════
@@ -486,6 +486,7 @@ def retry_provisioning(*, provision_id, user, ip_address=None):
     provision.provisioning_error = ''
     
     provision.restart()
+    provision.save()
     
     return provision
 """

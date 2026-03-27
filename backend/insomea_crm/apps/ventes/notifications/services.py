@@ -9,7 +9,66 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils import timezone
 
+from asgiref.sync import async_to_sync  # 🆕 NOUVEAU
+from channels.layers import get_channel_layer  # 🆕 NOUVEAU
+
 from .models import Notification, NotificationType, NotificationStatus
+
+
+# 🆕 NOUVEAU: Helper pour envoyer via WebSocket
+def send_notification_to_websocket(notification):
+    """
+    Envoie notification via WebSocket
+    
+    Args:
+        notification: Notification instance
+    
+    Flow:
+        1. Serialize notification
+        2. Get channel layer
+        3. Send to user's personal channel
+    """
+    
+    channel_layer = get_channel_layer()
+    
+    # Serialize notification
+    notification_data = {
+        'id': str(notification.id),
+        'type': notification.type,
+        'type_display': notification.get_type_display(),
+        'title': notification.title,
+        'message': notification.message,
+        'action_url': notification.action_url,
+        'created_at': notification.created_at.isoformat(),
+    }
+    
+    # Send to user's channel
+    room_group_name = f'notifications_{notification.recipient.id}'
+    
+    async_to_sync(channel_layer.group_send)(
+        room_group_name,
+        {
+            'type': 'notification.send',
+            'notification': notification_data
+        }
+    )
+    
+    # Also send updated count
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    unread_count = Notification.objects.filter(
+        recipient=notification.recipient,
+        status=NotificationStatus.PENDING
+    ).count()
+    
+    async_to_sync(channel_layer.group_send)(
+        room_group_name,
+        {
+            'type': 'notification.count',
+            'count': unread_count
+        }
+    )
 
 
 # ═══════════════════════════════════════════════════════════
@@ -34,7 +93,7 @@ def notify_finance_to_approve(opportunity):
     
     for user in finance_users:
         
-        # Créé notification
+        # Créé notification (DB)
         notification = Notification.objects.create(
             type=NotificationType.FINANCE_APPROVE,
             recipient=user,
@@ -43,9 +102,11 @@ def notify_finance_to_approve(opportunity):
             opportunity=opportunity,
             action_url=f"/opportunities/{opportunity.id}/",
         )
-        
-        # Envoi email
+
         try:
+            # NOUVEAU: Envoi WebSocket (real-time)
+            send_notification_to_websocket(notification)
+            # Envoi email
             send_notification_email(notification)
             notification.mark_as_sent()
         except Exception as e:
@@ -87,8 +148,9 @@ def notify_techniciens_provision_waiting(provision):
             opportunity=provision.opportunity_line.opportunity,
             action_url=f"/provisions/{provision.id}/",
         )
-        
+    
         try:
+            send_notification_to_websocket(notification)
             send_notification_email(notification)
             notification.mark_as_sent()
         except Exception as e:
@@ -143,6 +205,7 @@ def notify_all_provisioned(provision):
         )
         
         try:
+            send_notification_to_websocket(notification)
             send_notification_email(notification)
             notification.mark_as_sent()
         except Exception as e:
@@ -177,6 +240,7 @@ def notify_subscription_expiring(subscription, days, recipient):
     )
     
     try:
+        send_notification_to_websocket(notification)
         send_notification_email(notification)
         notification.mark_as_sent()
     except Exception as e:
@@ -223,8 +287,9 @@ def notify_subscription_expired(subscription):
             subscription=subscription,
             action_url=f"/subscriptions/{subscription.id}/",
         )
-        
+
         try:
+            send_notification_to_websocket(notification)
             send_notification_email(notification)
             notification.mark_as_sent()
         except Exception as e:

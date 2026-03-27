@@ -86,14 +86,21 @@ class Opportunity(models.Model):
         ]
         return self.status in editable_statuses
     
+    @property
     def can_add_items(self):
         return self.can_edit()
     
+    @property
     def is_renewal(self):
         return self.type == OpportunityType.RENEWAL
     
+    @property
     def is_initial(self):
         return self.type == OpportunityType.INITIAL
+    
+    @property
+    def lines_count(self):
+        return self.lines.count()
     
     def get_parent_opportunity(self):
         return self.related_opportunity
@@ -154,6 +161,7 @@ class Opportunity(models.Model):
             OpportunityStatus.SUPPLIER_QUOTE_RECIEVED,
             OpportunityStatus.INSOMEA_QUOTE_CREATED,
             OpportunityStatus.CLIENT_PO_REQUEST,
+            OpportunityStatus.CLIENT_PO_RECIEVED,
         ],
         target=OpportunityStatus.CANCELLED
     )

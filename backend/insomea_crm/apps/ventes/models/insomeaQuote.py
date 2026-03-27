@@ -6,7 +6,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from ...users.models.users import User
 from datetime import datetime
 
-
+def get_upload_path(instance, filename):
+    return f'quotes/client/{instance.opportunity.client.company_name}/{filename}'
 
 class InsomeaQuote(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -14,7 +15,7 @@ class InsomeaQuote(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Insomea_quote_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")
     
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique InsomeaQuote (ex: INSOMEA-2024-00001)")
-    document = models.FileField(upload_to='quotes/')
+    document = models.FileField(upload_to=get_upload_path)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     subtotal_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Sous-total achat")
@@ -26,6 +27,13 @@ class InsomeaQuote(models.Model):
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))], help_text="Remise globale en %")
     margin = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), help_text="Marge totale")
     margin_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), help_text="Marge %")
+
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['opportunity', 'created_at']),
+            models.Index(fields=['reference']),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.reference:

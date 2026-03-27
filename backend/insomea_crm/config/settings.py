@@ -84,6 +84,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -96,6 +97,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',  # for logout
     'corsheaders',
+    'django_filters',
+    'drf_spectacular',
+    'channels',
+    'celery',
     
     # Local apps
     'apps.users.apps.UsersConfig',
@@ -135,7 +140,32 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# ═══════════════════════════════════════════════════════════
+# CHANNELS CONFIGURATION
+# ═══════════════════════════════════════════════════════════
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [config('REDIS_URL', default='redis://localhost:6379/1')],
+        },
+    },
+}
+
+# ═══════════════════════════════════════════════════════════
+# CORS (pour WebSocket connections)
+# ═══════════════════════════════════════════════════════════
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React dev
+    "http://localhost:5173",  # Vite dev
+    config('FRONTEND_URL', default='http://localhost:3000'),
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 
 # Database
@@ -222,7 +252,8 @@ REST_FRAMEWORK = {
         'anon': '100/hour',  # 100 requêtes/heure pour utilisateurs non-authentifiés
         'user': '1000/hour', # 1000 requêtes/heure pour utilisateurs authentifiés
         'login': '5/15min',  # 5 tentatives de login par 15 minutes (brute-force protection)
-    }
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 
@@ -401,4 +432,12 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'opportunities.tasks.expire_unrenewed_subscriptions',
         'schedule': crontab(hour=9, minute=0),  # 9:00 AM UTC daily
     },
+}
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'InsomeaCRM API',
+    'DESCRIPTION': 'a custom web application designed to automate the licensing lifecycle management',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
