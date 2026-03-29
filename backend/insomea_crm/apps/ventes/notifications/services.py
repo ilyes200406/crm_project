@@ -1,16 +1,9 @@
-"""
-NOTIFICATION SERVICES
-
-Création et envoi notifications internes
-"""
-
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.utils import timezone
 
-from asgiref.sync import async_to_sync  # 🆕 NOUVEAU
-from channels.layers import get_channel_layer  # 🆕 NOUVEAU
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .models import Notification, NotificationType, NotificationStatus
 
@@ -104,7 +97,7 @@ def notify_finance_to_approve(opportunity):
         )
 
         try:
-            # NOUVEAU: Envoi WebSocket (real-time)
+            # Envoi WebSocket (real-time)
             send_notification_to_websocket(notification)
             # Envoi email
             send_notification_email(notification)

@@ -1,5 +1,3 @@
-"""VIEWS - APP PRODUCTS"""
-
 from rest_framework import viewsets
 from .models import Product
 from .serializers import (
@@ -13,8 +11,6 @@ from .permessions import ProductPermission
 from .filters import ProductFilter
 
 class ProductViewSet(viewsets.ModelViewSet):
-    """ViewSet products"""
-    
     permission_classes = [ProductPermission]
     filterset_class = ProductFilter
     search_fields = ['sku', 'name']
@@ -35,10 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        product = create_product(
-            data=serializer.validated_data,
-            user=request.user
-        )
+        product = create_product(data=serializer.validated_data, user=request.user)
         
         output = ProductDetailSerializer(product)
         return Response(output.data, status=201)

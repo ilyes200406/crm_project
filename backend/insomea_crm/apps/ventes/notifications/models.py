@@ -10,8 +10,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class NotificationType(models.TextChoices):
-    """Types notifications"""
-    
     # Opportunity workflow
     FINANCE_APPROVE = 'FINANCE_APPROVE', _('Finance: Approuver opportunité')
     
@@ -25,7 +23,6 @@ class NotificationType(models.TextChoices):
 
 
 class NotificationStatus(models.TextChoices):
-    """Statuts notification"""
     PENDING = 'PENDING', _('En attente')
     SENT = 'SENT', _('Envoyée')
     READ = 'READ', _('Lue')
@@ -33,127 +30,22 @@ class NotificationStatus(models.TextChoices):
 
 
 class Notification(models.Model):
-    """
-    Notification interne
-    
-    Usage:
-        - Affichage dashboard (bell icon)
-        - Envoi email optionnel
-    """
-    
-    # ───────────────────────────────────────────────────────
-    # IDENTIFICATION
-    # ───────────────────────────────────────────────────────
-    
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # TYPE & STATUS
-    # ───────────────────────────────────────────────────────
-    
-    type = models.CharField(
-        max_length=50,
-        choices=NotificationType.choices,
-        help_text="Type notification"
-    )
-    
-    status = models.CharField(
-        max_length=20,
-        choices=NotificationStatus.choices,
-        default=NotificationStatus.PENDING,
-        help_text="Statut notification"
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # RECIPIENT
-    # ───────────────────────────────────────────────────────
-    
-    recipient = models.ForeignKey(
-        'users.User',
-        on_delete=models.CASCADE,
-        related_name='notifications',
-        help_text="Destinataire"
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # CONTENT
-    # ───────────────────────────────────────────────────────
-    
-    title = models.CharField(
-        max_length=200,
-        help_text="Titre notification"
-    )
-    
-    message = models.TextField(
-        help_text="Message notification"
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # LINKED OBJECTS (optionnel)
-    # ───────────────────────────────────────────────────────
-    
-    opportunity = models.ForeignKey(
-        'Opportunity',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='notifications',
-        help_text="Opportunité liée"
-    )
-    
-    provision = models.ForeignKey(
-        'Provision',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='notifications',
-        help_text="Provision liée"
-    )
-    
-    subscription = models.ForeignKey(
-        'Subscription',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='notifications',
-        help_text="Subscription liée"
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # ACTION LINK
-    # ───────────────────────────────────────────────────────
-    
-    action_url = models.CharField(
-        max_length=500,
-        blank=True,
-        help_text="URL action (ex: /opportunities/123/)"
-    )
-    
-    # ───────────────────────────────────────────────────────
-    # METADATA
-    # ───────────────────────────────────────────────────────
-    
-    sent_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date/heure envoi"
-    )
-    
-    read_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date/heure lecture"
-    )
-    
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    opportunity = models.ForeignKey('Opportunity', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    provision = models.ForeignKey('Provision', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    subscription = models.ForeignKey('Subscription', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+
+    recipient = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='notifications', help_text="Destinataire")
+    type = models.CharField(max_length=50, choices=NotificationType.choices, help_text="Type notification")
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    action_url = models.CharField(max_length=500, blank=True, help_text="URL action (ex: /opportunities/123/)")
+    status = models.CharField(max_length=20, choices=NotificationStatus.choices, default=NotificationStatus.PENDING)    
+
+    sent_at = models.DateTimeField(null=True,blank=True)
+    read_at = models.DateTimeField(null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    # ───────────────────────────────────────────────────────
-    # META
-    # ───────────────────────────────────────────────────────
     
     class Meta:
         db_table = 'notifications'
@@ -168,10 +60,6 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"{self.get_type_display()} → {self.recipient.get_full_name()}"
-    
-    # ───────────────────────────────────────────────────────
-    # METHODS
-    # ───────────────────────────────────────────────────────
     
     def mark_as_sent(self):
         """Marque notification comme envoyée"""
