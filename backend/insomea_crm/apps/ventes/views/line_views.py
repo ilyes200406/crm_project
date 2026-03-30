@@ -33,7 +33,7 @@ from ..services import (
     update_opportunity_line,
     remove_line_from_opportunity,
 )
-from ..permissions import IsOpportunityOwnerOrAdmin
+from ..permissions import CanUpdateOpportunity
 from ..filters import OpportunityLineFilter
 from ..models import Opportunity
 from ...products.models import Product
@@ -107,7 +107,7 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         Permissions selon action
         """
         if self.action in ['update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), IsOpportunityOwnerOrAdmin()]
+            return [CanUpdateOpportunity()]
         return [IsAuthenticated()]
     
     # ═══════════════════════════════════════════════════════

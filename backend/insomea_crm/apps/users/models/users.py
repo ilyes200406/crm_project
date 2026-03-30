@@ -114,55 +114,49 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def get_short_name(self):
         return self.first_name if self.first_name else self.email
-    
 
+    # ── Role helpers ───────────────────────────────────────────────────────
+    # Convenience checks used across services and templates.
 
-
-
-
-
-
-
-
-
-"""
-    def has_permission(self, permission):
-        permissions_map = {
-            'ADMIN': ['all'],
-            'COMMERCIAL': [
-                'view_catalogue',
-                'manage_clients',
-                'manage_ventes',
-                'view_deploiements',
-                'manage_renouvellements',
-            ],
-            'TECHNICIEN': [
-                'view_catalogue',
-                'view_clients',
-                'manage_deploiements',
-                'manage_approvisionnement',
-            ],
-            'FINANCE': [
-                'view_catalogue',
-                'view_clients',
-                'view_ventes',
-                'approve_demandes',
-                'view_rapports_financiers',
-            ],
-        }
-        
-        user_permissions = permissions_map.get(self.role, [])
-        return permission in user_permissions or 'all' in user_permissions
-    
     def is_admin(self):
         return self.role == RoleChoices.ADMIN
-    
+
     def is_commercial(self):
         return self.role == RoleChoices.COMMERCIAL
-    
+
     def is_technicien(self):
         return self.role == RoleChoices.TECHNICIEN
-    
+
     def is_finance(self):
         return self.role == RoleChoices.FINANCE
-"""
+
+    # ── RBAC Layer 1 ───────────────────────────────────────────────────────
+
+    def has_ventes_perm(self, codename: str) -> bool:
+        """
+        Layer 1 + Layer 3 combined check.
+
+        ADMIN always returns True — no DB query, maximum performance.
+        Any other role: looks up RolePermission to see if that role has
+        the requested codename assigned.
+
+        Usage:
+            user.has_ventes_perm('opportunity.create')   → True/False
+            user.has_ventes_perm('opportunity.approve')  → True only for FINANCE/ADMIN
+
+        Called by HasVentesPerm.has_permission() in users/permissions.py.
+        """
+        if self.role == RoleChoices.ADMIN:
+            return True
+        from .permission import RolePermission
+        return RolePermission.objects.filter(
+            role=self.role,
+            permission__codename=codename
+        ).exists()
+
+
+
+
+
+
+

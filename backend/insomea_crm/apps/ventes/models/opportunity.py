@@ -30,6 +30,14 @@ class Opportunity(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Opportunities_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Opportunities_assigned', limit_choices_to={'role__in': ['COMMERCIAL', 'TECHNICIEN', 'FINANCE']}, db_index=True, help_text="Utilisateur assigné (responsable actuel)")
     related_opportunity = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_opportunities', help_text="Opportunité parente (si renewal/upsell/downgrade)")
+    approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_opportunities',
+        help_text="Utilisateur Finance ayant approuvé cette opportunité"
+    )
 
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique Opportunity (ex: OPP-2024-00001)")
     name = models.CharField(max_length=255, help_text="Nom descriptif du Opportunity")

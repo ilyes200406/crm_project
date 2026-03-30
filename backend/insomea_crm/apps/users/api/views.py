@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...authentication.emails import send_setup_email
-from ...authentication.permissions import IsAdmin
+from ..permissions import IsAdmin
 from ...authentication.models.setupToken import SetupToken
 from .serializers import AdminCreateUserSerializer, UserUpdateSerializer, UserSerializer
 from ..models.users import User

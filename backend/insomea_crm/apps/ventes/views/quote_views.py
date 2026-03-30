@@ -27,7 +27,7 @@ from ..serializers import (
     InsomeaQuoteSerializer,
 )
 from ..services import create_supplier_quote
-from ..permissions import IsCommercialOrAdmin
+from ..permissions import CanCreateSupplierQuote
 from ..filters import SupplierQuoteFilter, InsomeaQuoteFilter
 
 
@@ -111,7 +111,7 @@ class SupplierQuoteViewSet(viewsets.ModelViewSet):
         Permissions selon action
         """
         if self.action == 'create':
-            return [IsAuthenticated(), IsCommercialOrAdmin()]
+            return [CanCreateSupplierQuote()]
         return [IsAuthenticated()]
     
     # ═══════════════════════════════════════════════════════

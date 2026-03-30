@@ -46,7 +46,13 @@ from ..services import (
     fail_provisioning,
 )
 from ..filters import ProvisionFilter
-from ..permissions import IsTechnicienOrAdmin
+from ..permissions import (
+    CanViewProvision,
+    CanStartProvisioning,
+    CanCompleteProvisioning,
+    CanFailProvisioning,
+    CanRetryProvisioning,
+)
 
 
 class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -90,6 +96,16 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return ProvisionDetailSerializer
     
+    def get_permissions(self):
+        """Map each action to its concrete permission class."""
+        mapping = {
+            'start':    [CanStartProvisioning()],
+            'complete': [CanCompleteProvisioning()],
+            'fail':     [CanFailProvisioning()],
+            'retry':    [CanRetryProvisioning()],
+        }
+        return mapping.get(self.action, [CanViewProvision()])
+
     def get_object(self):
         """Get object"""
         provision_id = self.kwargs.get('pk')
@@ -124,7 +140,7 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
     # WORKFLOW ACTIONS
     # ───────────────────────────────────────────────────────
     
-    @action(detail=True, methods=['post'], permission_classes=[IsTechnicienOrAdmin])
+    @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
         """
         Start provisioning
@@ -147,7 +163,7 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ProvisionDetailSerializer(provision)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsTechnicienOrAdmin])
+    @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         """
         Complete provisioning
@@ -196,7 +212,7 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
             'provision': ProvisionDetailSerializer(result['provision']).data,
         })
     
-    @action(detail=True, methods=['post'], permission_classes=[IsTechnicienOrAdmin])
+    @action(detail=True, methods=['post'])
     def fail(self, request, pk=None):
         """
         Fail provisioning

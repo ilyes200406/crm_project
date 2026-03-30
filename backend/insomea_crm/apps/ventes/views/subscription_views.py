@@ -33,6 +33,7 @@ from ..services import (
     cancel_subscription,
 )
 from ..filters import SubscriptionFilter
+from ..permissions import CanViewSubscription, CanCreateRenewal, CanCancelSubscription
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
@@ -78,6 +79,14 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         else:
             return SubscriptionDetailSerializer
     
+    def get_permissions(self):
+        """Map each action to its concrete permission class."""
+        mapping = {
+            'create_renewal': [CanCreateRenewal()],
+            'cancel':         [CanCancelSubscription()],
+        }
+        return mapping.get(self.action, [CanViewSubscription()])
+
     def get_object(self):
         """Get object"""
         subscription_id = self.kwargs.get('pk')

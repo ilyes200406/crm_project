@@ -65,9 +65,17 @@ from ..services import (
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
-    IsCommercialOrAdmin,
-    IsFinanceOrAdmin,
-    IsOpportunityOwnerOrAdmin,
+    CanViewOpportunity,
+    CanCreateOpportunity,
+    CanUpdateOpportunity,
+    CanDeleteOpportunity,
+    CanCancelOpportunity,
+    CanRequestSupplierQuotes,
+    CanCreateInsomeaQuote,
+    CanRequestClientPO,
+    CanUploadClientPO,
+    CanUpdateInsomeaQuote,
+    CanApproveOpportunity,
 )
 
 
@@ -128,15 +136,21 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             return OpportunityDetailSerializer
     
     def get_permissions(self):
-        """Get permissions"""
-        if self.action in ['create']:
-            return [IsCommercialOrAdmin()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            return [IsOpportunityOwnerOrAdmin()]
-        elif self.action == 'approve':
-            return [IsFinanceOrAdmin()]
-        else:
-            return [IsAuthenticated()]
+        """Map each action to its concrete permission class."""
+        mapping = {
+            'create':                  [CanCreateOpportunity()],
+            'update':                  [CanUpdateOpportunity()],
+            'partial_update':          [CanUpdateOpportunity()],
+            'destroy':                 [CanDeleteOpportunity()],
+            'cancel':                  [CanCancelOpportunity()],
+            'approve':                 [CanApproveOpportunity()],
+            'request_supplier_quotes': [CanRequestSupplierQuotes()],
+            'create_insomea_quote':    [CanCreateInsomeaQuote()],
+            'request_client_po':       [CanRequestClientPO()],
+            'upload_client_po':        [CanUploadClientPO()],
+            'update_insomea_quote':    [CanUpdateInsomeaQuote()],
+        }
+        return mapping.get(self.action, [CanViewOpportunity()])
     
     def get_object(self):
         """Get object"""
@@ -363,7 +377,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         serializer = OpportunityDetailSerializer(opportunity)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsFinanceOrAdmin])
+    @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """
         Approuver opportunité (Finance)

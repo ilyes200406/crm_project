@@ -9,11 +9,6 @@ from ..validators import (validate_opportunity_data, validate_can_approve, norma
 
 @transaction.atomic
 def create_opportunity(*, data: dict, user, ip_address=None):
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied(
-            'Seuls les admins et commerciaux peuvent créer des opportunités'
-        )
-
     payload = data.copy()
 
     name = normalize_opportunity_name(payload.get('name'))
@@ -38,14 +33,7 @@ def create_opportunity(*, data: dict, user, ip_address=None):
 @transaction.atomic
 def update_opportunity(*, opportunity_id, data: dict, user, ip_address=None):
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Vous ne pouvez modifier que vos propres opportunités')
-    
-    elif user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied('Vous n\'avez pas les permissions pour modifier cette opportunité')
-    
+
     unrestricted_fields = {'notes', 'assigned_to'}
     restricted_fields = set(data.keys()) - unrestricted_fields
     
@@ -68,13 +56,7 @@ def update_opportunity(*, opportunity_id, data: dict, user, ip_address=None):
 @transaction.atomic
 def delete_opportunity(*, opportunity_id, user, ip_address=None):
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Vous ne pouvez supprimer que vos propres opportunités')
-    elif user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied('Vous n\'avez pas les permissions pour supprimer des opportunités')
-    
+
     if opportunity.status == OpportunityStatus.CANCELLED:
         raise ValidationError('L\'opportunité est déjà annulée')
     
@@ -129,14 +111,7 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
-    
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent demander des devis fournisseurs')
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Vous ne pouvez gérer que vos propres opportunités')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VÉRIFICATION
     # ───────────────────────────────────────────────────────
@@ -222,18 +197,11 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-    
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent demander un BC client')
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Action non autorisée')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. TRANSITION FSM
     # ───────────────────────────────────────────────────────
-    
+
     opportunity.request_client_po()
     opportunity.save()
     # Signal FSM → StatusHistory créé auto
@@ -291,20 +259,18 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
-    
-    if user.role not in ['ADMIN', 'FINANCE']:
-        raise PermissionDenied('Seul Finance peut approuver des opportunités')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VALIDATION PRÉCONDITIONS
     # ───────────────────────────────────────────────────────
-    
+
     validate_can_approve(opportunity)
-    
+
     # ───────────────────────────────────────────────────────
     # 3. TRANSITION FSM OPPORTUNITY
     # ───────────────────────────────────────────────────────
-    
+
+    opportunity.approved_by = user   # Layer 2: record which Finance user approved
     opportunity.approuve()
     opportunity.save()
     # Signal FSM → StatusHistory créé auto
@@ -524,13 +490,6 @@ def update_insomea_quote_transition(*, opportunity_id, user, ip_address=None):
 
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
 
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent mettre à jour le devis')
-
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Action non autorisée')
-
     if opportunity.status != OpportunityStatus.CLIENT_PO_REQUEST:
         raise ValidationError(
             f'L\'opportunité doit être en CLIENT_PO_REQUEST pour mettre à jour le devis. '
@@ -570,18 +529,11 @@ def request_client_po_transition(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-    
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent demander un BC client')
-    
-    if user.role == 'COMMERCIAL':
-        if opportunity.created_by != user and opportunity.assigned_to != user:
-            raise PermissionDenied('Action non autorisée')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VALIDATION PRÉCONDITIONS
     # ───────────────────────────────────────────────────────
-    
+
     validate_can_request_client_po(opportunity)
     
     # ───────────────────────────────────────────────────────

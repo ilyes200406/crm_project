@@ -139,10 +139,7 @@ def start_provisioning(*, provision_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     provision = get_provision_by_id(provision_id)
-    
-    if user.role not in ['ADMIN', 'TECHNICIEN']:
-        raise PermissionDenied('Seul Technicien peut démarrer provisionnement')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VALIDATION PRÉCONDITIONS
     # ───────────────────────────────────────────────────────
@@ -235,10 +232,7 @@ def complete_provisioning(
     # ───────────────────────────────────────────────────────
     
     provision = get_provision_by_id(provision_id)
-    
-    if user.role not in ['ADMIN', 'TECHNICIEN']:
-        raise PermissionDenied('Seul Technicien peut compléter provisionnement')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VÉRIFICATION
     # ───────────────────────────────────────────────────────
@@ -404,10 +398,7 @@ def fail_provisioning(*, provision_id, error_message, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     provision = get_provision_by_id(provision_id)
-    
-    if user.role not in ['ADMIN', 'TECHNICIEN']:
-        raise PermissionDenied('Seul Technicien peut reporter échec provisionnement')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VÉRIFICATION
     # ───────────────────────────────────────────────────────
@@ -465,10 +456,7 @@ def retry_provisioning(*, provision_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     provision = get_provision_by_id(provision_id)
-    
-    if user.role not in ['ADMIN', 'TECHNICIEN']:
-        raise PermissionDenied('Seul Technicien peut retry provisionnement')
-    
+
     # ───────────────────────────────────────────────────────
     # 2. VÉRIFICATION
     # ───────────────────────────────────────────────────────
