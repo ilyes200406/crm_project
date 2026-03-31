@@ -10,6 +10,8 @@ class OpportunityLineStatus(models.TextChoices):
     DRAFT = 'DRAFT', _('Brouillon')
     SUPPLIER_QUOTE_REQUEST = 'SUPPLIER_QUOTE_REQUEST', _('Devis fournisseur demandé')
     SUPPLIER_QUOTE_RECIEVED = 'SUPPLIER_QUOTE_RECIEVED', _('Devis fournisseur reçu')
+    INSOMEA_PO_SENT = 'INSOMEA_PO_SENT', _('BC Insomea envoyé')
+    INSOMEA_PO_CONFIRMED = 'INSOMEA_PO_CONFIRMED', _('BC Insomea confirmé fournisseur')
     CANCELLED = 'CANCELLED', _('Annulé')
 
 class BillingCycle(models.TextChoices):
@@ -70,6 +72,14 @@ class OpportunityLine(models.Model):
             return self.supplier_quote_line is not None
         except self.__class__.supplier_quote_line.RelatedObjectDoesNotExist:
             return False
+    
+    @transition(field=status, source=OpportunityLineStatus.SUPPLIER_QUOTE_RECIEVED, target=OpportunityLineStatus.INSOMEA_PO_SENT)
+    def send_insomea_po(self):
+        pass
+
+    @transition(field=status, source=OpportunityLineStatus.INSOMEA_PO_SENT, target=OpportunityLineStatus.INSOMEA_PO_CONFIRMED)
+    def confirm_insomea_po(self):
+        pass
     
     @transition(field=status, source="*", target=OpportunityLineStatus.CANCELLED)
     def cancel(self, reason=''):

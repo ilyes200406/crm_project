@@ -23,6 +23,8 @@ from .opportunity import (
     CanApproveOpportunity,
     CanCreateInsomeaPOs,
     CanCreateSupplierQuote,
+    CanSendInsomeaPO,
+    CanConfirmInsomeaPO,
 )
 from .provision import (
     CanViewProvision,

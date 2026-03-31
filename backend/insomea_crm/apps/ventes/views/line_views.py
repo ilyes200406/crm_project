@@ -24,6 +24,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from ..models import OpportunityLine
 from ..serializers import (
     OpportunityLineSerializer,
+    OpportunityLineDetailSerializer,
     OpportunityLineCreateSerializer,
     OpportunityLineUpdateSerializer,
 )
@@ -32,6 +33,7 @@ from ..services import (
     add_line_to_opportunity,
     update_opportunity_line,
     remove_line_from_opportunity,
+    confirm_insomea_po,
 )
 from ..permissions import CanUpdateOpportunity
 from ..filters import OpportunityLineFilter
@@ -73,7 +75,7 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         
         elif user.role == 'TECHNICIEN':
             queryset = queryset.filter(
-                opportunity__status=OpportunityStatus.APPROUVED
+                opportunity__status=OpportunityStatus.INSOMEA_POS_CONFIRMED
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
@@ -106,7 +108,7 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         """
         Permissions selon action
         """
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy', 'confirm_po']:
             return [CanUpdateOpportunity()]
         return [IsAuthenticated()]
     
@@ -244,6 +246,41 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         )
         
         return Response(serializer.data)
+    
+    # 🆕 NOUVELLE ACTION
+    @action(detail=True, methods=['post'], url_path='confirm-po')
+    def confirm_po(self, request, pk=None):
+        """
+        Confirmer BC Insomea reçu par fournisseur
+        
+        POST /opportunity-lines/{id}/confirm-po/
+        
+        Body: (vide)
+        
+        🆕 NOUVEAU
+        
+        Flow:
+            - Transition ligne: INSOMEA_PO_SENT → INSOMEA_PO_CONFIRMED
+            - Si toutes lignes du PO confirmées → PO.confirmed_at updated
+            - Si toutes lignes opp confirmées → crée provisions
+        """
+        
+        line = self.get_object()
+        
+        # Call service
+        result = confirm_insomea_po(
+            line_id=line.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        # Return
+        return Response({
+            'line': OpportunityLineDetailSerializer(result['line']).data,
+            'po_confirmed': result['po_fully_confirmed'],
+            'all_confirmed': result['all_confirmed'],
+            'provisions_created': result['provisions_created'],
+        })
     
     @action(detail=True, methods=['post'], url_path='cancel')
     def cancel(self, request, pk=None):

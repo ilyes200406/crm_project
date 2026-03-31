@@ -22,6 +22,8 @@ class OpportunityStatus(models.TextChoices):
     CLIENT_PO_REQUEST = 'CLIENT_PO_REQUEST', _('BC client demandé')
     CLIENT_PO_RECIEVED = 'CLIENT_PO_RECIEVED', _('BC client reçu')
     APPROUVED = 'APPROUVED', _('approuvée')
+    INSOMEA_POS_SENT = 'INSOMEA_POS_SENT', _('BCs Insomea envoyés')
+    INSOMEA_POS_CONFIRMED = 'INSOMEA_POS_CONFIRMED', _('BCs Insomea confirmés fournisseurs')
     CANCELLED = 'CANCELLED', _('Annulé')                    
 
 class Opportunity(models.Model):
@@ -164,6 +166,14 @@ class Opportunity(models.Model):
     
     @transition(field=status, source=OpportunityStatus.CLIENT_PO_RECIEVED, target=OpportunityStatus.APPROUVED)
     def approuve(self):
+        pass
+
+    @transition(field=status, source=OpportunityStatus.APPROUVED, target=OpportunityStatus.INSOMEA_POS_SENT)
+    def all_insomea_pos_sent(self):
+        pass
+
+    @transition(field=status, source=OpportunityStatus.INSOMEA_POS_SENT, target=OpportunityStatus.INSOMEA_POS_CONFIRMED)
+    def all_insomea_pos_confirmed(self):
         pass
 
     @transition(

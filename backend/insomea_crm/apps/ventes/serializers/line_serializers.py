@@ -7,7 +7,7 @@ Support renewal workflow
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from ..models import OpportunityLine, OpportunityLineStatus, BillingCycle
+from ..models import OpportunityLine
 from ..validators import (
     validate_quantity,
     validate_line_editable,

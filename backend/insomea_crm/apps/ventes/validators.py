@@ -399,7 +399,7 @@ def validate_can_complete_provisioning(provision):
     
 def validate_complete_provisioning_data(provision, subscription_data):
     """Valide données complete provisioning selon initial vs renewal"""
-    if provision.is_initial():
+    if provision.is_initial:
         if not subscription_data.get('subscription_number'):
             raise ValidationError('subscription_number required for initial')
     else:

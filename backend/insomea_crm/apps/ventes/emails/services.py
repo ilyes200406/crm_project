@@ -195,3 +195,40 @@ def send_subscription_expired_client(subscription):
     )
     
     logger.info(f"✅ Expiration email sent to client {client.company_name}")
+
+def send_insomea_po_to_supplier(supplier, po, opportunity):
+    """
+    Envoyer BC Insomea au fournisseur
+    
+    ✅ MODIFIÉ: 1 PO = 1 SupplierQuote (plusieurs lignes possibles)
+    
+    Args:
+        supplier: Supplier instance
+        po: InsomeaPurchaseOrder instance (contains supplier_quote with lines)
+        opportunity: Opportunity instance
+    
+    Template: emails/insomea_po_to_supplier.html
+    """
+    
+    # ✅ Get lines from supplier_quote
+    supplier_quote_lines = po.supplier_quote.lines.all()
+    
+    context = {
+        'supplier': supplier,
+        'po': po,
+        'lines': supplier_quote_lines,  # ✅ SupplierQuoteLines
+        'opportunity': opportunity,
+        'total_purchase': po.total_purchase,  # ✅ Calculé depuis property
+        'site_url': settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000',
+    }
+    
+    html_message = render_to_string('emails/insomea_po_to_supplier.html', context)
+    
+    send_mail(
+        subject=f"Bon de commande Insomea - {po.reference}",
+        message=f"Bonjour {supplier.name},\n\nVeuillez trouver ci-joint notre bon de commande.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[supplier.email],
+        html_message=html_message,
+        fail_silently=False,
+    )

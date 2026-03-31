@@ -56,16 +56,18 @@ class CanViewOpportunity(HasVentesPerm):
         if user.role == 'COMMERCIAL':
             return opp.assigned_to == user or opp.created_by == user
 
-        # FINANCE: advanced phases
+        # FINANCE: from client PO received onwards
         if user.role == 'FINANCE':
             return opp.status in [
                 OpportunityStatus.CLIENT_PO_RECIEVED,
                 OpportunityStatus.APPROUVED,
+                OpportunityStatus.INSOMEA_POS_SENT,
+                OpportunityStatus.INSOMEA_POS_CONFIRMED,
             ]
 
-        # TECHNICIEN: approved phase only
+        # TECHNICIEN: once all supplier POs are confirmed
         if user.role == 'TECHNICIEN':
-            return opp.status == OpportunityStatus.APPROUVED
+            return opp.status == OpportunityStatus.INSOMEA_POS_CONFIRMED
 
         return False
 
@@ -162,3 +164,15 @@ class CanCreateSupplierQuote(HasVentesPerm):
     """COMMERCIAL creates per-line supplier quotes."""
     permission_codename = 'supplier_quote.create'
     check_ownership = True
+
+
+class CanSendInsomeaPO(HasVentesPerm):
+    """Finance sends an Insomea PO to the supplier."""
+    permission_codename = 'insomea_po.send'
+    check_ownership = False
+
+
+class CanConfirmInsomeaPO(HasVentesPerm):
+    """Finance records supplier confirmation of an Insomea PO."""
+    permission_codename = 'insomea_po.confirm'
+    check_ownership = False

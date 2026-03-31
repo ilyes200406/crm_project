@@ -7,16 +7,13 @@ from datetime import datetime
 from ...users.models.users import User
 from ...suppliers.models import Supplier
 
-def get_upload_path(instance, filename):
-    return f'quotes/supplier/{instance.supplier.name}/{filename}'
-
 class SupplierQuote(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Supplier_quote_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")    
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
 
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique SupplierQuote")
-    document = models.FileField(upload_to=get_upload_path)
+    document = models.FileField(upload_to='quotes/supplier/')
     recieved_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     subtotal_purchase = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))], help_text="Sous-total achat")

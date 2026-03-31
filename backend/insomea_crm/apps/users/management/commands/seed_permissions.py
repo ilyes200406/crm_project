@@ -56,6 +56,10 @@ PERMISSIONS = [
     ('subscription.view',                   'Voir les subscriptions'),
     ('subscription.create_renewal',         'Créer opportunité renouvellement'),
     ('subscription.cancel',                 'Annuler une subscription'),
+    # InsomeaPO
+    ('insomea_po.send',                     'Envoyer BC Insomea au fournisseur'),
+    ('insomea_po.confirm',                  'Confirmer reception BC Insomea'),
+
 ]
 
 
@@ -86,6 +90,8 @@ ROLE_PERMISSIONS = {
         'opportunity.cancel',
         'opportunity.approve',
         'opportunity.create_insomea_pos',
+        'insomea_po.send',
+        'insomea_po.confirm',
         'provision.view',
         'subscription.view',
         'subscription.cancel',
@@ -100,6 +106,7 @@ ROLE_PERMISSIONS = {
         'subscription.view',
     ],
 }
+
 
 
 class Command(BaseCommand):

@@ -12,8 +12,9 @@ from .opportunity_service import (
     request_client_po,
     approve_opportunity,
     update_opportunity_status_from_lines,
-    request_client_po_transition,
     update_insomea_quote_transition,
+    confirm_all_insomea_pos,
+    confirm_insomea_po,
 )
 
 from .opportunity_line_service import (
@@ -35,7 +36,7 @@ from .purchase_order_service import (
 )
 
 from .provision_service import (
-    create_provision_for_line,
+    create_provisions,
     start_provisioning,
     complete_provisioning,
     fail_provisioning,
@@ -64,7 +65,9 @@ __all__ = [
     'add_line_to_opportunity',
     'update_opportunity_line',
     'remove_line_from_opportunity',
-    
+    'confirm_all_insomea_pos',
+    'confirm_insomea_po',
+
     # Quotes
     'create_supplier_quote',
     'create_insomea_quote',
@@ -74,11 +77,10 @@ __all__ = [
     # Purchase Orders
     'upload_client_po',
     'create_insomea_pos',
-    'request_client_po_transition',
     'update_insomea_quote_transition',
     
     # Provision
-    'create_provision_for_line',
+    'create_provisions',
     'start_provisioning',
     'complete_provisioning',
     'fail_provisioning',

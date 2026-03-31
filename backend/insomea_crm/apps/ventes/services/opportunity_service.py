@@ -1,10 +1,9 @@
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
-
-from ..models import (Opportunity, OpportunityStatus, OpportunityLineStatus)
-from ..selectors import (get_opportunity_by_id)
-from .provision_service import create_provision_for_line
-from ..emails.services import send_supplier_quote_request, send_client_quote_with_pdf
+from django.utils import timezone
+from ..models import (Opportunity, OpportunityLine, OpportunityStatus, OpportunityLineStatus, InsomeaPurchaseOrder)
+from ..selectors import (get_opportunity_by_id, get_line_by_id)
+from ..emails.services import send_supplier_quote_request, send_client_quote_with_pdf, send_insomea_po_to_supplier
 from ..validators import (validate_opportunity_data, validate_can_approve, normalize_opportunity_name, validate_can_request_client_po)
 
 @transaction.atomic
@@ -278,7 +277,7 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     # 4. CRÉATION PROVISIONS (1 par OpportunityLine)
     # ───────────────────────────────────────────────────────
-    
+    """
     provisions = []
     
     for line in opportunity.lines.all():
@@ -289,27 +288,298 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
                 user=user
             )
             provisions.append(provision)
-    
+    """
     # ───────────────────────────────────────────────────────
     # 5. CRÉATION INSOMEA POs (1 par fournisseur)
     # ───────────────────────────────────────────────────────
     
-    from .purchase_order_service import create_insomea_pos
     
-    insomea_pos = create_insomea_pos(
+    result = send_insomea_pos(
         opportunity_id=opportunity.id,
         user=user,
         ip_address=ip_address
     )
+
+    return result
+
+def generate_insomea_po_reference(supplier):
+    """
+    Générer référence Insomea PO
     
-    # ───────────────────────────────────────────────────────
-    # 6. RETOUR
-    # ───────────────────────────────────────────────────────
+    Format: IPO-YYYYMMDD-SUPPLIER-XXX
+    """
+    from django.db.models import Count
+    
+    today = timezone.now().date()
+    count = InsomeaPurchaseOrder.objects.filter(
+        supplier=supplier,
+        created_at__date=today
+    ).count()
+    
+    supplier_code = supplier.name[:3].upper()
+    
+    return f"IPO-{today.strftime('%Y%m%d')}-{supplier_code}-{count + 1:03d}"
+
+
+@transaction.atomic
+def send_insomea_pos(*, opportunity_id, user, ip_address=None):
+    """
+    Send Insomea Purchase Orders to suppliers
+    
+    ✅ REFACTORÉ: Crée 1 PO par SupplierQuote (pas par ligne)
+    
+    Triggered by: approve_opportunity() (Finance)
+    
+    Flow:
+        1. Get all SupplierQuotes from opportunity lines
+        2. Pour chaque SupplierQuote:
+           - Create 1 InsomeaPurchaseOrder
+           - Link all OpportunityLines to this PO
+           - Transition all lines: SUPPLIER_QUOTE_RECEIVED → INSOMEA_PO_SENT
+        3. Send 1 email per supplier (with all lines)
+        4. Opportunity auto-transition: APPROVED → INSOMEA_PO_SENT
+    
+    Returns:
+        dict {
+            'opportunity': Opportunity,
+            'pos_created': [InsomeaPurchaseOrder, ...],
+            'emails_sent': int
+        }
+    """
+    
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
+    
+    # Check status
+    if opportunity.status != OpportunityStatus.APPROUVED:
+        raise ValidationError(
+            f"Opportunity must be APPROVED. Current: {opportunity.get_status_display()}"
+        )
+    
+    # Check lines
+    if not opportunity.lines.exists():
+        raise ValidationError("Opportunity has no lines")
+    
+    # ✅ NOUVEAU: Group lines by SupplierQuote
+    supplier_quotes_map = {}  # {supplier_quote_id: [lines]}
+    
+    for line in opportunity.lines.all():
+        
+        # Check status
+        if line.status != OpportunityLineStatus.SUPPLIER_QUOTE_RECIEVED:
+            raise ValidationError(
+                f"Line {line.id} must be SUPPLIER_QUOTE_RECIEVED. Current: {line.get_status_display()}"
+            )
+        
+        # Get SupplierQuoteLine
+        if not hasattr(line, 'supplier_quote_line') or not line.supplier_quote_line:
+            raise ValidationError(f"Line {line.id} has no supplier quote")
+        
+        supplier_quote = line.supplier_quote_line.supplier_quote
+        
+        if supplier_quote.id not in supplier_quotes_map:
+            supplier_quotes_map[supplier_quote.id] = {
+                'supplier_quote': supplier_quote,
+                'lines': []
+            }
+        
+        supplier_quotes_map[supplier_quote.id]['lines'].append(line)
+    
+    # ✅ Create 1 PO per SupplierQuote
+    pos_created = []
+    emails_sent = 0
+    
+    for sq_data in supplier_quotes_map.values():
+        
+        supplier_quote = sq_data['supplier_quote']
+        lines = sq_data['lines']
+        supplier = supplier_quote.supplier
+        
+        # Check if PO already exists (related_name='insomea_pos')
+        existing_po = supplier_quote.insomea_pos.first()
+        if existing_po:
+            print(f"⚠️  PO already exists for SupplierQuote {supplier_quote.id}")
+            po = existing_po
+        else:
+            # Generate reference
+            po_number = generate_insomea_po_reference(supplier)
+
+            # ✅ Create InsomeaPurchaseOrder (1 per SupplierQuote)
+            po = InsomeaPurchaseOrder.objects.create(
+                supplier=supplier,
+                supplier_quote=supplier_quote,  # ✅ Link to quote (not line)
+                po_number=po_number,
+                sent_at=timezone.now(),
+            )
+        
+        # Link all lines to this PO + transition
+        for line in lines:
+            line.insomea_purchase_order = po
+            line.send_insomea_po()
+            line.save()
+        
+        pos_created.append(po)
+        
+        # Send email to supplier (1 email with all lines)
+        try:
+            send_insomea_po_to_supplier(
+                supplier=supplier,
+                po=po,  # ✅ 1 PO (contains multiple lines via supplier_quote)
+                opportunity=opportunity
+            )
+            emails_sent += 1
+        except Exception as e:
+            print(f"❌ Error sending email to {supplier.name}: {e}")
+    
+    # Refresh opportunity
+    opportunity.refresh_from_db()
+    
+    # Check if all lines transitioned → auto-transition opportunity
+    all_lines_sent = all(
+        line.status == OpportunityLineStatus.INSOMEA_PO_SENT
+        for line in opportunity.lines.all()
+    )
+    
+    if all_lines_sent:
+        opportunity.all_insomea_pos_sent()
+        opportunity.save()
     
     return {
         'opportunity': opportunity,
-        'provisions': provisions,
-        'insomea_pos': insomea_pos,
+        'pos_created': pos_created,
+        'emails_sent': emails_sent
+    }
+
+
+@transaction.atomic
+def confirm_insomea_po(*, line_id, user, ip_address=None):
+    """
+    Confirm Insomea PO received by supplier
+    
+    ✅ MODIFIÉ: Confirmation par ligne, mais check si toutes lignes du PO confirmées
+    
+    Args:
+        line_id: OpportunityLine UUID
+        user: User instance
+    
+    Flow:
+        1. Check line status = INSOMEA_PO_SENT
+        2. Transition line: INSOMEA_PO_SENT → INSOMEA_PO_CONFIRMED
+        3. Check if ALL lines of this PO confirmed
+        4. If yes: Update PO.confirmed_at
+        5. Check if all opportunity lines confirmed → create provisions
+    """
+    
+    line = get_line_by_id(line_id, user=user)
+    
+    # Check permissions
+    #check_can_update_opportunity(user, line.opportunity)
+    
+    # Check status
+    if line.status != OpportunityLineStatus.INSOMEA_PO_SENT:
+        raise ValidationError(
+            f"Line must be INSOMEA_PO_SENT. Current: {line.get_status_display()}"
+        )
+    
+    # Get PO
+    if not line.insomea_purchase_order:
+        raise ValidationError("Line has no Insomea PO")
+    
+    po = line.insomea_purchase_order
+    
+    # FSM transition line
+    line.confirm_insomea_po()
+    line.save()
+    
+    # ✅ Check if ALL lines of this PO confirmed
+    all_po_lines = OpportunityLine.objects.filter(
+        insomea_purchase_order=po
+    )
+    
+    all_po_lines_confirmed = all(
+        l.status == OpportunityLineStatus.INSOMEA_PO_CONFIRMED
+        for l in all_po_lines
+    )
+    
+    # Update PO if all lines confirmed
+    if all_po_lines_confirmed and not po.confirmed_at:
+        po.confirmed_at = timezone.now()
+        po.save()
+    
+    # Check if ALL opportunity lines confirmed
+    opportunity = line.opportunity
+    all_opp_lines_confirmed = all(
+        l.status == OpportunityLineStatus.INSOMEA_PO_CONFIRMED
+        for l in opportunity.lines.all()
+    )
+    
+    provisions_created = False
+    
+    if all_opp_lines_confirmed:
+        # Auto-transition opportunity
+        opportunity.all_insomea_pos_confirmed()
+        opportunity.save()
+        
+        # Create provisions
+        from .provision_service import create_provisions
+        
+        create_provisions(
+            opportunity_id=opportunity.id,
+            user=user,
+            ip_address=ip_address
+        )
+        
+        provisions_created = True
+    
+    return {
+        'line': line,
+        'po': po,
+        'po_fully_confirmed': all_po_lines_confirmed,
+        'all_confirmed': all_opp_lines_confirmed,
+        'provisions_created': provisions_created
+    }
+
+
+@transaction.atomic
+def confirm_all_insomea_pos(*, opportunity_id, user, ip_address=None):
+    """
+    Confirm all Insomea POs for opportunity
+    
+    ✅ MODIFIÉ: Confirme toutes lignes
+    """
+    
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
+    
+    # Check permissions
+    # check_can_update_opportunity(user, opportunity)
+    
+    # Check status
+    if opportunity.status != OpportunityStatus.INSOMEA_POS_SENT:
+        raise ValidationError(
+            f"Opportunity must be INSOMEA_POS_SENT. Current: {opportunity.get_status_display()}"
+        )
+    
+    lines_confirmed = 0
+    
+    for line in opportunity.lines.all():
+        if line.status == OpportunityLineStatus.INSOMEA_PO_SENT:
+            confirm_insomea_po(
+                line_id=line.id,
+                user=user,
+                ip_address=ip_address
+            )
+            lines_confirmed += 1
+    
+    # Refresh
+    opportunity.refresh_from_db()
+    
+    provisions_created = (
+        opportunity.status == OpportunityStatus.INSOMEA_POS_CONFIRMED
+    )
+    
+    return {
+        'lines_confirmed': lines_confirmed,
+        'opportunity': opportunity,
+        'provisions_created': provisions_created
     }
 
 
@@ -499,49 +769,4 @@ def update_insomea_quote_transition(*, opportunity_id, user, ip_address=None):
     opportunity.update_insomea_quote()
     opportunity.save()
 
-    return opportunity
-
-
-@transaction.atomic
-def request_client_po_transition(*, opportunity_id, user, ip_address=None):
-    """
-    Transition Opportunity: INSOMEA_QUOTE_CREATED → CLIENT_PO_REQUEST
-    
-    Args:
-        opportunity_id: UUID
-        user: User instance (COMMERCIAL)
-        ip_address: str
-    
-    Returns:
-        Opportunity mise à jour
-    
-    Raises:
-        ValidationError: Si préconditions non remplies
-        PermissionDenied: Si pas COMMERCIAL
-    
-    Business Rules:
-        - Marque devis Insomea comme envoyé au client
-        - Transition FSM: request_client_po()
-    """
-    
-    # ───────────────────────────────────────────────────────
-    # 1. RÉCUPÉRATION + PERMISSIONS
-    # ───────────────────────────────────────────────────────
-    
-    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-
-    # ───────────────────────────────────────────────────────
-    # 2. VALIDATION PRÉCONDITIONS
-    # ───────────────────────────────────────────────────────
-
-    validate_can_request_client_po(opportunity)
-    
-    # ───────────────────────────────────────────────────────
-    # 3. TRANSITION FSM
-    # ───────────────────────────────────────────────────────
-    
-    opportunity.request_client_po()
-    opportunity.save()
-    # Signal FSM → StatusHistory créé auto
-    
     return opportunity

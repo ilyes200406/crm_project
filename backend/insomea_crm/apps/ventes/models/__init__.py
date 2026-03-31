@@ -1,4 +1,4 @@
-from .clientPurchaseOder import ClientPO
+from .clientPurchaseOrder import ClientPO
 from .insomeaPurchaseOrder import InsomeaPurchaseOrder
 from .insomeaQuote import InsomeaQuote
 from .insomeaQuoteLine import InsomeaQuoteLine

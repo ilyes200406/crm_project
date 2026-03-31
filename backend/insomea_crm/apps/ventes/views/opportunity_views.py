@@ -46,6 +46,7 @@ from ..serializers import (
     CancelOpportunitySerializer,
     ProvisionDetailSerializer,
     InsomeaPOSerializer,
+    InsomeaPurchaseOrderListSerializer,
     UploadClientPOSerializer,
 )
 from ..selectors import (
@@ -62,6 +63,7 @@ from ..services import (
     approve_opportunity,
     upload_client_po,
     update_insomea_quote_transition,
+    confirm_all_insomea_pos,
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
@@ -396,8 +398,44 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         
         return Response({
             'opportunity': OpportunityDetailSerializer(result['opportunity']).data,
-            'provisions': ProvisionDetailSerializer(result['provisions'], many=True).data,
-            'insomea_pos': InsomeaPOSerializer(result['insomea_pos'], many=True).data,
+            'pos_created': InsomeaPurchaseOrderListSerializer(
+                result['pos_created'], 
+                many=True
+            ).data,
+            'emails_sent': result['emails_sent'],
+        })
+    
+    # 🆕 NOUVELLE ACTION
+    @action(detail=True, methods=['post'])
+    def confirm_all_pos(self, request, pk=None):
+        """
+        Confirmer tous les BC Insomea
+        
+        POST /opportunities/:id/confirm_all_pos/
+        
+        Body: (vide)
+        
+        🆕 NOUVEAU
+        
+        Flow:
+            - Confirme toutes lignes INSOMEA_PO_SENT
+            - Si toutes confirmées → crée provisions
+        """
+        
+        opportunity = self.get_object()
+        
+        # Call service
+        result = confirm_all_insomea_pos(
+            opportunity_id=opportunity.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        # Return
+        return Response({
+            'lines_confirmed': result['lines_confirmed'],
+            'provisions_created': result['provisions_created'],
+            'opportunity': OpportunityDetailSerializer(result['opportunity']).data,
         })
 
     @action(detail=True, methods=['post'])

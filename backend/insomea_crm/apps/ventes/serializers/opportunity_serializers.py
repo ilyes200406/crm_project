@@ -569,6 +569,93 @@ class InsomeaPOSerializer(serializers.ModelSerializer):
         return obj.opportunity_lines.count()
 
 
-class InsomeaPurchaseOrderListSerializer(InsomeaPOSerializer):
-    """Alias pour cohérence avec les serializers d'opportunity."""
-    pass
+class InsomeaPurchaseOrderListSerializer(serializers.ModelSerializer):
+    """
+    Serializer liste Insomea POs
+    
+    ✅ REFACTORÉ: Via supplier_quote
+    """
+    
+    supplier_name = serializers.CharField(
+        source='supplier.name',
+        read_only=True
+    )
+    
+    # ✅ Calculé depuis supplier_quote
+    total_purchase = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    
+    lines_count = serializers.IntegerField(read_only=True)
+    
+    is_sent = serializers.BooleanField(read_only=True)
+    is_confirmed = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = InsomeaPurchaseOrder
+        fields = [
+            'id',
+            'reference',
+            'supplier',
+            'supplier_name',
+            'supplier_quote',  # ✅ MODIFIÉ
+            'total_purchase',  # ✅ Property
+            'lines_count',  # ✅ Property
+            'sent_at',
+            'confirmed_at',
+            'is_sent',
+            'is_confirmed',
+            'created_at',
+        ]
+
+class InsomeaPurchaseOrderDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer détail Insomea PO
+    
+    ✅ REFACTORÉ: Nested supplier_quote with lines
+    """
+    
+    supplier = serializers.SerializerMethodField()
+    supplier_quote = serializers.SerializerMethodField()
+    
+    # ✅ Properties
+    total_purchase = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    
+    lines_count = serializers.IntegerField(read_only=True)
+    
+    is_sent = serializers.BooleanField(read_only=True)
+    is_confirmed = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = InsomeaPurchaseOrder
+        fields = [
+            'id',
+            'reference',
+            'supplier',
+            'supplier_quote',
+            'total_purchase',
+            'lines_count',
+            'po_file',
+            'sent_at',
+            'confirmed_at',
+            'is_sent',
+            'is_confirmed',
+            'notes',
+            'created_at',
+        ]
+    
+    def get_supplier(self, obj):
+        """Supplier info"""
+        from ...suppliers.serializers import SupplierListSerializer
+        return SupplierListSerializer(obj.supplier).data
+    
+    def get_supplier_quote(self, obj):
+        """SupplierQuote info with lines"""
+        from .quote_serializers import SupplierQuoteDetailSerializer
+        return SupplierQuoteDetailSerializer(obj.supplier_quote).data

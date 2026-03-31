@@ -14,14 +14,16 @@ from ..models import (
     Provision,
     ProvisionStatus,
     Subscription,
+    OpportunityStatus,
+    OpportunityLineStatus,
 )
 from ..validators import (
     validate_can_start_provisioning,
     validate_can_complete_provisioning,
 )
 from ..selectors import (
-    get_line_by_id,
     get_provision_by_id,
+    get_opportunity_by_id
 )
 
 # 🆕 NOUVEAUX IMPORTS
@@ -43,67 +45,69 @@ def _get_related_or_none(instance, attr_name):
 # ═══════════════════════════════════════════════════════════
 
 @transaction.atomic
-def create_provision_for_line(*, opportunity_line_id, user=None):
+def create_provisions(*, opportunity_id, user, ip_address=None):
     """
-    Crée Provision pour une OpportunityLine
+    Create provisions for opportunity
     
-    INCHANGÉ - fonctionne pour INITIAL et RENEWAL
+    🆕 MODIFIÉ: Triggered by confirm_insomea_pos() (toutes POs confirmées)
+    AVANT: Triggered by approve_opportunity()
     
     Args:
-        opportunity_line_id: UUID OpportunityLine
-        user: User instance (optionnel, pour audit)
+        opportunity_id: UUID
+        user: User instance
     
     Returns:
-        Provision créée
-    
-    Raises:
-        ValidationError: Si provision existe déjà
+        list[Provision]
     
     Business Rules:
-        - Appelé automatiquement quand Opportunity APPROVED
-        - Statut initial: WAITING_PROVISION
-        - 1 Provision par OpportunityLine
-        
-        🆕 RENEWAL: Si OpportunityLine.renewal_of_subscription existe,
-                    provision.subscription sera pré-remplie
-    
-    Note:
-        Cette fonction est appelée par approve_opportunity() dans workflow_service
+        - Opportunity status must be INSOMEA_PO_CONFIRMED  # 🆕 MODIFIÉ
+        - All lines must be INSOMEA_PO_CONFIRMED  # 🆕 MODIFIÉ
+        - Creates 1 Provision per line
     """
     
-    # ───────────────────────────────────────────────────────
-    # 1. RÉCUPÉRATION
-    # ───────────────────────────────────────────────────────
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
     
-    line = get_line_by_id(opportunity_line_id)
-    
-    # ───────────────────────────────────────────────────────
-    # 2. VÉRIFICATION
-    # ───────────────────────────────────────────────────────
-    
-    # Vérifie que provision n'existe pas déjà
-    if _get_related_or_none(line, 'provision') is not None:
+    # 🆕 MODIFIÉ: Check status
+    if opportunity.status != OpportunityStatus.INSOMEA_PO_CONFIRMED:
         raise ValidationError(
-            f'Une provision existe déjà pour cette ligne : {line.product.title}'
+            f"Opportunity must be INSOMEA_PO_CONFIRMED to create provisions. "
+            f"Current: {opportunity.get_status_display()}"
         )
     
-    # ───────────────────────────────────────────────────────
-    # 3. CRÉATION PROVISION
-    # ───────────────────────────────────────────────────────
+    # Check lines
+    for line in opportunity.lines.all():
+        # 🆕 MODIFIÉ: Check status
+        if line.status != OpportunityLineStatus.INSOMEA_PO_CONFIRMED:
+            raise ValidationError(
+                f"Line {line.id} must be INSOMEA_PO_CONFIRMED. "
+                f"Current: {line.get_status_display()}"
+            )
     
-    # 🆕 NOUVEAU: Détecte renewal et link subscription si existe
-    subscription = None
-    if line.is_renewal():
-        subscription = line.get_original_subscription()
+    provisions = []
     
-    provision = Provision.objects.create(
-        opportunity_line=line,
-        subscription=subscription,  # 🆕 None si initial, existante si renewal
-        status=ProvisionStatus.WAITING_PROVISION,
-    )
-    # NOTE: FSM statut initial défini dans model
+    for line in opportunity.lines.all():
+        
+        # Check if provision already exists
+        if hasattr(line, 'provision') and line.provision:
+            print(f"⚠️  Provision already exists for line {line.id}")
+            continue
+        
+        # Determine subscription (renewal vs initial)
+        subscription = None
+        if line.is_renewal():
+            subscription = line.get_original_subscription()
+        
+        # Create provision
+        provision = Provision.objects.create(
+            opportunity_line=line,
+            subscription=subscription,  # None if initial, existing if renewal
+            status=ProvisionStatus.WAITING_PROVISION,
+        )
+
+        provisions.append(provision)
+        # Notification handled by post_save signal (notify_on_provision_created)
     
-    return provision
+    return provisions
 
 
 # ═══════════════════════════════════════════════════════════
