@@ -23,7 +23,7 @@ Performance :
 
 import django_filters
 from django.db.models import Q
-from .models import Client, Contact, ClientActivity, ClientStatus, Industry
+from .models import Client, Contact, ClientActivity, Industry
 
 
 # ═══════════════════════════════════════════════════════════
@@ -51,16 +51,6 @@ class ClientFilter(django_filters.FilterSet):
     # EXACT FILTERS (égalité stricte)
     # ───────────────────────────────────────────────────────
     
-    status = django_filters.ChoiceFilter(
-        field_name='status',
-        choices=ClientStatus.choices,
-        label='Statut'
-    )
-    # Explication :
-    # ChoiceFilter : liste déroulante dans Swagger
-    # SQL : WHERE status = 'CUSTOMER'
-    # Utilise index sur status
-    
     industry = django_filters.ChoiceFilter(
         field_name='industry',
         choices=Industry.choices,
@@ -68,26 +58,6 @@ class ClientFilter(django_filters.FilterSet):
     )
     # SQL : WHERE industry = 'IT'
     # Utilise index sur industry
-    
-    country = django_filters.CharFilter(
-        field_name='country',
-        lookup_expr='iexact',
-        label='Pays'
-    )
-    # Explication lookup_expr='iexact' :
-    # Case-insensitive exact match
-    # SQL : WHERE LOWER(country) = LOWER('tunisie')
-    # 'Tunisie' = 'tunisie' = 'TUNISIE'
-    
-    city = django_filters.CharFilter(
-        field_name='city',
-        lookup_expr='icontains',
-        label='Ville'
-    )
-    # Explication lookup_expr='icontains' :
-    # Case-insensitive contains (LIKE)
-    # SQL : WHERE city ILIKE '%tunis%'
-    # 'Tunis' trouve 'Tunis', 'La Marsa, Tunis', etc.
     
     # ───────────────────────────────────────────────────────
     # FOREIGN KEY FILTERS
@@ -239,23 +209,17 @@ class ClientFilter(django_filters.FilterSet):
         - company_name
         - email
         - phone
-        - city
         - notes
         - contacts.first_name
         - contacts.last_name
-        
+
         Usage :
         GET /clients/?search=Dupont
-        
-        Explication :
-        Full-text search basique
-        Pour production : utiliser PostgreSQL full-text search
         """
         return queryset.filter(
             Q(company_name__icontains=value) |
             Q(email__icontains=value) |
             Q(phone__icontains=value) |
-            Q(city__icontains=value) |
             Q(notes__icontains=value) |
             Q(contacts__first_name__icontains=value) |
             Q(contacts__last_name__icontains=value) |
@@ -317,10 +281,7 @@ class ClientFilter(django_filters.FilterSet):
     class Meta:
         model = Client
         fields = {
-            'status': ['exact'],
             'industry': ['exact'],
-            'country': ['exact', 'icontains'],
-            'city': ['icontains'],
             'is_active': ['exact'],
             'created_at': ['gte', 'lte', 'exact'],
             'updated_at': ['gte', 'lte'],
@@ -412,15 +373,14 @@ class ContactFilter(django_filters.FilterSet):
         - first_name, last_name
         - email
         - position
-        - phone, mobile
+        - phone
         """
         return queryset.filter(
             Q(first_name__icontains=value) |
             Q(last_name__icontains=value) |
             Q(email__icontains=value) |
             Q(position__icontains=value) |
-            Q(phone__icontains=value) |
-            Q(mobile__icontains=value)
+            Q(phone__icontains=value)
         )
     
     class Meta:
@@ -539,12 +499,8 @@ class ClientOrderingFilter(django_filters.OrderingFilter):
             ('-created_at', 'Date création (récents)'),
             ('updated_at', 'Date modification (anciens)'),
             ('-updated_at', 'Date modification (récents)'),
-            ('status', 'Statut (A-Z)'),
-            ('-status', 'Statut (Z-A)'),
             ('industry', 'Secteur (A-Z)'),
             ('-industry', 'Secteur (Z-A)'),
-            ('city', 'Ville (A-Z)'),
-            ('-city', 'Ville (Z-A)'),
         ]
         # Explication :
         # Liste affichée dans Swagger UI

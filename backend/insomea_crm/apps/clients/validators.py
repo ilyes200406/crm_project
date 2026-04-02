@@ -67,35 +67,6 @@ def validate_phone_number(value):
         )
 
 
-def validate_mobile_number(value):
-    """
-    Valide un numéro mobile tunisien
-    
-    Règles spécifiques mobiles :
-    - Commence par 2, 4, 5, ou 9 (opérateurs tunisiens)
-    - 8 chiffres total
-    
-    Opérateurs :
-    - 2X XXX XXX : Ooredoo
-    - 4X XXX XXX : Orange
-    - 5X XXX XXX : Tunisie Telecom
-    - 9X XXX XXX : Tunisie Telecom
-    """
-    if not value:
-        return
-    
-    cleaned = re.sub(r'[\s\-\(\)]', '', value)
-    
-    # Mobile tunisien : commence par 2, 4, 5, ou 9
-    pattern = r'^(\+?216|00216)?[2459]\d{7}$'
-    
-    if not re.match(pattern, cleaned):
-        raise ValidationError(
-            _('Numéro mobile invalide. Doit commencer par 2, 4, 5, ou 9 (opérateurs tunisiens)'),
-            code='invalid_mobile'
-        )
-
-
 # ═══════════════════════════════════════════════════════════
 # EMAIL VALIDATORS
 # ═══════════════════════════════════════════════════════════
@@ -186,134 +157,6 @@ def validate_website_url(value):
 
 
 # ═══════════════════════════════════════════════════════════
-# CLIENT STATUS VALIDATORS
-# ═══════════════════════════════════════════════════════════
-
-def validate_client_status(value):
-    """
-    Valide le statut client
-    
-    Explication :
-    Vérifie que le statut est dans la liste autorisée
-    Empêche injection de statuts invalides
-    """
-    from .models import ClientStatus
-    
-    valid_statuses = [choice[0] for choice in ClientStatus.choices]
-    
-    if value not in valid_statuses:
-        raise ValidationError(
-            _(f'Statut invalide. Valeurs autorisées : {", ".join(valid_statuses)}'),
-            code='invalid_status'
-        )
-
-
-def validate_status_transition(old_status, new_status):
-    """
-    Valide les transitions de statut autorisées
-    
-    Règles métier :
-    - LEAD → PROSPECT : OK (qualification)
-    - LEAD → CUSTOMER : NON (doit passer par PROSPECT)
-    - PROSPECT → CUSTOMER : OK (vente conclue)
-    - CUSTOMER → INACTIVE : OK (churn)
-    - INACTIVE → CUSTOMER : OK (réactivation)
-    - CUSTOMER → LEAD : NON (régression impossible)
-    
-    Explication :
-    Workflow métier strict
-    Empêche transitions illogiques
-    """
-    from .models import ClientStatus
-    
-    # Transitions autorisées (from_status → to_status)
-    allowed_transitions = {
-        ClientStatus.LEAD: [ClientStatus.PROSPECT, ClientStatus.INACTIVE],
-        ClientStatus.PROSPECT: [ClientStatus.CUSTOMER, ClientStatus.LEAD, ClientStatus.INACTIVE],
-        ClientStatus.CUSTOMER: [ClientStatus.INACTIVE],
-        ClientStatus.INACTIVE: [ClientStatus.LEAD, ClientStatus.PROSPECT, ClientStatus.CUSTOMER],
-    }
-    
-    # Si pas de changement, OK
-    if old_status == new_status:
-        return
-    
-    # Vérifie si transition autorisée
-    if new_status not in allowed_transitions.get(old_status, []):
-        raise ValidationError(
-            _(f'Transition de statut non autorisée : {old_status} → {new_status}. '
-              f'Transitions autorisées depuis {old_status} : '
-              f'{", ".join(allowed_transitions.get(old_status, []))}'),
-            code='invalid_status_transition'
-        )
-
-
-# ═══════════════════════════════════════════════════════════
-# TAX ID VALIDATORS
-# ═══════════════════════════════════════════════════════════
-
-def validate_tunisian_tax_id(value):
-    """
-    Valide une matricule fiscale tunisienne
-    
-    Format matricule fiscale tunisienne :
-    - 7 chiffres + 1 lettre + 3 chiffres + 1 lettre
-    - Exemple : 1234567A123B
-    - Total : 13 caractères
-    
-    Explication :
-    - 7 premiers chiffres : numéro d'ordre
-    - 1 lettre : clé de contrôle 1
-    - 3 chiffres : code établissement
-    - 1 lettre : clé de contrôle 2
-    
-    Validation stricte pour conformité légale tunisienne
-    """
-    if not value:
-        return
-    
-    # Nettoie espaces/tirets
-    cleaned = value.replace(' ', '').replace('-', '').upper()
-    
-    # Pattern matricule fiscale tunisienne
-    # Format : 1234567A123B
-    pattern = r'^\d{7}[A-Z]\d{3}[A-Z]$'
-    
-    if not re.match(pattern, cleaned):
-        raise ValidationError(
-            _('Matricule fiscale invalide. Format attendu : 1234567A123B '
-              '(7 chiffres, 1 lettre, 3 chiffres, 1 lettre)'),
-            code='invalid_tax_id'
-        )
-
-
-def validate_registration_number(value):
-    """
-    Valide un numéro de registre de commerce tunisien
-    
-    Format registre de commerce :
-    - Variable selon type (SARL, SA, etc.)
-    - Généralement : B + chiffres ou chiffres seuls
-    
-    Validation souple (différents formats acceptés)
-    """
-    if not value:
-        return
-    
-    cleaned = value.replace(' ', '').replace('-', '').upper()
-    
-    # Pattern flexible : commence par lettre optionnelle + chiffres
-    pattern = r'^[A-Z]?\d{1,15}$'
-    
-    if not re.match(pattern, cleaned):
-        raise ValidationError(
-            _('Numéro d\'enregistrement invalide. '
-              'Doit contenir uniquement des chiffres ou lettre + chiffres'),
-            code='invalid_registration'
-        )
-
-
-# ═══════════════════════════════════════════════════════════
 # INDUSTRY VALIDATORS
 # ═══════════════════════════════════════════════════════════
 
@@ -379,28 +222,7 @@ def validate_client_data(data):
             validate_website_url(data['website'])
         except ValidationError as e:
             errors['website'] = e.messages
-    
-    # Valide matricule fiscale (si fournie)
-    if 'tax_id' in data and data['tax_id']:
-        try:
-            validate_tunisian_tax_id(data['tax_id'])
-        except ValidationError as e:
-            errors['tax_id'] = e.messages
-    
-    # Valide numéro d'enregistrement (si fourni)
-    if 'registration_number' in data and data['registration_number']:
-        try:
-            validate_registration_number(data['registration_number'])
-        except ValidationError as e:
-            errors['registration_number'] = e.messages
-    
-    # Valide statut (si fourni)
-    if 'status' in data and data['status']:
-        try:
-            validate_client_status(data['status'])
-        except ValidationError as e:
-            errors['status'] = e.messages
-    
+
     # Valide secteur (si fourni)
     if 'industry' in data and data['industry']:
         try:
@@ -448,13 +270,6 @@ def validate_contact_data(data, client=None):
             validate_phone_number(data['phone'])
         except ValidationError as e:
             errors['phone'] = e.messages
-    
-    # Valide mobile (si fourni)
-    if 'mobile' in data and data['mobile']:
-        try:
-            validate_mobile_number(data['mobile'])
-        except ValidationError as e:
-            errors['mobile'] = e.messages
     
     # Valide contact principal unique
     if data.get('is_primary') and client:
@@ -515,14 +330,3 @@ def normalize_phone_number(value):
     return cleaned
 
 
-def normalize_tax_id(value):
-    """
-    Normalise une matricule fiscale
-    
-    Input : "1234567 A 123 B", "1234567A123B"
-    Output : "1234567A123B"
-    """
-    if not value:
-        return value
-    
-    return value.replace(' ', '').replace('-', '').upper()

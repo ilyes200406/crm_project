@@ -20,7 +20,7 @@ from .models import (
     InsomeaPurchaseOrder,
     Provision,
     Subscription,
-    StatusHistory,
+    #StatusHistory,
 )
 
 
@@ -351,7 +351,6 @@ class SubscriptionAdmin(admin.ModelAdmin):
 # ═══════════════════════════════════════════════════════════
 # STATUS HISTORY ADMIN
 # ═══════════════════════════════════════════════════════════
-
 @admin.register(StatusHistory)
 class StatusHistoryAdmin(admin.ModelAdmin):
     

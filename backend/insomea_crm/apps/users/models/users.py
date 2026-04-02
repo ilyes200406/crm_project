@@ -26,63 +26,19 @@ class RoleChoices(models.TextChoices):
 
 class User(AbstractBaseUser, PermissionsMixin):
 
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(verbose_name='Adresse email', max_length=255, unique=True, db_index=True)
 
-    email = models.EmailField(
-        verbose_name='Adresse email',
-        max_length=255,
-        unique=True,
-        db_index=True
-    )
+    first_name = models.CharField(verbose_name='Prénom', max_length=150, blank=True)
+    last_name = models.CharField(verbose_name='Nom', max_length=150, blank=True)
+    role = models.CharField(verbose_name='Rôle', max_length=20, choices=RoleChoices.choices, default=RoleChoices.COMMERCIAL)
 
-    first_name = models.CharField(
-        verbose_name='Prénom',
-        max_length=150,
-        blank=True  # Peut être vide au début
-    )
-    
-    last_name = models.CharField(
-        verbose_name='Nom',
-        max_length=150,
-        blank=True
-    )
-    
-    role = models.CharField(
-        verbose_name='Rôle',
-        max_length=20,
-        choices=RoleChoices.choices,
-        default=RoleChoices.COMMERCIAL
-    )
+    is_active = models.BooleanField(verbose_name='Actif', default=False)
+    is_verified = models.BooleanField(verbose_name='Email vérifié', default=False)
+    is_staff = models.BooleanField(verbose_name='Staff', default=False)
 
-    is_active = models.BooleanField(
-        verbose_name='Actif',
-        default=False  # ⚠️ False par défaut car compte pas encore configuré
-    )
-    
-    is_verified = models.BooleanField(
-        verbose_name='Email vérifié',
-        default=False
-    )
-    
-    is_staff = models.BooleanField(
-        verbose_name='Staff',
-        default=False
-    )
-
-    date_joined = models.DateTimeField(
-        verbose_name='Date d\'inscription',
-        default=timezone.now
-    )
-    
-    last_login = models.DateTimeField(
-        verbose_name='Dernière connexion',
-        null=True,
-        blank=True
-    )
+    date_joined = models.DateTimeField(verbose_name='Date d\'inscription', default=timezone.now)  
+    last_login = models.DateTimeField(verbose_name='Dernière connexion', null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

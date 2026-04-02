@@ -155,12 +155,12 @@ class ClientViewSet(viewsets.ModelViewSet):
     # Classe de filtres custom
     # GET /clients/?status=CUSTOMER&industry=IT
     
-    search_fields = ['company_name', 'email', 'phone', 'city', 'notes']
+    search_fields = ['company_name', 'email', 'phone', 'notes']
     # Explication :
     # GET /clients/?search=Dupont
     # Cherche dans ces champs
     
-    ordering_fields = ['company_name', 'created_at', 'updated_at', 'status']
+    ordering_fields = ['company_name', 'created_at', 'updated_at']
     ordering = ['-created_at']  # Default : plus récents
     # Explication :
     # GET /clients/?ordering=-created_at
@@ -886,19 +886,17 @@ class ContactViewSet(viewsets.ModelViewSet):
 # ═══════════════════════════════════════════════════════════
 
 class ClientActivityViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet READ-ONLY pour activités
+    # ViewSet READ-ONLY pour activités
     
-    Endpoints :
-    - GET /activities/          → list()
-    - GET /activities/{id}/     → retrieve()
+    # Endpoints :
+    # - GET /activities/          → list()
+    # - GET /activities/{id}/     → retrieve()
     
-    Explication :
-    ReadOnlyModelViewSet : Seulement GET
-    Pas de POST/PUT/DELETE (créées automatiquement)
+    # Explication :
+    # ReadOnlyModelViewSet : Seulement GET
+    # Pas de POST/PUT/DELETE (créées automatiquement)
     
-    Permission : Basée sur client parent
-    """
+    # Permission : Basée sur client parent
     
     queryset = ClientActivity.objects.select_related('client', 'user').all()
     serializer_class = ClientActivitySerializer
@@ -909,12 +907,12 @@ class ClientActivityViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        """
-        Filtre selon permissions RBAC
+
+        # Filtre selon permissions RBAC
         
-        Commercial : activités de ses clients
-        Autres : toutes les activités
-        """
+        # Commercial : activités de ses clients
+        # Autres : toutes les activités
+
         queryset = super().get_queryset()
         user = self.request.user
         

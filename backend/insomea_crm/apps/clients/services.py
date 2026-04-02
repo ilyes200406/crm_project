@@ -24,21 +24,14 @@ Views appellent services pour écrire
 
 from django.db import transaction
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.utils import timezone
 from .models import Client, Contact, ClientActivity
 from .validators import (
     validate_client_data,
     validate_contact_data,
-    validate_status_transition,
     normalize_phone_number,
-    normalize_tax_id
 )
 from .selectors import get_client_by_id, get_client_by_email
 
-
-# ═══════════════════════════════════════════════════════════
-# CLIENT CREATION
-# ═══════════════════════════════════════════════════════════
 
 @transaction.atomic
 def create_client(*, data: dict, user, ip_address=None):
@@ -104,9 +97,6 @@ def create_client(*, data: dict, user, ip_address=None):
     
     if 'phone' in data and data['phone']:
         data['phone'] = normalize_phone_number(data['phone'])
-    
-    if 'tax_id' in data and data['tax_id']:
-        data['tax_id'] = normalize_tax_id(data['tax_id'])
     
     # Explication normalisation :
     # "+216 12 345 678" → "+21612345678"
@@ -246,22 +236,12 @@ def update_client(*, client_id, data: dict, user, ip_address=None):
     # 4. VALIDATION TRANSITION STATUT
     # ───────────────────────────────────────────────────────
     
-    if 'status' in data and data['status'] != client.status:
-        validate_status_transition(client.status, data['status'])
-        # Explication :
-        # Vérifie workflow métier
-        # LEAD → CUSTOMER direct : INTERDIT
-        # LEAD → PROSPECT → CUSTOMER : OK
-    
     # ───────────────────────────────────────────────────────
     # 5. NORMALISATION
     # ───────────────────────────────────────────────────────
     
     if 'phone' in data and data['phone']:
         data['phone'] = normalize_phone_number(data['phone'])
-    
-    if 'tax_id' in data and data['tax_id']:
-        data['tax_id'] = normalize_tax_id(data['tax_id'])
     
     # ───────────────────────────────────────────────────────
     # 6. VÉRIFICATION EMAIL UNIQUE
@@ -313,18 +293,6 @@ def update_client(*, client_id, data: dict, user, ip_address=None):
     
     if changes:
         description = f'Client modifié : {", ".join(changes)}'
-        
-        # Activité spéciale pour changement statut
-        if 'status' in changes:
-            log_client_activity(
-                client=client,
-                activity_type=ClientActivity.ActivityType.STATUS_CHANGED,
-                user=user,
-                description=f'Statut changé : {metadata["status"]["old"]} → {metadata["status"]["new"]}',
-                metadata=metadata,
-                ip_address=ip_address
-            )
-        
         log_client_activity(
             client=client,
             activity_type=ClientActivity.ActivityType.UPDATED,
@@ -333,7 +301,6 @@ def update_client(*, client_id, data: dict, user, ip_address=None):
             metadata=metadata,
             ip_address=ip_address
         )
-    
     return client
 
 
@@ -399,7 +366,7 @@ def delete_client(*, client_id, user, ip_address=None):
         description=f'Client désactivé : {client.company_name}',
         ip_address=ip_address
     )
-    
+
     return client
 
 
@@ -429,7 +396,6 @@ def restore_client(*, client_id, user, ip_address=None):
         raise ValidationError('Ce client est déjà actif')
     
     client.restore()
-    
     log_client_activity(
         client=client,
         activity_type=ClientActivity.ActivityType.RESTORED,
@@ -437,7 +403,6 @@ def restore_client(*, client_id, user, ip_address=None):
         description=f'Client réactivé : {client.company_name}',
         ip_address=ip_address
     )
-    
     return client
 
 
@@ -523,7 +488,7 @@ def assign_client(*, client_id, assigned_to_id, user, ip_address=None):
         description += f'{old_assignee.get_full_name()} → {new_assignee.get_full_name()}'
     else:
         description += f'Assigné à {new_assignee.get_full_name()}'
-    
+
     log_client_activity(
         client=client,
         activity_type=ClientActivity.ActivityType.ASSIGNED,
@@ -537,7 +502,6 @@ def assign_client(*, client_id, assigned_to_id, user, ip_address=None):
         },
         ip_address=ip_address
     )
-    
     return client
 
 
@@ -602,7 +566,6 @@ def create_contact(*, client_id, data: dict, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     # LOG ACTIVITÉ
     # ───────────────────────────────────────────────────────
-    
     log_client_activity(
         client=client,
         activity_type=ClientActivity.ActivityType.UPDATED,
@@ -611,7 +574,6 @@ def create_contact(*, client_id, data: dict, user, ip_address=None):
         metadata={'contact_id': str(contact.id)},
         ip_address=ip_address
     )
-    
     return contact
 
 
@@ -654,7 +616,6 @@ def update_contact(*, contact_id, data: dict, user, ip_address=None):
         setattr(contact, field, value)
     
     contact.save()
-    
     # Log
     log_client_activity(
         client=client,
@@ -664,7 +625,6 @@ def update_contact(*, contact_id, data: dict, user, ip_address=None):
         metadata={'contact_id': str(contact.id)},
         ip_address=ip_address
     )
-    
     return contact
 
 
@@ -694,7 +654,6 @@ def delete_contact(*, contact_id, user, ip_address=None):
     
     contact_name = contact.get_full_name()
     contact.delete()
-    
     # Log
     log_client_activity(
         client=client,
@@ -704,39 +663,30 @@ def delete_contact(*, contact_id, user, ip_address=None):
         ip_address=ip_address
     )
 
-
 # ═══════════════════════════════════════════════════════════
 # ACTIVITY LOGGING
 # ═══════════════════════════════════════════════════════════
 
-def log_client_activity(
-    *,
-    client,
-    activity_type,
-    user,
-    description='',
-    metadata=None,
-    ip_address=None
-):
-    """
-    Log une activité client
+def log_client_activity(*, client, activity_type, user, description='', metadata=None, ip_address=None):
+
+    # Log une activité client
     
-    Args:
-        client: Client instance
-        activity_type: Type d'activité (ActivityType enum)
-        user: Utilisateur
-        description: Description textuelle
-        metadata: Données additionnelles (dict)
-        ip_address: IP audit
+    # Args:
+    #    client: Client instance
+    #    activity_type: Type d'activité (ActivityType enum)
+    #    user: Utilisateur
+    #    description: Description textuelle
+    #    metadata: Données additionnelles (dict)
+    #    ip_address: IP audit
     
-    Returns:
-        ClientActivity instance
+    # Returns:
+    #    ClientActivity instance
     
-    Explication :
-    Point central pour audit trail
-    Appelé par tous les services
-    Traçabilité complète
-    """
+    # Explication :
+    # Point central pour audit trail
+    # Appelé par tous les services
+    # Traçabilité complète
+
     
     return ClientActivity.objects.create(
         client=client,

@@ -285,24 +285,22 @@ def search_clients(search_term, user=None, limit=20):
     - company_name
     - email
     - phone
-    - city
     - notes
-    
+
     Performance :
     Utilise indexes sur company_name, email
     Q avec OR → utilise indexes disponibles
     """
-    
+
     queryset = get_clients_queryset(user=user, is_active=True)
-    
+
     if not search_term:
         return queryset[:limit]
-    
+
     # Q objects pour recherche multi-champs
     query = Q(company_name__icontains=search_term) | \
             Q(email__icontains=search_term) | \
             Q(phone__icontains=search_term) | \
-            Q(city__icontains=search_term) | \
             Q(notes__icontains=search_term)
     # Explication Q :
     # Q() permet conditions complexes avec OR/AND
@@ -425,7 +423,6 @@ def get_client_stats(user=None):
     Returns:
         dict avec stats :
         - total_clients
-        - by_status : {LEAD: X, PROSPECT: Y, ...}
         - by_industry : {IT: X, FINANCE: Y, ...}
         - recent_count : Clients créés ce mois
     
@@ -440,17 +437,7 @@ def get_client_stats(user=None):
     
     # Total
     total = queryset.count()
-    
-    # Par statut
-    by_status = dict(
-        queryset.values('status').annotate(
-            count=Count('id')
-        ).values_list('status', 'count')
-    )
-    # Explication :
-    # SELECT status, COUNT(id) FROM clients GROUP BY status
-    # → {LEAD: 10, PROSPECT: 5, CUSTOMER: 20}
-    
+
     # Par secteur
     by_industry = dict(
         queryset.values('industry').annotate(
@@ -466,7 +453,6 @@ def get_client_stats(user=None):
     
     return {
         'total_clients': total,
-        'by_status': by_status,
         'by_industry': by_industry,
         'recent_count': recent_count,
     }
