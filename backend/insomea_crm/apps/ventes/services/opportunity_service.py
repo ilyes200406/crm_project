@@ -469,7 +469,7 @@ def confirm_insomea_po(*, line_id, user, ip_address=None):
         5. Check if all opportunity lines confirmed → create provisions
     """
     
-    line = get_line_by_id(line_id, user=user)
+    line = get_line_by_id(line_id)
     
     # Check permissions
     #check_can_update_opportunity(user, line.opportunity)

@@ -14,7 +14,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'sku', 'name', 'version', 'category', 'category_display',
+            'id', 'sku', 'title', 'version', 'category', 'category_display',
             'supplier', 'is_active', 'is_deprecated', 'created_at'
         ]
 
@@ -37,7 +37,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'sku', 'name', 'version', 'category', 'description_technique',
+            'sku', 'title', 'version', 'category', 'description_technique',
             'description_commerciale', 'supplier'
         ]
     
@@ -52,4 +52,4 @@ class ProductMinimalSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'sku', 'name', 'version']
+        fields = ['id', 'sku', 'title', 'version']

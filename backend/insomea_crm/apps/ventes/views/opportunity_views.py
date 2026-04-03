@@ -44,8 +44,6 @@ from ..serializers import (
     RequestClientPOSerializer,
     ApproveOpportunitySerializer,
     CancelOpportunitySerializer,
-    ProvisionDetailSerializer,
-    InsomeaPOSerializer,
     InsomeaPurchaseOrderListSerializer,
     UploadClientPOSerializer,
 )
@@ -507,3 +505,67 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         # Return
         output = OpportunityDetailSerializer(opportunity)
         return Response(output.data)
+
+    # Dans OpportunityViewSet class
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Stats globales opportunités
+    
+        GET /opportunities/stats/
+    
+        Returns:
+        {
+            "total_opportunities": 45,
+            "opportunities_this_month": 8,
+            "revenue_forecast": 125000.00,
+            "conversion_rate": 0.68,
+            "by_status": {"DRAFT": 5, ...},
+            "by_type": {"INITIAL": 30, ...}
+        }
+        """
+        from ..selectors import get_opportunity_stats
+    
+        stats = get_opportunity_stats(user=request.user)
+        return Response(stats)
+
+    @action(detail=False, methods=['get'])
+    def pipeline(self, request):
+        """
+        Pipeline stats (par status)
+    
+        GET /opportunities/pipeline/
+    
+        Returns:
+            [
+                {"status": "DRAFT", "status_display": "Brouillon", "count": 5, "value": 25000.00},
+            ...
+            ]
+        """
+        from ..selectors import get_opportunity_pipeline_stats
+    
+        pipeline = get_opportunity_pipeline_stats(user=request.user)
+        return Response(pipeline)
+
+    @action(detail=False, methods=['get'])
+    def revenue_chart(self, request):
+        """
+        Revenue chart data
+    
+        GET /opportunities/revenue_chart/?months=6
+    
+        Query params:
+            - months: int (default 6)
+    
+        Returns:
+            [
+                {"month": "2024-01", "month_display": "January 2024", "revenue": 50000.00, "count": 10},
+                ...
+            ]
+        """
+        from ..selectors import get_opportunity_revenue_chart
+    
+        months = int(request.query_params.get('months', 6))
+        data = get_opportunity_revenue_chart(user=request.user, months=months)
+        return Response(data)

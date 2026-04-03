@@ -313,7 +313,8 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     # ───────────────────────────────────────────────────────
     # 7. TRANSITION FSM OPPORTUNITY
     # ───────────────────────────────────────────────────────
-    
+
+    opportunity.refresh_from_db()
     if opportunity.has_insomea_quote():
         opportunity.create_insomea_quote()
         opportunity.save()
@@ -397,29 +398,3 @@ def recalculate_insomea_quote_totals(insomea_quote_id):
     insomea_quote.calculate_totals()
     
     return insomea_quote
-
-
-
-
-"""
-**✅ SERVICES PARTIE 2/5 COMPLETE !**
-
-**Coverage :**
-- ✅ create_supplier_quote() - Upload PDF + create lines + FSM transition
-- ✅ recalculate_supplier_quote_totals() - Agrégation lignes
-- ✅ create_insomea_quote() - Commercial choisit SupplierQuoteLine + copie prix + validation marge + FSM transition
-- ✅ recalculate_insomea_quote_totals() - Agrégation purchase + sale + margin
-
-**LOGIQUE CLEF :**
-```
-Commercial upload SupplierQuote:
-  → Crée SupplierQuoteLines (prix fournisseur)
-  → Transition OpportunityLines: SUPPLIER_QUOTE_RECEIVED
-
-Commercial crée InsomeaQuote:
-  → Choisit SupplierQuoteLine pour chaque OpportunityLine
-  → Copie unit_price_purchase
-  → Définit unit_price_sale (avec marge)
-  → Valide sale >= purchase
-  → Transition Opportunity: INSOMEA_QUOTE_CREATED
-  """

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.response import Response
 from .models import Product
 from .serializers import (
     ProductListSerializer, ProductDetailSerializer,
@@ -13,9 +14,9 @@ from .filters import ProductFilter
 class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [ProductPermission]
     filterset_class = ProductFilter
-    search_fields = ['sku', 'name']
-    ordering_fields = ['name', 'sku', 'created_at']
-    ordering = ['name']
+    search_fields = ['sku', 'title']
+    ordering_fields = ['title', 'sku', 'created_at']
+    ordering = ['title']
     
     def get_queryset(self):
         return get_products_queryset(user=self.request.user)
