@@ -305,7 +305,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request or not request.user:
             return False
-        return obj.can_add_items()
+        return obj.can_add_items
 
 
 # ═══════════════════════════════════════════════════════════
@@ -597,12 +597,12 @@ class InsomeaPurchaseOrderListSerializer(serializers.ModelSerializer):
         model = InsomeaPurchaseOrder
         fields = [
             'id',
-            'reference',
+            'po_number',
             'supplier',
             'supplier_name',
-            'supplier_quote',  # ✅ MODIFIÉ
-            'total_purchase',  # ✅ Property
-            'lines_count',  # ✅ Property
+            'supplier_quote',
+            'total_purchase',
+            'lines_count',
             'sent_at',
             'confirmed_at',
             'is_sent',
@@ -636,17 +636,16 @@ class InsomeaPurchaseOrderDetailSerializer(serializers.ModelSerializer):
         model = InsomeaPurchaseOrder
         fields = [
             'id',
-            'reference',
+            'po_number',
             'supplier',
             'supplier_quote',
             'total_purchase',
             'lines_count',
-            'po_file',
+            'document',
             'sent_at',
             'confirmed_at',
             'is_sent',
             'is_confirmed',
-            'notes',
             'created_at',
         ]
     

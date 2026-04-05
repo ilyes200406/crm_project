@@ -14,6 +14,10 @@ from ..models import (
     OpportunityStatus,
     Provision,
     ProvisionStatus,
+    SupplierQuoteLine,
+    OpportunityLineStatus,
+    InsomeaQuote,
+    ClientPO,
 #    StatusHistory,
 )
 
@@ -105,3 +109,39 @@ def update_opportunity_status_on_line_delete(sender, instance, **kwargs):
             update_opportunity_status_from_lines(instance.opportunity)
         except Opportunity.DoesNotExist:
             pass
+
+
+
+
+
+#for the admins sake
+@receiver(post_save, sender=SupplierQuoteLine)
+def transition_opp_line_on_supplier_quote_line_save(sender, instance, created, **kwargs):
+    """SupplierQuoteLine created → OpportunityLine: SUPPLIER_QUOTE_REQUEST → SUPPLIER_QUOTE_RECIEVED"""
+    if not created:
+        return
+    opp_line = instance.opportunity_line
+    if opp_line.status == OpportunityLineStatus.SUPPLIER_QUOTE_REQUEST:
+        opp_line.supplier_quote_received()
+        opp_line.save()
+        # update_opportunity_status_on_line_save signal cascades Opportunity status
+
+@receiver(post_save, sender=InsomeaQuote)
+def transition_opportunity_on_insomea_quote_save(sender, instance, created, **kwargs):
+    """InsomeaQuote created → Opportunity: SUPPLIER_QUOTE_RECIEVED → INSOMEA_QUOTE_CREATED"""
+    if not created:
+        return
+    opp = instance.opportunity
+    if opp.status == OpportunityStatus.SUPPLIER_QUOTE_RECIEVED:
+        opp.create_insomea_quote()
+        opp.save()
+
+@receiver(post_save, sender=ClientPO)
+def transition_opportunity_on_client_po_save(sender, instance, created, **kwargs):
+    """ClientPO created → Opportunity: CLIENT_PO_REQUEST → CLIENT_PO_RECIEVED"""
+    if not created:
+        return
+    opp = instance.opportunity
+    if opp.status == OpportunityStatus.CLIENT_PO_REQUEST:
+        opp.receive_client_po()
+        opp.save()

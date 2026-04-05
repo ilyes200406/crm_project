@@ -112,7 +112,7 @@ def get_clients_queryset(
         queryset = queryset.prefetch_related(
             Prefetch(
                 'activities',
-                queryset=ClientActivity.objects.select_related('user').order_by('-created_at')[:10]
+                queryset=ClientActivity.objects.select_related('user').order_by('-created_at')
             )
         )
         # Explication :
@@ -126,7 +126,7 @@ def get_clients_queryset(
     # Filtre actifs/inactifs
     if is_active is not None:
         queryset = queryset.filter(is_active=is_active)
-    
+    """
     # Filtres RBAC (selon rôle user)
     if user:
         if user.role == 'COMMERCIAL':
@@ -136,7 +136,7 @@ def get_clients_queryset(
             # Tech/Finance : read-only, tous les clients actifs
             queryset = queryset.filter(is_active=True)
         # ADMIN : voit tout (pas de filtre)
-    
+    """
     # Filtres additionnels
     if filters:
         queryset = queryset.filter(**filters)
@@ -184,7 +184,7 @@ def get_client_by_id(client_id, user=None, prefetch_all=True):
             ),
             Prefetch(
                 'activities',
-                queryset=ClientActivity.objects.select_related('user').order_by('-created_at')[:20]
+                queryset=ClientActivity.objects.select_related('user').order_by('-created_at')
             )
         )
     

@@ -23,7 +23,7 @@ def add_line_to_opportunity(*, opportunity_id, data: dict, user, ip_address=None
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Vous ne pouvez modifier que vos propres opportunités')
     
-    if not opportunity.can_add_items():
+    if not opportunity.can_add_items:
         raise ValidationError(f'Impossible d\'ajouter des lignes. Statut : {opportunity.get_status_display()}')
     
     validate_opportunity_line_data(data, opportunity=opportunity)

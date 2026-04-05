@@ -20,7 +20,7 @@ from celery.schedules import crontab
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-
+#redis
 """
 # ═══════════════════════════════════════════════════════════
 # SECURITY SETTINGS
@@ -148,7 +148,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'BACKEND': 'channels.layers.InMemoryChannelLayer', #'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [config('REDIS_URL', default='redis://localhost:6379/1')],
         },

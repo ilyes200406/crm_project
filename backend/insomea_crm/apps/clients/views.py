@@ -135,7 +135,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     # CONFIGURATION
     # ───────────────────────────────────────────────────────
     
-    permission_classes = [IsAuthenticated, ClientPermission]
+    permission_classes = [IsAuthenticated] #, ClientPermission]
     # Explication :
     # IsAuthenticated : JWT valide requis
     # ClientPermission : RBAC custom
@@ -802,7 +802,7 @@ class ContactViewSet(viewsets.ModelViewSet):
     
     queryset = Contact.objects.select_related('client').all()
     serializer_class = ContactSerializer
-    permission_classes = [IsAuthenticated, CanManageContact]
+    permission_classes = [IsAuthenticated] #, CanManageContact]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ContactFilter
     search_fields = ['first_name', 'last_name', 'email', 'position']
@@ -900,7 +900,7 @@ class ClientActivityViewSet(viewsets.ReadOnlyModelViewSet):
     
     queryset = ClientActivity.objects.select_related('client', 'user').all()
     serializer_class = ClientActivitySerializer
-    permission_classes = [IsAuthenticated, CanViewActivity]
+    permission_classes = [IsAuthenticated] #, CanViewActivity]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ClientActivityFilter
     ordering_fields = ['created_at']

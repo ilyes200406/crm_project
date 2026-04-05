@@ -22,7 +22,7 @@ Structure générée :
 """
 
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from rest_framework_nested import routers as nested_routers
 
 from .views import ClientViewSet, ContactViewSet, ClientActivityViewSet
@@ -32,13 +32,16 @@ from .views import ClientViewSet, ContactViewSet, ClientActivityViewSet
 # ROUTER PRINCIPAL
 # ═══════════════════════════════════════════════════════════
 
-router = DefaultRouter()
-# Explication DefaultRouter :
-# DRF built-in router
-# Génère automatiquement URLs REST standards
-# Ajoute API root view (/)
+router = SimpleRouter()
+# Explication SimpleRouter :
+# Comme DefaultRouter mais sans la vue API root à ^$
+# Nécessaire pour enregistrer ClientViewSet avec prefix vide r''
+# sans conflit avec la vue API root.
 
-router.register(r'clients', ClientViewSet, basename='client')
+# Contacts et activités enregistrés EN PREMIER pour que leurs
+# patterns concrets (^contacts/, ^activities/) soient prioritaires
+# sur le pattern générique ^(?P<id>[^/.]+)/ du ClientViewSet.
+router.register(r'contacts', ContactViewSet, basename='contact')
 # Explication :
 # Génère automatiquement :
 # - GET    /clients/                     → list()
@@ -58,18 +61,11 @@ router.register(r'clients', ClientViewSet, basename='client')
 # - GET    /clients/{id}/activities/     → activities()
 # - GET    /clients/{id}/contacts/       → contacts()
 
-router.register(r'contacts', ContactViewSet, basename='contact')
-# Explication :
-# URLs contacts standalone
-# GET /contacts/, POST /contacts/, etc.
-#
-# Alternative : nested sous clients (voir plus bas)
-
 router.register(r'activities', ClientActivityViewSet, basename='activity')
-# Explication :
-# URLs activités standalone
-# GET /activities/ (toutes activités filtrées par RBAC)
-# GET /activities/{id}/
+
+# ClientViewSet enregistré en dernier avec prefix vide r''
+# → /api/clients/ (list/create) et /api/clients/{id}/ (detail)
+router.register(r'', ClientViewSet, basename='client')
 
 
 # ═══════════════════════════════════════════════════════════

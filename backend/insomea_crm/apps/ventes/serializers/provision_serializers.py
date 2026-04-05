@@ -216,7 +216,7 @@ class CompleteProvisioningSerializer(serializers.Serializer):
         # 🆕 NOUVEAU: Vérifie subscription_number si INITIAL
         provision = self.context.get('provision')
         
-        if provision and provision.is_initial():
+        if provision and provision.is_initial:
             # INITIAL: subscription_number REQUIS
             if not attrs.get('subscription_number'):
                 raise serializers.ValidationError({
