@@ -161,7 +161,6 @@ class ContactCreateSerializer(serializers.ModelSerializer):
             'position',
             'email',
             'phone',
-            'mobile',
             'is_primary',
             'notes',
         ]

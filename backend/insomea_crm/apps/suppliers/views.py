@@ -195,11 +195,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     # CUSTOM ACTIONS
     # ───────────────────────────────────────────────────────
     
-    @action(
-        detail=True,
-        methods=['post'],
-        url_path='activate'
-    )
+    @action(detail=True, methods=['post'], url_path='activate')
     def activate(self, request, pk=None):
         """
         POST /suppliers/{id}/activate/
@@ -219,11 +215,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         serializer = SupplierDetailSerializer(supplier)
         return Response(serializer.data)
     
-    @action(
-        detail=True,
-        methods=['post'],
-        url_path='deactivate'
-    )
+    @action(detail=True, methods=['post'], url_path='deactivate')
     def deactivate(self, request, pk=None):
         """
         POST /suppliers/{id}/deactivate/
@@ -243,11 +235,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         serializer = SupplierDetailSerializer(supplier)
         return Response(serializer.data)
     
-    @action(
-        detail=False,
-        methods=['get'],
-        url_path='stats'
-    )
+    @action(detail=False, methods=['get'], url_path='stats')
     def stats(self, request):
         """
         GET /suppliers/stats/
@@ -262,4 +250,19 @@ class SupplierViewSet(viewsets.ModelViewSet):
         """
         stats = get_supplier_stats(user=request.user)
         serializer = SupplierStatsSerializer(stats)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def products(self, request, pk=None):
+        """GET /suppliers/{id}/products/"""
+        supplier = self.get_object()
+        products = supplier.products.filter(is_active=True)
+    
+        # Pagination
+        page = self.paginate_queryset(products)
+        if page is not None:
+            serializer = ProductListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+    
+        serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)

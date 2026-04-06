@@ -14,14 +14,14 @@ class ProductFilter(django_filters.FilterSet):
     is_deprecated = django_filters.BooleanFilter(field_name='is_deprecated')
     
     sku = django_filters.CharFilter(field_name='sku', lookup_expr='icontains')
-    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    name = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
     
     search = django_filters.CharFilter(method='filter_search')
     
     def filter_search(self, queryset, name, value):
         return queryset.filter(
             Q(sku__icontains=value) |
-            Q(name__icontains=value) |
+            Q(title__icontains=value) |
             Q(description_commerciale__icontains=value)
         )
     
