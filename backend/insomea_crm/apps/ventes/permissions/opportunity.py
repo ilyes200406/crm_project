@@ -25,12 +25,12 @@ class CanViewOpportunity(HasVentesPerm):
     Visibility rules differ by role:
         ADMIN      → everything
         COMMERCIAL → own opportunities (assigned_to or created_by)
-        FINANCE    → opportunities at CLIENT_PO_RECIEVED or APPROUVED stage
-        TECHNICIEN → opportunities at APPROUVED stage only
+        FINANCE    → CLIENT_PO_RECIEVED, APPROUVED, INSOMEA_POS_SENT, INSOMEA_POS_CONFIRMED
+        TECHNICIEN → no opportunity access (provisions and subscriptions only)
 
     The queryset selector (get_all_opportunities) already pre-filters for
-    COMMERCIAL so this has_object_permission guard is mainly for direct
-    retrieve calls.
+    COMMERCIAL and FINANCE so this has_object_permission guard is mainly for
+    direct retrieve calls.
     """
 
     permission_codename = 'opportunity.view'
@@ -65,10 +65,7 @@ class CanViewOpportunity(HasVentesPerm):
                 OpportunityStatus.INSOMEA_POS_CONFIRMED,
             ]
 
-        # TECHNICIEN: once all supplier POs are confirmed
-        if user.role == 'TECHNICIEN':
-            return opp.status == OpportunityStatus.INSOMEA_POS_CONFIRMED
-
+        # TECHNICIEN: no opportunity access
         return False
 
 

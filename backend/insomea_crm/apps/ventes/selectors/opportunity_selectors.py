@@ -71,25 +71,17 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
                 Q(created_by=user) | Q(assigned_to=user)
             )
         
-        elif user.role == 'TECHNICIEN':
-            # Technicien voit :
-            # - Opportunités APPROVED (à provisionner)
-            # - Opportunités qui lui sont assignées
-            queryset = queryset.filter(
-                Q(assigned_to=user) |
-                Q(status=OpportunityStatus.APPROUVED)
-            )
-        
         elif user.role == 'FINANCE':
             # Finance voit :
             # - Opportunités CLIENT_PO_RECIEVED (à approuver)
-            # - Opportunités APPROVED
-            # - Toutes pour reporting
+            # - Opportunités APPROVED, INSOMEA_POS_SENT, INSOMEA_POS_CONFIRMED
             queryset = queryset.filter(
                 Q(assigned_to=user) |
                 Q(status__in=[
                     OpportunityStatus.CLIENT_PO_RECIEVED,
                     OpportunityStatus.APPROUVED,
+                    OpportunityStatus.INSOMEA_POS_SENT,
+                    OpportunityStatus.INSOMEA_POS_CONFIRMED,
                 ])
             )
         

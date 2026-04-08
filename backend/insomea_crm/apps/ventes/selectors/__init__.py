@@ -19,6 +19,9 @@ from .subscription_selectors import (
 from .opportunity_selectors import (
     get_all_opportunities,
     get_opportunity_by_id,
+    get_opportunity_stats,
+    get_opportunity_pipeline_stats,
+    get_opportunity_revenue_chart,
 )
 
 from .opportunity_line_selectors import (
@@ -50,6 +53,9 @@ __all__ = [
 
     'get_all_opportunities',
     'get_opportunity_by_id',
+    'get_opportunity_stats',
+    'get_opportunity_pipeline_stats',
+    'get_opportunity_revenue_chart',
 
     'get_line_by_id',
 

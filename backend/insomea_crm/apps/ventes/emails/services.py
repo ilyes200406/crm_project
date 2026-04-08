@@ -225,7 +225,7 @@ def send_insomea_po_to_supplier(supplier, po, opportunity):
     html_message = render_to_string('emails/insomea_po_to_supplier.html', context)
     
     send_mail(
-        subject=f"Bon de commande Insomea - {po.reference}",
+        subject=f"Bon de commande Insomea - {po.po_number}",
         message=f"Bonjour {supplier.name},\n\nVeuillez trouver ci-joint notre bon de commande.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[supplier.email],

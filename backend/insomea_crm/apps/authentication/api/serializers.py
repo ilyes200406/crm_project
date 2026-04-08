@@ -10,34 +10,11 @@ from ..models.passwordResetToken import PasswordResetToken
 
 
 class SetupAccountSerializer(serializers.Serializer):
-    token = serializers.CharField(
-        required=True,
-        help_text="Token recu par email"
-    )
-
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password'},
-        help_text="Nouveau mot de passe (min 8 caracteres)"
-    )
-
-    password_confirm = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password'},
-        help_text="Confirmation du mot de passe"
-    )
-
-    first_name = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
-
-    last_name = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
+    token = serializers.CharField(required=True, help_text="Token recu par email")
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'}, help_text="Nouveau mot de passe (min 8 caracteres)")
+    password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'}, help_text="Confirmation du mot de passe")
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
 
     def validate_token(self, value):
         try:

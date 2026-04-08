@@ -272,12 +272,10 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     
     def get_client_po(self, obj):
         """Client PO"""
-        from .workflow_serializers import ClientPOSerializer
         return self._serialize_related(obj, 'client_purchase_order', ClientPOSerializer)
-    
+
     def get_insomea_pos(self, obj):
         """Insomea POs"""
-        from .workflow_serializers import InsomeaPurchaseOrderListSerializer
         from ..models import InsomeaPurchaseOrder
 
         po_ids = (

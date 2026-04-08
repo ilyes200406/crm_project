@@ -76,6 +76,7 @@ from ..permissions import (
     CanUploadClientPO,
     CanUpdateInsomeaQuote,
     CanApproveOpportunity,
+    CanConfirmInsomeaPO,
 )
 
 
@@ -149,6 +150,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'request_client_po':       [CanRequestClientPO()],
             'upload_client_po':        [CanUploadClientPO()],
             'update_insomea_quote':    [CanUpdateInsomeaQuote()],
+            'confirm_all_pos':         [CanConfirmInsomeaPO()],
         }
         return mapping.get(self.action, [CanViewOpportunity()])
     

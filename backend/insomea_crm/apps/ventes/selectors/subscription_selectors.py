@@ -35,8 +35,8 @@ def get_all_subscriptions(*, user=None):
     qs = Subscription.objects.select_related(
         'client',
         'product',
-        'provision',
     ).prefetch_related(
+        'provisions',
         Prefetch(
             'terms',
             queryset=SubscriptionTerm.objects.select_related(

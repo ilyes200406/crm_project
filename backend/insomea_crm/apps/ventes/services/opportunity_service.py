@@ -409,6 +409,7 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
                 supplier_quote=supplier_quote,  # ✅ Link to quote (not line)
                 po_number=po_number,
                 sent_at=timezone.now(),
+                created_by=user,
             )
         
         # Link all lines to this PO + transition

@@ -73,7 +73,7 @@
             <p>Nous vous confirmons notre commande pour l'opportunité <strong>{{ opportunity.reference }}</strong>.</p>
             
             <div class="info-box">
-                <strong>📋 Référence BC :</strong> {{ po.reference }}<br>
+                <strong>📋 Référence BC :</strong> {{ po.po_number }}<br>
                 <strong>📅 Date émission :</strong> {{ po.sent_at|date:"d/m/Y H:i" }}<br>
                 <strong>🏢 Client final :</strong> {{ opportunity.client.company_name }}
             </div>
