@@ -180,6 +180,28 @@ class CreateSupplierQuoteSerializer(serializers.Serializer):
         min_length=1
     )
     
+    def to_internal_value(self, data):
+        """
+        When submitted as multipart/form-data, `lines` arrives as a JSON
+        string.  QueryDict.getlist() is used by ListField, so we must use
+        setlist() to store the parsed items — not a plain assignment, which
+        would wrap the list in another list.
+        """
+        import json
+        from django.http import QueryDict
+
+        if isinstance(data, QueryDict):
+            data = data.copy()  # make mutable
+            raw_lines = data.get('lines')
+            if isinstance(raw_lines, str):
+                try:
+                    parsed = json.loads(raw_lines)
+                    if isinstance(parsed, list):
+                        data.setlist('lines', parsed)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        return super().to_internal_value(data)
+
     def validate_supplier_id(self, value):
         """Valide que supplier existe"""
         from ...suppliers.models import Supplier

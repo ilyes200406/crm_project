@@ -68,7 +68,7 @@ def create_provisions(*, opportunity_id, user, ip_address=None):
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
     
     # 🆕 MODIFIÉ: Check status
-    if opportunity.status != OpportunityStatus.INSOMEA_PO_CONFIRMED:
+    if opportunity.status != OpportunityStatus.INSOMEA_POS_CONFIRMED :
         raise ValidationError(
             f"Opportunity must be INSOMEA_PO_CONFIRMED to create provisions. "
             f"Current: {opportunity.get_status_display()}"

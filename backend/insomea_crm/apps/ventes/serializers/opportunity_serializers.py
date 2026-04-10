@@ -233,9 +233,9 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     
     def get_lines(self, obj):
         """OpportunityLines"""
-        from .line_serializers import OpportunityLineListSerializer
+        from .line_serializers import OpportunityLineDetailSerializer
         lines = obj.lines.all().order_by('created_at')
-        return OpportunityLineListSerializer(lines, many=True).data
+        return OpportunityLineDetailSerializer(lines, many=True).data
 
     # ═══════════════════════════════════════════════════════════
     # HELPERS

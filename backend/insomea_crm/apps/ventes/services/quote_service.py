@@ -321,13 +321,18 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
         # Signal FSM → StatusHistory créé auto
     
     # ───────────────────────────────────────────────────────
-    # 8. GÉNÉRATION PDF (TODO)
+    # 8. GÉNÉRATION PDF (best-effort)
     # ───────────────────────────────────────────────────────
-    
-    # Générer PDF via template
-    pdf_file = generate_quote_pdf(insomea_quote)
-    insomea_quote.document.save(pdf_file.name, pdf_file, save=True)
-    
+
+    try:
+        pdf_file = generate_quote_pdf(insomea_quote)
+        insomea_quote.document.save(pdf_file.name, pdf_file, save=True)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            f"PDF generation skipped for InsomeaQuote {insomea_quote.id}: {e}"
+        )
+
     return insomea_quote
 
 from django.template.loader import render_to_string

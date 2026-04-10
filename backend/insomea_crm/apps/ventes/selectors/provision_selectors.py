@@ -13,13 +13,8 @@ def get_provisions_waiting(user=None):
         'opportunity_line__product',
     )
     
-    # RBAC
-    if user and user.role == 'TECHNICIEN':
-        queryset = queryset.filter(
-            Q(provisionned_by=user) |
-            Q(opportunity_line__opportunity__assigned_to=user)
-        )
-    
+    # WAITING provisions are visible to all TECHNICIENs so anyone can pick them up.
+
     return queryset.order_by('opportunity_line__created_at')
 
 
@@ -50,8 +45,12 @@ def get_provision_by_id(provision_id, *, user=None):
     ).prefetch_related('subscription')
     
     if user and user.role == 'TECHNICIEN':
-        queryset = queryset.filter(Q(provisionned_by=user) | Q(opportunity_line__opportunity__assigned_to=user))
-    
+        queryset = queryset.filter(
+            Q(status=ProvisionStatus.WAITING_PROVISION) |
+            Q(provisionned_by=user) |
+            Q(opportunity_line__opportunity__assigned_to=user)
+        )
+
     return get_object_or_404(queryset, id=provision_id)
 
 def get_all_provisions(*, user=None):
@@ -62,8 +61,11 @@ def get_all_provisions(*, user=None):
         'provisionned_by',
     ).prefetch_related('subscription')
 
+    # TECHNICIEN: all waiting provisions visible (so they can be picked up),
+    # plus their own in-progress / completed ones.
     if user and user.role == 'TECHNICIEN':
         qs = qs.filter(
+            Q(status=ProvisionStatus.WAITING_PROVISION) |
             Q(provisionned_by=user) |
             Q(opportunity_line__opportunity__assigned_to=user)
         )

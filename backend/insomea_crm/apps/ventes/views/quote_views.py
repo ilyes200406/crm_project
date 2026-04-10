@@ -143,7 +143,11 @@ class SupplierQuoteViewSet(viewsets.ModelViewSet):
             }
         """
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+
+        # serializer.is_valid(raise_exception=True)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
         
         # Utilise service
         supplier_quote = create_supplier_quote(

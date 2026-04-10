@@ -125,10 +125,13 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
                 'lines',
                 queryset=OpportunityLine.objects.select_related(
                     'product',
+                    'product__supplier',
                     'insomea_purchase_order',
                     'supplier_quote_line',
+                    'supplier_quote_line__supplier_quote',
+                    'supplier_quote_line__supplier_quote__supplier',
+                    'insomea_quote_line',
                     'provision',
-                ).prefetch_related(
                 ).order_by('created_at')
             ),
             'insomea_quote',
@@ -154,6 +157,8 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
             allowed_statuses = [
                 OpportunityStatus.CLIENT_PO_RECIEVED,
                 OpportunityStatus.APPROUVED,
+                OpportunityStatus.INSOMEA_POS_SENT,
+                OpportunityStatus.INSOMEA_POS_CONFIRMED,
             ]
             if opportunity.status not in allowed_statuses and opportunity.assigned_to != user:
                 from django.http import Http404
@@ -437,7 +442,7 @@ def get_opportunity_pipeline_stats(user=None):
         # ✅ Calculate value SEULEMENT si INSOMEA_PO_CONFIRMED
         value = Decimal('0.00')
         
-        if status == OpportunityStatus.INSOMEA_PO_CONFIRMED:
+        if status == OpportunityStatus.INSOMEA_POS_CONFIRMED:
             opps = queryset.filter(status=status).select_related('insomea_quote')
             for opp in opps:
                 if hasattr(opp, 'insomea_quote') and opp.insomea_quote:
@@ -459,8 +464,8 @@ def get_opportunity_pipeline_stats(user=None):
         OpportunityStatus.CLIENT_PO_REQUEST,
         OpportunityStatus.CLIENT_PO_RECIEVED,
         OpportunityStatus.APPROUVED,
-        OpportunityStatus.INSOMEA_PO_SENT,
-        OpportunityStatus.INSOMEA_PO_CONFIRMED,
+        OpportunityStatus.INSOMEA_POS_SENT,
+        OpportunityStatus.INSOMEA_POS_CONFIRMED,
     ]
     
     pipeline_sorted = sorted(
@@ -491,7 +496,7 @@ def get_opportunity_revenue_chart(user=None, months=6):
     queryset = get_opportunities_queryset(user=user, include_cancelled=False)
     
     # ✅ Filtre seulement INSOMEA_PO_CONFIRMED
-    queryset = queryset.filter(status=OpportunityStatus.INSOMEA_PO_CONFIRMED)
+    queryset = queryset.filter(status=OpportunityStatus.INSOMEA_POS_CONFIRMED)
     
     # Get date range
     today = timezone.now()
