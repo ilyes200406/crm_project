@@ -28,6 +28,8 @@ class Provision(models.Model):
     provisioning_completed_at = models.DateTimeField(null=True, blank=True, help_text="Date fin provisionnement")
     provisioning_error = models.TextField(blank=True, help_text="Erreur provisionnement (si échec)")
 
+    is_renewal = models.BooleanField(default=False, help_text="True si renewal d'une subscription existante, False si initial")
+
     status = FSMField(max_length=50, choices=ProvisionStatus.choices, default=ProvisionStatus.WAITING_PROVISION, protected=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -67,18 +69,12 @@ class Provision(models.Model):
 
     def has_subscription(self):
         """
-        Vérifie si provision a subscription
-        
-        MODIFIÉ: Check subscription FK au lieu de reverse OneToOne
-        
-        Returns:
-            bool
+        Vérifie si provision a subscription (requis pour compléter FSM).
+        Pour INITIAL: subscription est créée et linkée avant complete_provisioning().
+        Pour RENEWAL: subscription déjà linkée à la création.
         """
         return self.subscription is not None
-    @property
-    def is_renewal(self):
-        return self.subscription is not None
-    
+
     @property
     def is_initial(self):
-        return self.subscription is None
+        return not self.is_renewal

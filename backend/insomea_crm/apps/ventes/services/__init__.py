@@ -40,6 +40,7 @@ from .provision_service import (
     start_provisioning,
     complete_provisioning,
     fail_provisioning,
+    retry_provisioning,
 )
 
 # 🆕 NOUVEAUX
@@ -84,6 +85,7 @@ __all__ = [
     'start_provisioning',
     'complete_provisioning',
     'fail_provisioning',
+    'retry_provisioning',
     
     # Workflow
     'request_all_supplier_quotes',

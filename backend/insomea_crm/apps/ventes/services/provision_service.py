@@ -101,6 +101,7 @@ def create_provisions(*, opportunity_id, user, ip_address=None):
         provision = Provision.objects.create(
             opportunity_line=line,
             subscription=subscription,  # None if initial, existing if renewal
+            is_renewal=subscription is not None,  # Stored at creation, never changes
             status=ProvisionStatus.WAITING_PROVISION,
         )
 

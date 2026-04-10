@@ -42,8 +42,9 @@ from ..selectors import (
 )
 from ..services import (
     start_provisioning,
-    complete_provisioning,  # 🆕 MODIFIÉ
+    complete_provisioning,
     fail_provisioning,
+    retry_provisioning,
 )
 from ..filters import ProvisionFilter
 from ..permissions import (
@@ -216,20 +217,20 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
     def fail(self, request, pk=None):
         """
         Fail provisioning
-        
+
         POST /provisions/:id/fail/
-        
+
         Body:
             {
                 "error_message": "Error description"
             }
         """
-        
+
         provision = self.get_object()
-        
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         # Call service
         provision = fail_provisioning(
             provision_id=provision.id,
@@ -237,7 +238,30 @@ class ProvisionViewSet(viewsets.ReadOnlyModelViewSet):
             user=request.user,
             ip_address=request.META.get('REMOTE_ADDR')
         )
-        
+
         # Return
+        output = ProvisionDetailSerializer(provision)
+        return Response(output.data)
+
+    @action(detail=True, methods=['post'])
+    def retry(self, request, pk=None):
+        """
+        Retry provisioning after ERROR
+
+        POST /provisions/:id/retry/
+
+        Body: (empty)
+
+        Transitions: ERROR → PROVISIONING
+        """
+
+        provision = self.get_object()
+
+        provision = retry_provisioning(
+            provision_id=provision.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
         output = ProvisionDetailSerializer(provision)
         return Response(output.data)
