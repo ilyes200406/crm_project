@@ -75,13 +75,13 @@ export function OpportunitiesWidget({
 
   // Handle row click
   const handleRowClick = (opportunity) => {
-    navigate(`/ventes/opportunities/${opportunity.id}`);
+    navigate(`/app/ventes/opportunities/${opportunity.id}`);
   };
 
   // Footer action
   const footer = showViewAll && data?.results?.length > 0 && (
     <button
-      onClick={() => navigate('/ventes?tab=opportunities')}
+      onClick={() => navigate('/app/ventes/opportunities')}
       className="text-sm text-blue-600 hover:text-blue-800 font-medium"
     >
       Voir tout ({data.count || 0}) →
@@ -171,12 +171,20 @@ export function OpportunitiesApprovalWidget() {
       },
     },
     {
+      header: 'Commercial',
+      render: (row) => (
+        <span className="text-sm text-gray-600">
+          {row.created_by_name || row.assigned_to_name || '—'}
+        </span>
+      ),
+    },
+    {
       header: 'Actions',
       render: (row) => (
         <button
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/ventes/opportunities/${row.id}?tab=approval`);
+            navigate(`/app/ventes/opportunities/${row.id}`);
           }}
           className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
         >
@@ -187,7 +195,7 @@ export function OpportunitiesApprovalWidget() {
   ];
 
   const handleRowClick = (opportunity) => {
-    navigate(`/ventes/opportunities/${opportunity.id}?tab=approval`);
+    navigate(`/app/ventes/opportunities/${opportunity.id}`);
   };
 
   return (

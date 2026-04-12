@@ -4,8 +4,6 @@
  * Dashboard principal pour le rôle FINANCE
  */
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -20,7 +18,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { Card, DataTable, Badge } from '../../../shared/components';
+import { Card } from '../../../shared/components';
 import {
   FinanceStatsCards,
   OpportunitiesApprovalWidget,
@@ -28,23 +26,14 @@ import {
 import {
   useRevenueChart,
   useSubscriptionsStats,
-  useOpportunities,
 } from '../hooks';
 
 export function FinanceDashboard() {
-  const navigate = useNavigate();
-
   // Fetch revenue chart (12 months)
   const { data: revenueData, isLoading: revenueLoading } = useRevenueChart(12);
 
   // Fetch subscriptions stats
   const { data: subStats, isLoading: subStatsLoading } = useSubscriptionsStats();
-
-  // Fetch top opportunities by margin (placeholder)
-  const { data: topOpps, isLoading: topOppsLoading } = useOpportunities({
-    status: 'INSOMEA_PO_CONFIRMED',
-    limit: 10,
-  });
 
   // Prepare subscriptions pie chart data
   const subscriptionsPieData = subStats
@@ -165,81 +154,6 @@ export function FinanceDashboard() {
         </Card>
       </div>
 
-      {/* Row 3: Top Opportunities by Margin */}
-      <Card title="💎 Top 10 Opportunités par Marge" noPadding>
-        <DataTable
-          columns={[
-            {
-              header: 'Client',
-              render: (row) => (
-                <div className="font-medium text-gray-900">
-                  {row.client?.name || '-'}
-                </div>
-              ),
-            },
-            {
-              header: 'Produit',
-              render: (row) => {
-                const product = row.opportunity_lines?.[0]?.product;
-                return (
-                  <div className="text-sm text-gray-700">
-                    {product?.title || '-'}
-                  </div>
-                );
-              },
-            },
-            {
-              header: 'Achat',
-              render: (row) => {
-                const purchase = row.insomea_quote?.total_purchase || 0;
-                return (
-                  <div className="text-sm text-gray-900">
-                    {purchase.toLocaleString()} DT
-                  </div>
-                );
-              },
-            },
-            {
-              header: 'Vente',
-              render: (row) => {
-                const sale = row.insomea_quote?.total_sale || 0;
-                return (
-                  <div className="text-sm font-semibold text-gray-900">
-                    {sale.toLocaleString()} DT
-                  </div>
-                );
-              },
-            },
-            {
-              header: 'Marge',
-              render: (row) => {
-                const quote = row.insomea_quote;
-                if (!quote) return '-';
-
-                const margin = quote.total_sale - quote.total_purchase;
-                const marginPercent = ((margin / quote.total_purchase) * 100).toFixed(1);
-
-                return (
-                  <div>
-                    <div className="text-sm font-bold text-green-600">
-                      {marginPercent}%
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {margin.toLocaleString()} DT
-                    </div>
-                  </div>
-                );
-              },
-            },
-          ]}
-          data={topOpps?.results || []}
-          loading={topOppsLoading}
-          onRowClick={(opp) => navigate(`/ventes/opportunities/${opp.id}`)}
-          emptyState={{
-            message: 'Aucune opportunité confirmée',
-          }}
-        />
-      </Card>
     </div>
   );
 }

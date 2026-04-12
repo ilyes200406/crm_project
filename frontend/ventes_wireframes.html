@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ventes App — Wireframes</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+  /* ── Role switcher ── */
+  .role-tabs { position: sticky; top: 0; z-index: 100; background: #1e293b; display: flex; gap: 4px; padding: 12px 24px; }
+  .role-tab { padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #94a3b8; border: none; background: transparent; }
+  .role-tab.active { background: #3b82f6; color: white; }
+  .role-tab:hover:not(.active) { background: #334155; color: white; }
+
+  /* ── Role views ── */
+  .role-view { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .role-view.active { display: block; }
+
+  /* ── Workflow flow ── */
+  .flow-header { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border-left: 4px solid #3b82f6; }
+  .flow-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .flow-header p { font-size: 13px; color: #64748b; }
+  .flow-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+  .flow-step { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .flow-step.done   { background: #dcfce7; color: #15803d; }
+  .flow-step.active { background: #dbeafe; color: #1d4ed8; }
+  .flow-step.wait   { background: #fef9c3; color: #854d0e; }
+  .flow-step.grey   { background: #f1f5f9; color: #64748b; }
+  .flow-arrow { font-size: 12px; color: #94a3b8; }
+
+  /* ── Page mockup container ── */
+  .pages-grid { display: flex; flex-direction: column; gap: 32px; }
+  .page-mockup { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.05); }
+  .page-title-bar { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .page-title-bar .url { font-size: 11px; color: #64748b; background: #e2e8f0; padding: 3px 10px; border-radius: 4px; font-family: monospace; }
+  .page-title-bar .label { font-size: 12px; font-weight: 700; color: #475569; }
+  .page-content { padding: 20px; }
+
+  /* ── Shared UI pieces ── */
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .topbar h1 { font-size: 20px; font-weight: 700; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn { padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary  { background: #3b82f6; color: white; }
+  .btn-success  { background: #16a34a; color: white; }
+  .btn-warning  { background: #d97706; color: white; }
+  .btn-danger   { background: #dc2626; color: white; }
+  .btn-ghost    { background: #f1f5f9; color: #475569; }
+  .btn-outline  { background: white; border: 1px solid #d1d5db; color: #374151; }
+  .btn-purple   { background: #7c3aed; color: white; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+  /* ── Stats row ── */
+  .stats-row { display: grid; gap: 12px; margin-bottom: 20px; }
+  .stats-row.col4 { grid-template-columns: repeat(4, 1fr); }
+  .stats-row.col3 { grid-template-columns: repeat(3, 1fr); }
+  .stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+  .stat-card .stat-icon { font-size: 20px; margin-bottom: 6px; }
+  .stat-card .stat-value { font-size: 22px; font-weight: 700; color: #1e293b; }
+  .stat-card .stat-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .stat-card .stat-trend { font-size: 11px; color: #16a34a; margin-top: 4px; font-weight: 600; }
+  .stat-card.urgent { border-color: #fca5a5; background: #fff5f5; }
+  .stat-card.urgent .stat-value { color: #dc2626; }
+
+  /* ── Table ── */
+  .table-wrapper { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { background: #f8fafc; }
+  th { padding: 10px 12px; text-align: left; font-weight: 600; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  /* ── Status badge ── */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-draft    { background: #f1f5f9; color: #475569; }
+  .badge-blue     { background: #dbeafe; color: #1d4ed8; }
+  .badge-yellow   { background: #fef9c3; color: #854d0e; }
+  .badge-green    { background: #dcfce7; color: #15803d; }
+  .badge-orange   { background: #ffedd5; color: #9a3412; }
+  .badge-purple   { background: #ede9fe; color: #6d28d9; }
+  .badge-red      { background: #fee2e2; color: #991b1b; }
+
+  /* ── Two-column layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* ── Card block ── */
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .card h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: #1e293b; }
+  .card-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+  .card-row:last-child { border-bottom: none; }
+  .card-label { color: #64748b; }
+  .card-value { font-weight: 600; color: #1e293b; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 2px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+
+  /* ── Sidebar layout ── */
+  .sidebar-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  .sidebar-layout.wide-sidebar { grid-template-columns: 1fr 340px; }
+
+  /* ── Status timeline ── */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+  .timeline-item { position: relative; padding: 8px 0 8px 16px; font-size: 12px; }
+  .timeline-item::before { content: ''; position: absolute; left: -4px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; border: 2px solid white; box-shadow: 0 0 0 2px #3b82f6; }
+  .timeline-item.grey::before { background: #cbd5e1; box-shadow: 0 0 0 2px #cbd5e1; }
+  .timeline-date { font-size: 10px; color: #94a3b8; }
+
+  /* ── Form ── */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: .04em; }
+  .form-input { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 7px 10px; font-size: 12px; background: white; color: #1e293b; }
+  .form-input:focus { outline: none; border-color: #3b82f6; }
+  .form-select { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 7px 10px; font-size: 12px; background: white; color: #1e293b; appearance: none; }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 13px; }
+  .empty .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* ── Alert ── */
+  .alert { padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; display: flex; gap: 8px; align-items: flex-start; }
+  .alert-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+  .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
+  /* ── Filter bar ── */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .filter-bar input { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 10px; font-size: 12px; flex: 1; min-width: 160px; }
+  .filter-bar select { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 10px; font-size: 12px; background: white; }
+
+  /* ── Line items ── */
+  .line-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+  .line-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .line-item-title { font-size: 13px; font-weight: 600; }
+  .line-item-meta { display: flex; gap: 16px; font-size: 11px; color: #64748b; }
+  .line-item-meta span b { color: #374151; }
+
+  /* ── Progress bar ── */
+  .progress-bar { background: #e2e8f0; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 4px; }
+
+  /* ── Provision card ── */
+  .prov-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .prov-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .prov-card-title { font-size: 13px; font-weight: 600; }
+  .prov-card-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  /* ── Notification dot ── */
+  .notif-dot { display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+
+  /* ── Section separator ── */
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #94a3b8; margin: 20px 0 10px; }
+
+  /* ── Upload zone ── */
+  .upload-zone { border: 2px dashed #d1d5db; border-radius: 8px; padding: 24px; text-align: center; color: #94a3b8; font-size: 12px; background: #f8fafc; }
+  .upload-zone .upload-icon { font-size: 28px; margin-bottom: 6px; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 14px 0; }
+
+  /* ── Chart placeholder ── */
+  .chart-ph { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; height: 180px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; }
+
+  /* ── Sidebar detail panel ── */
+  .detail-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; margin-bottom: 3px; }
+  .detail-value { font-size: 13px; color: #1e293b; margin-bottom: 10px; }
+
+  /* ── Modal overlay ── */
+  .modal-overlay { background: rgba(15,23,42,.15); border-radius: 8px; padding: 8px; margin-top: 12px; }
+  .modal-box { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.12); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .modal-title { font-size: 14px; font-weight: 700; }
+  .modal-close { font-size: 16px; color: #94a3b8; cursor: pointer; }
+
+  /* ── Workflow state indicator ── */
+  .workflow-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+  .wi-step { display: flex; flex-direction: column; align-items: center; position: relative; flex: 1; min-width: 80px; }
+  .wi-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; z-index: 1; }
+  .wi-dot.done   { background: #16a34a; color: white; }
+  .wi-dot.current{ background: #3b82f6; color: white; box-shadow: 0 0 0 3px #bfdbfe; }
+  .wi-dot.future { background: #e2e8f0; color: #94a3b8; }
+  .wi-label { font-size: 9px; font-weight: 600; color: #64748b; text-align: center; margin-top: 4px; max-width: 72px; line-height: 1.3; }
+  .wi-label.current { color: #3b82f6; }
+  .wi-line { flex: 1; height: 2px; margin-top: -14px; }
+  .wi-line.done   { background: #16a34a; }
+  .wi-line.future { background: #e2e8f0; }
+
+  .page-section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- ROLE TABS                                                      -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="role-tabs">
+  <span style="color:#94a3b8;font-size:12px;font-weight:600;margin-right:8px;line-height:32px">ROLE:</span>
+  <button class="role-tab active" onclick="switchRole('commercial')">💼 Commercial</button>
+  <button class="role-tab" onclick="switchRole('finance')">💰 Finance</button>
+  <button class="role-tab" onclick="switchRole('tech')">🔧 Technicien</button>
+  <span style="margin-left:auto;color:#475569;font-size:11px;line-height:32px">Insomea CRM — Ventes Wireframes</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- COMMERCIAL                                                     -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="role-view active" id="role-commercial">
+
+  <div class="flow-header">
+    <h2>💼 Workflow Commercial — de la création à la confirmation Finance</h2>
+    <p>Le commercial gère l'intégralité du cycle de vente : création de l'opportunité, gestion des devis fournisseurs, création du devis client Insomea, et réception du bon de commande client.</p>
+    <div class="flow-steps">
+      <span class="flow-step active">1. Dashboard</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">2. Liste Opportunités</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">3. Créer Opportunité</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">4. Ajouter Lignes + Request Devis</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">5. Uploader Devis Fournisseur</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">6. Créer Devis Insomea</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">7. Envoyer au Client</span><span class="flow-arrow">→</span>
+      <span class="flow-step wait">8. Attente BC Client</span><span class="flow-arrow">→</span>
+      <span class="flow-step wait">9. Upload BC Client</span><span class="flow-arrow">→</span>
+      <span class="flow-step grey">⏳ Finance prend le relais</span>
+    </div>
+  </div>
+
+  <div class="pages-grid">
+
+    <!-- PAGE 1: DASHBOARD -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">1. DASHBOARD COMMERCIAL</span>
+        <span class="url">/app/ventes</span>
+        <span style="margin-left:auto;font-size:11px;color:#94a3b8">Déjà construit ✅</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <h1>📊 Dashboard Commercial</h1>
+          <div class="topbar-actions">
+            <button class="btn btn-primary">+ Nouvelle Opportunité</button>
+          </div>
+        </div>
+        <div class="stats-row col4">
+          <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value">24</div><div class="stat-label">Total Opportunités</div><div class="stat-trend">+3 ce mois</div></div>
+          <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">6</div><div class="stat-label">Ce Mois</div><div class="stat-trend">+12%</div></div>
+          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">145K DT</div><div class="stat-label">Revenue Prévu</div><div class="stat-trend">+15K</div></div>
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">68%</div><div class="stat-label">Taux Conversion</div><div class="stat-trend">+5%</div></div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="page-section-title">📋 Mes Opportunités Actives</div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>Référence</th><th>Client</th><th>Status</th><th>Montant</th></tr></thead>
+              <tbody>
+                <tr><td><b>OPP-2024-00045</b><br><span style="font-size:10px;color:#94a3b8">INITIAL</span></td><td>ACME Corp</td><td><span class="badge badge-yellow">⚙️ DEVIS FOUR.</span></td><td>12,400 DT</td></tr>
+                <tr><td><b>OPP-2024-00044</b><br><span style="font-size:10px;color:#94a3b8">RENEWAL</span></td><td>TechCo</td><td><span class="badge badge-blue">📄 DEVIS INSOMEA</span></td><td>8,200 DT</td></tr>
+                <tr><td><b>OPP-2024-00043</b></td><td>StartUp SAS</td><td><span class="badge badge-orange">⏳ BC CLIENT</span></td><td>5,600 DT</td></tr>
+                <tr><td><b>OPP-2024-00042</b></td><td>BigCorp</td><td><span class="badge badge-draft">✏️ BROUILLON</span></td><td>—</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div>
+            <div class="page-section-title">⚠️ Subscriptions Expirant (30j)</div>
+            <div class="prov-card"><div class="prov-card-header"><div><div class="prov-card-title">Microsoft 365 Business</div><div class="prov-card-sub">ACME Corp • SUB-MS-001</div></div><span class="badge badge-red">🔴 7j</span></div><button class="btn btn-primary btn-sm" style="width:100%">🔄 Créer Renewal</button></div>
+            <div class="prov-card"><div class="prov-card-header"><div><div class="prov-card-title">Azure DevOps</div><div class="prov-card-sub">TechCo • SUB-MS-018</div></div><span class="badge badge-orange">🟠 15j</span></div><button class="btn btn-primary btn-sm" style="width:100%">🔄 Créer Renewal</button></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card"><div class="chart-ph">📊 Pipeline par statut (BarChart)</div></div>
+          <div class="card"><div class="chart-ph">💰 Revenue 6 mois (AreaChart)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: OPPORTUNITIES LIST -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">2. LISTE OPPORTUNITÉS</span>
+        <span class="url">/app/ventes/opportunities</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <h1>📋 Opportunités</h1>
+          <button class="btn btn-primary">+ Nouvelle Opportunité</button>
+        </div>
+        <div class="filter-bar">
+          <input type="text" placeholder="🔍 Rechercher par client, référence..." />
+          <select><option>Tous les statuts</option><option>Brouillon</option><option>Devis fournisseur</option><option>Devis Insomea</option><option>BC Client</option></select>
+          <select><option>Tous les types</option><option>Initial</option><option>Renewal</option><option>Upsell</option></select>
+          <select><option>Tous les clients</option></select>
+          <button class="btn btn-ghost">🗂️ Export</button>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>Référence</th><th>Client</th><th>Type</th><th>Assigné à</th><th>Status</th><th>Montant</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td><b>OPP-2024-00045</b></td><td>ACME Corp</td><td><span class="badge badge-blue">Initial</span></td><td>Ilyes S.</td><td><span class="badge badge-yellow">⚙️ Devis Four.</span></td><td>12,400 DT</td><td>03/04/2024</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+            <tr><td><b>OPP-2024-00044</b></td><td>TechCo</td><td><span class="badge badge-purple">Renewal</span></td><td>Ilyes S.</td><td><span class="badge badge-blue">📄 Devis Insomea</span></td><td>8,200 DT</td><td>01/04/2024</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+            <tr><td><b>OPP-2024-00043</b></td><td>StartUp SAS</td><td><span class="badge badge-blue">Initial</span></td><td>Ilyes S.</td><td><span class="badge badge-orange">⏳ BC Client</span></td><td>5,600 DT</td><td>28/03/2024</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+            <tr><td><b>OPP-2024-00042</b></td><td>BigCorp</td><td><span class="badge badge-blue">Initial</span></td><td>Ilyes S.</td><td><span class="badge badge-draft">✏️ Brouillon</span></td><td>—</td><td>25/03/2024</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+          </tbody></table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#64748b">
+          <span>Affichage 1–4 sur 24 résultats</span>
+          <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm">← Précédent</button><button class="btn btn-primary btn-sm">Suivant →</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: CREATE OPPORTUNITY -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">3. CRÉER OPPORTUNITÉ</span>
+        <span class="url">/app/ventes/opportunities/new</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar"><h1>➕ Nouvelle Opportunité</h1></div>
+        <div style="max-width:600px">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Nom de l'opportunité *</label><input class="form-input" type="text" placeholder="ex: Migration Office 365 ACME" /></div>
+            <div class="form-group"><label class="form-label">Client *</label><select class="form-select"><option>Sélectionner un client...</option><option>ACME Corp</option><option>TechCo</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Type *</label><select class="form-select"><option>INITIAL — Nouvelle vente</option><option>RENEWAL — Renouvellement</option><option>UPSELL — Montée en gamme</option><option>DOWNGRADE — Révision à la baisse</option></select></div>
+            <div class="form-group"><label class="form-label">Assigné à</label><select class="form-select"><option>Ilyes Samaaly (moi)</option><option>Autre commercial...</option></select></div>
+          </div>
+          <div class="form-group"><label class="form-label">Notes internes</label><textarea class="form-input" rows="3" placeholder="Contexte, remarques..."></textarea></div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn btn-primary">Créer l'opportunité →</button>
+            <button class="btn btn-ghost">Annuler</button>
+          </div>
+          <div class="alert alert-info" style="margin-top:12px">ℹ️ Après création, vous pourrez ajouter les lignes produits (licences).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: OPPORTUNITY DETAIL — DRAFT (add lines) -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">4. DÉTAIL OPPORTUNITÉ — ÉTAT: BROUILLON (ajout de lignes)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <!-- Breadcrumb -->
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">Opportunités / <b style="color:#374151">OPP-2024-00045</b></div>
+
+        <!-- Header -->
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1><div style="font-size:12px;color:#64748b;margin-top:2px">Migration Office 365 · INITIAL · Créé par Ilyes S. le 03/04/2024</div></div>
+          <div class="topbar-actions">
+            <span class="badge badge-draft" style="font-size:12px;padding:6px 14px">✏️ BROUILLON</span>
+            <button class="btn btn-danger btn-sm">🗑️ Supprimer</button>
+          </div>
+        </div>
+
+        <!-- Workflow indicator -->
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot current">1</div><div class="wi-label current">Brouillon<br>Lignes</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">2</div><div class="wi-label">Devis<br>Fournisseur</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">3</div><div class="wi-label">Devis<br>Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">4</div><div class="wi-label">Demande<br>BC Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">5</div><div class="wi-label">BC Client<br>Reçu</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">6</div><div class="wi-label">Approuvé<br>Finance</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">7</div><div class="wi-label">BC Insomea<br>Envoyés</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">BC Insomea<br>Confirmés</div></div>
+        </div>
+
+        <div class="sidebar-layout">
+          <div>
+            <!-- Add line form -->
+            <div class="card">
+              <h4>➕ Ajouter une ligne produit</h4>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Produit *</label><select class="form-select"><option>Rechercher un produit...</option><option>Microsoft 365 Business Basic</option><option>Microsoft 365 Business Premium</option><option>Azure P1</option></select></div>
+                <div class="form-group"><label class="form-label">Quantité *</label><input class="form-input" type="number" value="10" /></div>
+              </div>
+              <div class="form-group"><label class="form-label">Notes</label><input class="form-input" type="text" placeholder="Notes pour cette ligne..." /></div>
+              <button class="btn btn-primary btn-sm">+ Ajouter la ligne</button>
+            </div>
+
+            <!-- Lines list -->
+            <div class="page-section-title">📦 Lignes de l'opportunité (2)</div>
+            <div class="line-item">
+              <div class="line-item-header">
+                <div class="line-item-title">Microsoft 365 Business Basic</div>
+                <div style="display:flex;gap:6px;align-items:center"><span class="badge badge-draft">✏️ BROUILLON</span><button class="btn btn-danger btn-sm">✕</button></div>
+              </div>
+              <div class="line-item-meta"><span>Fournisseur: <b>Microsoft</b></span><span>Qté: <b>10 licences</b></span><span>Prix achat: <b>—</b></span></div>
+            </div>
+            <div class="line-item">
+              <div class="line-item-header">
+                <div class="line-item-title">Azure DevOps</div>
+                <div style="display:flex;gap:6px;align-items:center"><span class="badge badge-draft">✏️ BROUILLON</span><button class="btn btn-danger btn-sm">✕</button></div>
+              </div>
+              <div class="line-item-meta"><span>Fournisseur: <b>Microsoft</b></span><span>Qté: <b>5 licences</b></span><span>Prix achat: <b>—</b></span></div>
+            </div>
+
+            <!-- Primary action -->
+            <div class="alert alert-info">✅ 2 lignes ajoutées. Quand vous êtes prêt, envoyez les demandes de devis aux fournisseurs.</div>
+            <button class="btn btn-warning" style="width:100%;padding:10px">📧 Demander devis fournisseurs (2 lignes → 1 email Microsoft)</button>
+          </div>
+
+          <!-- Sidebar -->
+          <div>
+            <div class="card">
+              <h4>📋 Informations</h4>
+              <div class="detail-label">Client</div><div class="detail-value">ACME Corp</div>
+              <div class="detail-label">Type</div><div class="detail-value"><span class="badge badge-blue">Initial</span></div>
+              <div class="detail-label">Assigné à</div><div class="detail-value">Ilyes Samaaly</div>
+              <div class="detail-label">Créé le</div><div class="detail-value">03 avril 2024</div>
+            </div>
+            <div class="card">
+              <h4>🕐 Historique</h4>
+              <div class="timeline">
+                <div class="timeline-item"><b>Opportunité créée</b><div class="timeline-date">03/04/2024 14:32 · Ilyes S.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 5: OPPORTUNITY DETAIL — SUPPLIER QUOTE RECEIVED -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">5. DÉTAIL OPPORTUNITÉ — ÉTAT: DEVIS FOURNISSEUR REÇU (uploader devis)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">Opportunités / <b style="color:#374151">OPP-2024-00045</b></div>
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1><div style="font-size:12px;color:#64748b;margin-top:2px">Migration Office 365 · INITIAL</div></div>
+          <span class="badge badge-yellow" style="font-size:12px;padding:6px 14px">⚙️ DEVIS FOURNISSEUR DEMANDÉ</span>
+        </div>
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Brouillon</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot current">2</div><div class="wi-label current">Devis<br>Fournisseur</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">3</div><div class="wi-label">Devis<br>Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">4</div><div class="wi-label">Demande<br>BC Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">5</div><div class="wi-label">BC Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">6</div><div class="wi-label">Approuvé</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">7</div><div class="wi-label">BC Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">Confirmé</div></div>
+        </div>
+        <div class="sidebar-layout">
+          <div>
+            <div class="alert alert-warning">⏳ En attente du devis fournisseur Microsoft. Quand vous le recevez, uploadez-le ci-dessous.</div>
+            <!-- Supplier quote form per supplier -->
+            <div class="card">
+              <h4>📤 Uploader Devis — Microsoft (2 lignes)</h4>
+              <div class="form-group"><label class="form-label">Fichier PDF du devis *</label>
+                <div class="upload-zone"><div class="upload-icon">📄</div>Glisser-déposer le PDF ou <b>cliquer pour parcourir</b><br><span style="font-size:10px">PDF, max 10 MB</span></div>
+              </div>
+              <div class="section-label">Prix par ligne (HT)</div>
+              <div class="line-item">
+                <div class="line-item-header"><div class="line-item-title">Microsoft 365 Business Basic × 10</div></div>
+                <div class="form-row" style="margin-bottom:0">
+                  <div class="form-group"><label class="form-label">Prix unitaire achat (DT) *</label><input class="form-input" type="number" placeholder="0.00" /></div>
+                </div>
+              </div>
+              <div class="line-item">
+                <div class="line-item-header"><div class="line-item-title">Azure DevOps × 5</div></div>
+                <div class="form-row" style="margin-bottom:0">
+                  <div class="form-group"><label class="form-label">Prix unitaire achat (DT) *</label><input class="form-input" type="number" placeholder="0.00" /></div>
+                </div>
+              </div>
+              <button class="btn btn-success" style="margin-top:12px;width:100%">✅ Enregistrer le devis fournisseur</button>
+              <div style="font-size:10px;color:#94a3b8;margin-top:6px;text-align:center">Toutes les lignes passeront automatiquement en "Devis Reçu"</div>
+            </div>
+          </div>
+          <div>
+            <div class="card"><h4>📋 Lignes</h4>
+              <div class="card-row"><span class="card-label">M365 Business Basic × 10</span><span class="badge badge-yellow">⏳ En attente</span></div>
+              <div class="card-row"><span class="card-label">Azure DevOps × 5</span><span class="badge badge-yellow">⏳ En attente</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 6: CREATE INSOMEA QUOTE -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">6. DÉTAIL OPPORTUNITÉ — ÉTAT: DEVIS REÇU (créer devis Insomea)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">Opportunités / <b style="color:#374151">OPP-2024-00045</b></div>
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1></div>
+          <span class="badge badge-blue" style="font-size:12px;padding:6px 14px">📄 DEVIS FOURNISSEUR REÇU</span>
+        </div>
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Brouillon</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Four.</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot current">3</div><div class="wi-label current">Devis<br>Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">4</div><div class="wi-label">Demande BC</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">5</div><div class="wi-label">BC Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">6</div><div class="wi-label">Approuvé</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">7</div><div class="wi-label">BC Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">Confirmé</div></div>
+        </div>
+
+        <div class="sidebar-layout wide-sidebar">
+          <div>
+            <div class="card">
+              <h4>💰 Créer le devis Insomea — Saisir les prix de vente</h4>
+              <div class="section-label">Prix de vente par ligne</div>
+              <div class="table-wrapper">
+                <table><thead><tr><th>Produit</th><th>Qté</th><th>Prix achat unit.</th><th>Prix vente unit. *</th><th>Marge</th></tr></thead>
+                <tbody>
+                  <tr><td>M365 Business Basic</td><td>10</td><td style="color:#64748b">8.50 DT</td><td><input class="form-input" type="number" value="12.00" style="width:80px;padding:4px 6px" /></td><td style="color:#16a34a;font-weight:600">+41%</td></tr>
+                  <tr><td>Azure DevOps</td><td>5</td><td style="color:#64748b">15.00 DT</td><td><input class="form-input" type="number" value="20.00" style="width:80px;padding:4px 6px" /></td><td style="color:#16a34a;font-weight:600">+33%</td></tr>
+                </tbody></table>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Remise globale (%)</label><input class="form-input" type="number" value="0" /></div>
+              </div>
+              <button class="btn btn-success" style="width:100%;padding:10px">✅ Générer le devis Insomea (PDF auto)</button>
+            </div>
+          </div>
+
+          <!-- Sidebar: totals preview -->
+          <div>
+            <div class="card"><h4>📊 Récapitulatif</h4>
+              <div class="card-row"><span class="card-label">Sous-total achat</span><span class="card-value">160.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Sous-total vente</span><span class="card-value">220.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Remise</span><span class="card-value">0.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Total vente HT</span><span class="card-value" style="color:#1d4ed8;font-size:15px">220.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Marge</span><span class="card-value" style="color:#16a34a">60.00 DT (37.5%)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 7: INSOMEA QUOTE CREATED — send to client -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">7. DÉTAIL OPPORTUNITÉ — ÉTAT: DEVIS INSOMEA CRÉÉ (envoyer au client)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1></div>
+          <span class="badge badge-purple" style="font-size:12px;padding:6px 14px">📋 DEVIS INSOMEA CRÉÉ</span>
+        </div>
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Brouillon</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Four.</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Insomea</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot current">4</div><div class="wi-label current">Envoyer<br>au Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">5</div><div class="wi-label">BC Client</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">6</div><div class="wi-label">Approuvé</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">7</div><div class="wi-label">BC Insomea</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">Confirmé</div></div>
+        </div>
+
+        <div class="sidebar-layout">
+          <div>
+            <div class="card">
+              <h4>📄 Devis Insomea — INSOMEA-2024-00045</h4>
+              <div style="background:#1e293b;border-radius:8px;padding:16px;color:white;margin-bottom:12px">
+                <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">Aperçu PDF généré</div>
+                <div style="background:#334155;border-radius:4px;height:120px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#94a3b8">📄 insomea_quote_OPP-2024-00045.pdf</div>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <button class="btn btn-ghost" style="flex:1">👁️ Prévisualiser</button>
+                <button class="btn btn-ghost" style="flex:1">⬇️ Télécharger</button>
+              </div>
+              <div class="divider"></div>
+              <div class="alert alert-info">📧 Le devis sera envoyé par email à <b>contact@acme.com</b> avec le PDF en pièce jointe.</div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn btn-primary" style="flex:1;padding:10px">📧 Envoyer au client — Demander BC</button>
+                <button class="btn btn-ghost">✏️ Modifier devis</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card"><h4>💰 Résumé financier</h4>
+              <div class="card-row"><span class="card-label">Total achat</span><span class="card-value">160.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Total vente</span><span class="card-value">220.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Marge</span><span class="card-value" style="color:#16a34a">60.00 DT (37.5%)</span></div>
+            </div>
+            <div class="card"><h4>👤 Client</h4>
+              <div class="detail-label">Société</div><div class="detail-value">ACME Corp</div>
+              <div class="detail-label">Email</div><div class="detail-value">contact@acme.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 8: UPLOAD CLIENT PO -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">8. DÉTAIL OPPORTUNITÉ — ÉTAT: DEMANDE BC CLIENT (upload BC signé)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1></div>
+          <span class="badge badge-orange" style="font-size:12px;padding:6px 14px">⏳ DEMANDE BC CLIENT</span>
+        </div>
+        <div class="sidebar-layout">
+          <div>
+            <div class="alert alert-warning">⏳ Devis envoyé au client le 04/04/2024. En attente de retour du bon de commande signé.</div>
+            <div class="card">
+              <h4>📤 Uploader le BC Client reçu</h4>
+              <div class="form-group"><label class="form-label">Numéro BC *</label><input class="form-input" type="text" placeholder="ex: BC-ACME-2024-001" /></div>
+              <div class="form-group"><label class="form-label">Fichier PDF signé *</label>
+                <div class="upload-zone"><div class="upload-icon">📄</div>Glisser-déposer le BC signé<br><span style="font-size:10px">PDF, max 10 MB</span></div>
+              </div>
+              <button class="btn btn-success" style="width:100%;padding:10px;margin-top:8px">✅ Uploader BC Client → Notifier Finance</button>
+              <div style="font-size:10px;color:#94a3b8;margin-top:6px;text-align:center">Le service Finance sera notifié automatiquement pour approbation.</div>
+            </div>
+          </div>
+          <div>
+            <div class="card"><h4>📄 Devis envoyé</h4>
+              <div class="card-row"><span class="card-label">Référence</span><span class="card-value">INSOMEA-2024-00045</span></div>
+              <div class="card-row"><span class="card-label">Envoyé le</span><span class="card-value">04/04/2024</span></div>
+              <div class="card-row"><span class="card-label">Total</span><span class="card-value">220.00 DT</span></div>
+              <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px">⬇️ Télécharger PDF devis</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages-grid commercial -->
+</div><!-- /role-commercial -->
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- FINANCE                                                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="role-view" id="role-finance">
+
+  <div class="flow-header" style="border-left-color:#16a34a">
+    <h2>💰 Workflow Finance — approbation, envoi BC Insomea, confirmation réception</h2>
+    <p>La finance reçoit une notification WebSocket dès que le commercial uploade un BC client. Elle approuve, génère les BC fournisseurs (Insomea POs), puis confirme leur réception.</p>
+    <div class="flow-steps">
+      <span class="flow-step grey">⏳ Reçoit notification</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">1. Dashboard Finance</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">2. Vue opportunité</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">3. Approuver + BC Insomea auto-envoyés</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">4. Confirmer réception BC par fournisseur</span><span class="flow-arrow">→</span>
+      <span class="flow-step grey">⏳ Technicien provisionne</span>
+    </div>
+  </div>
+
+  <div class="pages-grid">
+
+    <!-- PAGE 1: FINANCE DASHBOARD -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">1. DASHBOARD FINANCE</span>
+        <span class="url">/app/ventes</span>
+        <span style="margin-left:auto;font-size:11px;color:#94a3b8">Déjà construit ✅</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar"><h1>💼 Dashboard Finance</h1></div>
+        <div class="stats-row col4">
+          <div class="stat-card urgent"><div class="stat-icon">⚠️</div><div class="stat-value">3</div><div class="stat-label">À Approuver</div><span class="badge badge-red" style="margin-top:4px">URGENT</span></div>
+          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">45K DT</div><div class="stat-label">Revenue Ce Mois</div></div>
+          <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">450K DT</div><div class="stat-label">Revenue YTD</div></div>
+          <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value">32%</div><div class="stat-label">Marge Moyenne</div></div>
+        </div>
+
+        <!-- Notification banner -->
+        <div class="alert alert-warning" style="margin-bottom:16px">🔔 <b>Nouvelle notification :</b> OPP-2024-00045 (ACME Corp) — BC client reçu, en attente d'approbation. <button class="btn btn-warning btn-sm" style="margin-left:8px">Voir →</button></div>
+
+        <div class="page-section-title">⚠️ Opportunités à Approuver</div>
+        <div class="table-wrapper" style="margin-bottom:20px">
+          <table><thead><tr><th>Référence</th><th>Client</th><th>BC Client</th><th>Montant</th><th>Commercial</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr style="background:#fffbeb"><td><b>OPP-2024-00045</b></td><td>ACME Corp</td><td><div>BC-ACME-2024-001</div><button class="btn btn-ghost btn-sm">📄 Voir</button></td><td><b>220.00 DT</b></td><td>Ilyes S.</td><td><button class="btn btn-success btn-sm">✅ Approuver</button></td></tr>
+            <tr><td><b>OPP-2024-00043</b></td><td>TechCo</td><td><div>BC-TECHCO-054</div><button class="btn btn-ghost btn-sm">📄 Voir</button></td><td><b>8,200 DT</b></td><td>Ilyes S.</td><td><button class="btn btn-success btn-sm">✅ Approuver</button></td></tr>
+          </tbody></table>
+        </div>
+
+        <div class="two-col">
+          <div class="card"><div class="chart-ph">💰 Revenue Mensuel (12 mois)</div></div>
+          <div class="card"><div class="chart-ph">📊 Subscriptions — Pie Chart</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: OPPORTUNITY DETAIL — CLIENT_PO_RECIEVED (finance view) -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">2. DÉTAIL OPPORTUNITÉ — ÉTAT: BC CLIENT REÇU (vue Finance)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1><div style="font-size:12px;color:#64748b">Migration Office 365 · INITIAL · Commercial: Ilyes S.</div></div>
+          <span class="badge badge-orange" style="font-size:12px;padding:6px 14px">⚠️ BC CLIENT REÇU — EN ATTENTE APPROBATION</span>
+        </div>
+
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Brouillon</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Four.</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Insomea</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Envoyé Client</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot current">5</div><div class="wi-label current">BC Client<br>⚠️ FINANCE</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">6</div><div class="wi-label">Approuvé</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">7</div><div class="wi-label">BC Insomea<br>Envoyés</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">BC Insomea<br>Confirmés</div></div>
+        </div>
+
+        <div class="sidebar-layout wide-sidebar">
+          <div>
+            <!-- Tabs: overview, BC client, devis -->
+            <div class="tabs">
+              <div class="tab active">📋 Vue d'ensemble</div>
+              <div class="tab">📦 Lignes (2)</div>
+              <div class="tab">💰 Devis Insomea</div>
+              <div class="tab">📄 BC Client</div>
+            </div>
+
+            <div class="table-wrapper" style="margin-bottom:16px">
+              <table><thead><tr><th>Produit</th><th>Qté</th><th>Prix achat</th><th>Prix vente</th><th>Marge</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>M365 Business Basic</td><td>10</td><td>8.50 DT</td><td>12.00 DT</td><td style="color:#16a34a">+41%</td><td><span class="badge badge-blue">✅ Devis reçu</span></td></tr>
+                <tr><td>Azure DevOps</td><td>5</td><td>15.00 DT</td><td>20.00 DT</td><td style="color:#16a34a">+33%</td><td><span class="badge badge-blue">✅ Devis reçu</span></td></tr>
+              </tbody></table>
+            </div>
+
+            <!-- BC Client view -->
+            <div class="card">
+              <h4>📄 Bon de Commande Client reçu</h4>
+              <div class="card-row"><span class="card-label">Numéro BC</span><span class="card-value">BC-ACME-2024-001</span></div>
+              <div class="card-row"><span class="card-label">Reçu le</span><span class="card-value">05/04/2024</span></div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px">📄 Voir le BC Client (PDF)</button>
+            </div>
+
+            <!-- Approval action -->
+            <div class="alert alert-warning">⚠️ Vérifiez le BC client ci-dessus avant d'approuver. L'approbation enverra automatiquement les BC Insomea aux fournisseurs.</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn btn-success" style="flex:2;padding:12px;font-size:14px">✅ Approuver — Envoyer BC Insomea aux fournisseurs</button>
+              <button class="btn btn-danger" style="flex:1">❌ Rejeter</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card"><h4>💰 Financier</h4>
+              <div class="card-row"><span class="card-label">Total achat</span><span class="card-value">160.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Total vente</span><span class="card-value">220.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Marge</span><span class="card-value" style="color:#16a34a">60.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Marge %</span><span class="card-value" style="color:#16a34a">37.5%</span></div>
+            </div>
+            <div class="card"><h4>👤 Client</h4>
+              <div class="detail-label">Société</div><div class="detail-value">ACME Corp</div>
+              <div class="detail-label">Commercial</div><div class="detail-value">Ilyes Samaaly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: OPPORTUNITY DETAIL — APPROUVED (confirm POs) -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">3. DÉTAIL OPPORTUNITÉ — ÉTAT: APPROUVÉ / BC INSOMEA ENVOYÉS (confirmer réception)</span>
+        <span class="url">/app/ventes/opportunities/abc-123</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>OPP-2024-00045 — ACME Corp</h1></div>
+          <span class="badge badge-blue" style="font-size:12px;padding:6px 14px">📬 BC INSOMEA ENVOYÉS — ATTENTE CONFIRMATION</span>
+        </div>
+        <div class="workflow-indicator">
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Brouillon</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Four.</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Devis Insomea</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">BC Client</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot done">✓</div><div class="wi-label">Approuvé</div></div>
+          <div class="wi-line done"></div>
+          <div class="wi-step"><div class="wi-dot current">7</div><div class="wi-label current">BC Insomea<br>Envoyés</div></div>
+          <div class="wi-line future"></div>
+          <div class="wi-step"><div class="wi-dot future">8</div><div class="wi-label">BC Confirmés<br>→ Provisions</div></div>
+        </div>
+
+        <div class="sidebar-layout">
+          <div>
+            <div class="alert alert-success">✅ Approuvé le 06/04/2024. BC Insomea envoyés automatiquement à Microsoft (1 BC pour 2 lignes).</div>
+
+            <div class="card">
+              <h4>📬 BC Insomea — Microsoft</h4>
+              <div class="card-row"><span class="card-label">Référence BC</span><span class="card-value">BC-INS-2024-0045</span></div>
+              <div class="card-row"><span class="card-label">Fournisseur</span><span class="card-value">Microsoft</span></div>
+              <div class="card-row"><span class="card-label">Email envoyé à</span><span class="card-value">orders@microsoft.com</span></div>
+              <div class="card-row"><span class="card-label">Envoyé le</span><span class="card-value">06/04/2024 10:14</span></div>
+            </div>
+
+            <div class="section-label">Lignes concernées</div>
+            <div class="line-item">
+              <div class="line-item-header"><div class="line-item-title">M365 Business Basic × 10</div><span class="badge badge-yellow">📬 En attente confirmation</span></div>
+            </div>
+            <div class="line-item">
+              <div class="line-item-header"><div class="line-item-title">Azure DevOps × 5</div><span class="badge badge-yellow">📬 En attente confirmation</span></div>
+            </div>
+
+            <div class="alert alert-info" style="margin-top:16px">ℹ️ Quand Microsoft confirme réception du BC, cliquez ci-dessous pour créer les provisions de provisioning.</div>
+            <button class="btn btn-success" style="width:100%;padding:12px;margin-top:8px;font-size:14px">✅ Confirmer réception BC — Créer provisions (Technicien notifié)</button>
+          </div>
+          <div>
+            <div class="card"><h4>📊 Résumé</h4>
+              <div class="card-row"><span class="card-label">Lignes</span><span class="card-value">2</span></div>
+              <div class="card-row"><span class="card-label">BC Insomea</span><span class="card-value">1 (Microsoft)</span></div>
+              <div class="card-row"><span class="card-label">Total achat</span><span class="card-value">160.00 DT</span></div>
+              <div class="card-row"><span class="card-label">Approuvé par</span><span class="card-value">Finance User</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages-grid finance -->
+</div><!-- /role-finance -->
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- TECHNICIEN                                                     -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="role-view" id="role-tech">
+
+  <div class="flow-header" style="border-left-color:#7c3aed">
+    <h2>🔧 Workflow Technicien — provisions et subscriptions uniquement</h2>
+    <p>Le technicien reçoit une notification quand une provision est prête. Il démarre le provisioning, crée ou renouvelle la subscription Microsoft, et complète avec les dates et numéros.</p>
+    <div class="flow-steps">
+      <span class="flow-step grey">⏳ Reçoit notification WebSocket</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">1. Dashboard Tech</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">2. Liste Provisions</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">3. Détail Provision → Start</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">4. Provisionner dans portail MS</span><span class="flow-arrow">→</span>
+      <span class="flow-step active">5. Compléter (INITIAL vs RENEWAL)</span><span class="flow-arrow">→</span>
+      <span class="flow-step grey">✅ Subscription créée/renouvelée</span>
+    </div>
+  </div>
+
+  <div class="pages-grid">
+
+    <!-- PAGE 1: TECH DASHBOARD -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">1. DASHBOARD TECHNICIEN</span>
+        <span class="url">/app/ventes</span>
+        <span style="margin-left:auto;font-size:11px;color:#94a3b8">Déjà construit ✅</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar"><h1>🔧 Dashboard Technicien</h1></div>
+        <div class="stats-row col3">
+          <div class="stat-card urgent"><div class="stat-icon">⚠️</div><div class="stat-value">5</div><div class="stat-label">En Attente</div><span class="badge badge-red" style="margin-top:4px">ACTION REQUISE</span></div>
+          <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-value">3</div><div class="stat-label">En Cours</div></div>
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">28</div><div class="stat-label">Complétées ce mois</div><div class="stat-trend">+5 vs M-1</div></div>
+        </div>
+
+        <!-- Notification -->
+        <div class="alert alert-warning">🔔 <b>Nouvelle provision :</b> Microsoft 365 × 10 — ACME Corp. <button class="btn btn-primary btn-sm" style="margin-left:8px">Voir →</button></div>
+
+        <div class="page-section-title">⚠️ Provisions en Attente (5)</div>
+        <div class="table-wrapper" style="margin-bottom:20px">
+          <table><thead><tr><th>Client</th><th>Produit</th><th>Type</th><th>Depuis</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr style="background:#fffbeb"><td>ACME Corp</td><td>M365 Business Basic × 10</td><td><span class="badge badge-blue">INITIAL</span></td><td>2 min</td><td><button class="btn btn-primary btn-sm">▶️ Démarrer</button></td></tr>
+            <tr><td>TechCo</td><td>Azure DevOps × 5</td><td><span class="badge badge-blue">INITIAL</span></td><td>2 min</td><td><button class="btn btn-primary btn-sm">▶️ Démarrer</button></td></tr>
+            <tr><td>BigCorp</td><td>M365 Business Premium × 20</td><td><span class="badge badge-purple">RENEWAL</span></td><td>1h</td><td><button class="btn btn-primary btn-sm">▶️ Démarrer</button></td></tr>
+          </tbody></table>
+        </div>
+
+        <div class="page-section-title">🔄 Provisions en Cours (3)</div>
+        <div class="three-col">
+          <div class="prov-card" style="border-color:#bfdbfe;background:#eff6ff">
+            <div class="prov-card-header"><div><div class="prov-card-title">StartUp SAS</div><div class="prov-card-sub">M365 Business Basic × 5</div></div><span class="badge badge-blue">🔄 EN COURS</span></div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px">Démarré il y a 45 min</div>
+            <button class="btn btn-success btn-sm" style="width:100%">✅ Compléter</button>
+          </div>
+          <div class="prov-card" style="border-color:#bfdbfe;background:#eff6ff">
+            <div class="prov-card-header"><div><div class="prov-card-title">MegaCorp</div><div class="prov-card-sub">Azure P1 × 15</div></div><span class="badge badge-blue">🔄 EN COURS</span></div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px">Démarré il y a 2h</div>
+            <button class="btn btn-success btn-sm" style="width:100%">✅ Compléter</button>
+          </div>
+          <div class="prov-card">
+            <div class="prov-card-header"><div><div class="prov-card-title">Corp Inc</div><div class="prov-card-sub">Dynamics 365 × 8</div></div><span class="badge badge-blue">🔄 EN COURS</span></div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px">Démarré il y a 3h</div>
+            <button class="btn btn-success btn-sm" style="width:100%">✅ Compléter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: PROVISIONS LIST -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">2. LISTE PROVISIONS</span>
+        <span class="url">/app/ventes/provisions</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar"><h1>🔧 Mes Provisions</h1></div>
+        <div class="filter-bar">
+          <input type="text" placeholder="🔍 Client, produit..." />
+          <select><option>Tous les statuts</option><option selected>En attente</option><option>En cours</option><option>Complétées</option><option>Erreur</option></select>
+          <select><option>Tous les types</option><option>Initial</option><option>Renewal</option></select>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>Client</th><th>Produit</th><th>Opportunité</th><th>Type</th><th>Status</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr style="background:#fffbeb"><td><b>ACME Corp</b></td><td>M365 Business Basic × 10</td><td>OPP-2024-00045</td><td><span class="badge badge-blue">Initial</span></td><td><span class="badge badge-yellow">⏳ Attente</span></td><td>Il y a 2 min</td><td><button class="btn btn-primary btn-sm">▶️ Démarrer</button></td></tr>
+            <tr style="background:#fffbeb"><td><b>ACME Corp</b></td><td>Azure DevOps × 5</td><td>OPP-2024-00045</td><td><span class="badge badge-blue">Initial</span></td><td><span class="badge badge-yellow">⏳ Attente</span></td><td>Il y a 2 min</td><td><button class="btn btn-primary btn-sm">▶️ Démarrer</button></td></tr>
+            <tr><td>StartUp SAS</td><td>M365 Business Basic × 5</td><td>OPP-2024-00043</td><td><span class="badge badge-blue">Initial</span></td><td><span class="badge badge-blue">🔄 En cours</span></td><td>Il y a 45 min</td><td><button class="btn btn-success btn-sm">✅ Compléter</button></td></tr>
+            <tr><td>BigCorp</td><td>M365 Business Premium × 20</td><td>OPP-2024-00040</td><td><span class="badge badge-purple">Renewal</span></td><td><span class="badge badge-green">✅ Provisioned</span></td><td>Hier</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: PROVISION DETAIL — start -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">3. DÉTAIL PROVISION — ÉTAT: EN ATTENTE (démarrer)</span>
+        <span class="url">/app/ventes/provisions/xyz-456</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">Provisions / <b style="color:#374151">PROV-2024-00045-1</b></div>
+        <div class="topbar">
+          <div><h1>Provision — ACME Corp</h1><div style="font-size:12px;color:#64748b">Microsoft 365 Business Basic × 10 · Opportunité OPP-2024-00045 · <span class="badge badge-blue">INITIAL</span></div></div>
+          <span class="badge badge-yellow" style="font-size:12px;padding:6px 14px">⏳ EN ATTENTE</span>
+        </div>
+
+        <div class="sidebar-layout wide-sidebar">
+          <div>
+            <div class="card">
+              <h4>📦 Détails du produit à provisionner</h4>
+              <div class="card-row"><span class="card-label">Produit</span><span class="card-value">Microsoft 365 Business Basic</span></div>
+              <div class="card-row"><span class="card-label">Quantité</span><span class="card-value">10 licences</span></div>
+              <div class="card-row"><span class="card-label">Fournisseur</span><span class="card-value">Microsoft</span></div>
+              <div class="card-row"><span class="card-label">Type</span><span class="card-value"><span class="badge badge-blue">INITIAL — Nouvelle subscription</span></span></div>
+              <div class="card-row"><span class="card-label">Client</span><span class="card-value">ACME Corp</span></div>
+            </div>
+
+            <div class="alert alert-info">ℹ️ <b>INITIAL :</b> Vous devrez créer une nouvelle subscription dans le portail Microsoft Partner Center, puis saisir le numéro de subscription généré.</div>
+
+            <button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px">▶️ Démarrer le provisioning</button>
+            <div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:6px">Le statut passera à "En cours" et l'heure de début sera enregistrée.</div>
+          </div>
+
+          <div>
+            <div class="card"><h4>🔗 Contexte Opportunité</h4>
+              <div class="detail-label">Référence</div><div class="detail-value">OPP-2024-00045</div>
+              <div class="detail-label">Commercial</div><div class="detail-value">Ilyes Samaaly</div>
+              <div class="detail-label">BC Insomea</div><div class="detail-value">BC-INS-2024-0045</div>
+              <div class="detail-label">Confirmé le</div><div class="detail-value">06/04/2024</div>
+            </div>
+            <div class="card"><h4>🕐 Timeline</h4>
+              <div class="timeline">
+                <div class="timeline-item"><b>Provision créée</b><div class="timeline-date">06/04/2024 14:05</div></div>
+                <div class="timeline-item grey"><b>Provisioning démarré</b><div class="timeline-date">En attente...</div></div>
+                <div class="timeline-item grey"><b>Provisioning complété</b><div class="timeline-date">En attente...</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: PROVISION DETAIL — PROVISIONING (complete — INITIAL) -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">4. DÉTAIL PROVISION — EN COURS · TYPE INITIAL (compléter avec subscription MS)</span>
+        <span class="url">/app/ventes/provisions/xyz-456</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>Provision — ACME Corp</h1><div style="font-size:12px;color:#64748b">Microsoft 365 Business Basic × 10 · <span class="badge badge-blue">INITIAL</span></div></div>
+          <span class="badge badge-blue" style="font-size:12px;padding:6px 14px">🔄 EN COURS</span>
+        </div>
+
+        <div class="sidebar-layout wide-sidebar">
+          <div>
+            <div class="alert alert-info">🔧 Vous êtes en train de provisionner. Créez la subscription dans le portail Microsoft Partner Center, puis complétez le formulaire ci-dessous.</div>
+
+            <!-- INITIAL form -->
+            <div class="card">
+              <h4>✅ Compléter le provisioning — Nouvelle Subscription (INITIAL)</h4>
+              <div class="form-group"><label class="form-label">N° Subscription Microsoft *<br><span style="font-weight:400;text-transform:none;color:#94a3b8;font-size:10px">Trouvable dans Partner Center après création</span></label>
+                <input class="form-input" type="text" placeholder="ex: MS-5G8T3-XXXXX" />
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Date début abonnement *</label><input class="form-input" type="date" /></div>
+                <div class="form-group"><label class="form-label">Date fin abonnement *</label><input class="form-input" type="date" /></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn-success" style="flex:2;padding:10px">✅ Compléter — Créer Subscription</button>
+                <button class="btn btn-danger" style="flex:1">❌ Signaler Erreur</button>
+              </div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:6px;text-align:center">Une subscription sera créée et toutes les équipes notifiées.</div>
+            </div>
+          </div>
+          <div>
+            <div class="card"><h4>📦 Produit</h4>
+              <div class="detail-label">Produit</div><div class="detail-value">M365 Business Basic</div>
+              <div class="detail-label">Quantité</div><div class="detail-value">10 licences</div>
+              <div class="detail-label">Démarré à</div><div class="detail-value">06/04 15:32</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 5: PROVISION DETAIL — PROVISIONING (complete — RENEWAL) -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">5. DÉTAIL PROVISION — EN COURS · TYPE RENEWAL (renouveler subscription existante)</span>
+        <span class="url">/app/ventes/provisions/xyz-789</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar">
+          <div><h1>Provision — BigCorp</h1><div style="font-size:12px;color:#64748b">M365 Business Premium × 20 · <span class="badge badge-purple">RENEWAL</span></div></div>
+          <span class="badge badge-blue" style="font-size:12px;padding:6px 14px">🔄 EN COURS</span>
+        </div>
+
+        <div class="sidebar-layout wide-sidebar">
+          <div>
+            <!-- Existing subscription info -->
+            <div class="card" style="border-color:#c4b5fd;background:#fdf4ff">
+              <h4>🔗 Subscription existante (à renouveler)</h4>
+              <div class="card-row"><span class="card-label">N° Subscription</span><span class="card-value">MS-5G8T3-ABCDE</span></div>
+              <div class="card-row"><span class="card-label">Terme actuel</span><span class="card-value">01/04/2023 → 31/03/2024</span></div>
+              <div class="card-row"><span class="card-label">Statut actuel</span><span class="card-value"><span class="badge badge-yellow">⏳ Pending Renewal</span></span></div>
+            </div>
+
+            <div class="alert alert-info">🔄 <b>RENEWAL :</b> Le N° de subscription reste le même. Renouvelez dans Partner Center puis saisissez les nouvelles dates du terme.</div>
+
+            <!-- RENEWAL form (no subscription_number) -->
+            <div class="card">
+              <h4>✅ Compléter le renouvellement</h4>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Nouvelle date début *</label><input class="form-input" type="date" value="2024-04-01" /></div>
+                <div class="form-group"><label class="form-label">Nouvelle date fin *</label><input class="form-input" type="date" value="2025-03-31" /></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn-success" style="flex:2;padding:10px">✅ Confirmer le Renouvellement</button>
+                <button class="btn btn-danger" style="flex:1">❌ Signaler Erreur</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card"><h4>📦 Produit</h4>
+              <div class="detail-label">Produit</div><div class="detail-value">M365 Business Premium</div>
+              <div class="detail-label">Quantité</div><div class="detail-value">20 licences</div>
+              <div class="detail-label">Client</div><div class="detail-value">BigCorp</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 6: SUBSCRIPTIONS LIST -->
+    <div class="page-mockup">
+      <div class="page-title-bar">
+        <span class="label">6. LISTE SUBSCRIPTIONS (lecture seule pour Tech)</span>
+        <span class="url">/app/ventes/subscriptions</span>
+        <span style="margin-left:auto;font-size:11px;color:#f59e0b">À construire 🔨</span>
+      </div>
+      <div class="page-content">
+        <div class="topbar"><h1>📦 Subscriptions</h1></div>
+        <div class="filter-bar">
+          <input type="text" placeholder="🔍 Client, N° subscription..." />
+          <select><option>Tous statuts</option><option>Active</option><option>Pending Renewal</option><option>Expired</option></select>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>N° Subscription</th><th>Client</th><th>Produit</span></th><th>Terme actuel</th><th>Statut</th><th>Provisionné par</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><b>MS-5G8T3-ABCDE</b></td><td>BigCorp</td><td>M365 Business Premium</td><td>01/04/2024 → 31/03/2025</td><td><span class="badge badge-green">🟢 Active</span></td><td>Ilyes T.</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+            <tr><td><b>MS-7KLM2-FGHIJ</b></td><td>ACME Corp</td><td>M365 Business Basic</td><td>06/04/2024 → 05/04/2025</td><td><span class="badge badge-green">🟢 Active</span></td><td>Ilyes T.</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+            <tr><td><b>MS-9NOP4-KLMNO</b></td><td>TechCo</td><td>Azure DevOps</td><td>01/01/2024 → 31/12/2024</td><td><span class="badge badge-yellow">⏳ Pending Renewal</span></td><td>Ilyes T.</td><td><button class="btn btn-ghost btn-sm">Voir →</button></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages-grid tech -->
+</div><!-- /role-tech -->
+
+<script>
+  function switchRole(role) {
+    document.querySelectorAll('.role-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('role-' + role).classList.add('active');
+    event.target.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

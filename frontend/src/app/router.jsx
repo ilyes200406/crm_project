@@ -14,7 +14,6 @@ import { MePage } from '../features/users/pages/MePage';
 import { UsersListPage } from '../features/users/pages/UsersListPage';
 import { CreateUserPage } from '../features/users/pages/CreateUserPage';
 import { NotificationsPage } from '../features/notifications/pages';
-import { FeaturePlaceholderPage } from '../shared/components/FeaturePlaceholderPage';
 
 // Import Clients pages
 import {
@@ -117,6 +116,7 @@ export const router = createBrowserRouter([
 ]);
 */
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+// import { useAppStore } from './store';
 
 import { AuthLayout } from '../layouts/AuthLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
@@ -131,7 +131,6 @@ import { MePage } from '../features/users/pages/MePage';
 import { UsersListPage } from '../features/users/pages/UsersListPage';
 import { CreateUserPage } from '../features/users/pages/CreateUserPage';
 import { NotificationsPage } from '../features/notifications/pages';
-import { FeaturePlaceholderPage } from '../shared/components/FeaturePlaceholderPage';
 
 // Import Clients pages
 import {
@@ -148,6 +147,29 @@ import {
   SuppliersListPage,
   SupplierDetailPage,
 } from '../features/catalogue/pages';
+
+// Import Ventes pages
+import {
+  // CommercialDashboard,
+  // FinanceDashboard,
+  // TechDashboard,
+  OpportunitiesListPage,
+  CreateOpportunityPage,
+  OpportunityDetailPage,
+  ProvisionsListPage,
+  ProvisionDetailPage,
+  SubscriptionsListPage,
+  SubscriptionDetailPage,
+} from '../features/ventes/pages';
+
+/** Route to the correct dashboard based on the authenticated user's role. */
+// function VentesDashboardRoute() {
+//   const user = useAppStore((state) => state.user);
+//   const role = user?.role;
+//   if (role === 'FINANCE') return <FinanceDashboard />;
+//   if (role === 'TECHNICIEN') return <TechDashboard />;
+//   return <CommercialDashboard />;
+// }
 
 export const router = createBrowserRouter([
   {
@@ -193,11 +215,11 @@ export const router = createBrowserRouter([
         ),
       },
       
-      // Clients (COMMERCIAL, ADMIN)
+      // Clients (COMMERCIAL, FINANCE, TECHNICIEN, ADMIN — read; create/edit gated in page UI)
       {
         path: 'clients',
         element: (
-          <ProtectedRoute allowedRoles={['COMMERCIAL', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN']}>
             <ClientsListPage />
           </ProtectedRoute>
         ),
@@ -213,7 +235,7 @@ export const router = createBrowserRouter([
       {
         path: 'clients/:id',
         element: (
-          <ProtectedRoute allowedRoles={['COMMERCIAL', 'ADMIN']}>
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN']}>
             <ClientDetailPage />
           </ProtectedRoute>
         ),
@@ -226,7 +248,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      
+
       // Catalogue - Products (Tous les rôles - READ-ONLY)
       {
         path: 'catalogue',
@@ -247,8 +269,62 @@ export const router = createBrowserRouter([
         element: <SupplierDetailPage />,
       },
       
-      // Ventes (placeholder)
-      { path: 'ventes', element: <FeaturePlaceholderPage featureName="Ventes" /> },
+      // Ventes — redirect to opportunities list
+      { path: 'ventes', element: <Navigate to="/app/ventes/opportunities" replace /> },
+      
+      // Opportunities
+      {
+        path: 'ventes/opportunities',
+        element: (
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'FINANCE', 'ADMIN']}>
+            <OpportunitiesListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'ventes/opportunities/new',
+        element: (
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'ADMIN']}>
+            <CreateOpportunityPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'ventes/opportunities/:id',
+        element: (
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'FINANCE', 'ADMIN']}>
+            <OpportunityDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Provisions
+      {
+        path: 'ventes/provisions',
+        element: (
+          <ProtectedRoute allowedRoles={['TECHNICIEN', 'ADMIN']}>
+            <ProvisionsListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'ventes/provisions/:id',
+        element: (
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN']}>
+            <ProvisionDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Subscriptions
+      {
+        path: 'ventes/subscriptions',
+        element: <SubscriptionsListPage />,
+      },
+      {
+        path: 'ventes/subscriptions/:id',
+        element: <SubscriptionDetailPage />,
+      },
       
       // Notifications
       { path: 'notifications', element: <NotificationsPage /> },

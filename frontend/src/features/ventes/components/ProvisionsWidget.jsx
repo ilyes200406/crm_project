@@ -35,7 +35,7 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
   const handleStart = async (provision) => {
     try {
       await startMutation.mutateAsync(provision.id);
-      navigate(`/provisions/${provision.id}`);
+      navigate(`/app/ventes/provisions/${provision.id}`);
     } catch (error) {
       // Error handled by mutation
     }
@@ -106,7 +106,7 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
   ];
 
   const handleRowClick = (provision) => {
-    navigate(`/provisions/${provision.id}`);
+    navigate(`/app/ventes/provisions/${provision.id}`);
   };
 
   return (
@@ -166,7 +166,7 @@ export function ProvisionsInProgressWidget() {
             <div
               key={provision.id}
               className="border border-blue-200 bg-blue-50 rounded-lg p-4 hover:bg-blue-100 cursor-pointer"
-              onClick={() => navigate(`/provisions/${provision.id}`)}
+              onClick={() => navigate(`/app/ventes/provisions/${provision.id}`)}
             >
               {/* Status badge */}
               <div className="mb-2">
@@ -191,7 +191,7 @@ export function ProvisionsInProgressWidget() {
               {/* Started time */}
               <div className="text-xs text-gray-500">
                 Démarré{' '}
-                {formatDistanceToNow(new Date(provision.started_at), {
+                {formatDistanceToNow(new Date(provision.provisioning_started_at), {
                   addSuffix: true,
                   locale: fr,
                 })}
@@ -201,7 +201,7 @@ export function ProvisionsInProgressWidget() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/provisions/${provision.id}/complete`);
+                  navigate(`/app/ventes/provisions/${provision.id}`);
                 }}
                 className="mt-3 w-full px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 font-medium"
               >

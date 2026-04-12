@@ -12,4 +12,5 @@ export const provisionsApi = {
   start:    (id)          => api.post(`${BASE}/${id}/start/`),
   complete: (id, data)    => api.post(`${BASE}/${id}/complete/`, data),
   fail:     (id, msg)     => api.post(`${BASE}/${id}/fail/`, { error_message: msg }),
+  retry:    (id)          => api.post(`${BASE}/${id}/retry/`),
 };

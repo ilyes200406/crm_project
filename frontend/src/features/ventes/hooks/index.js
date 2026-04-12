@@ -12,3 +12,6 @@ export function use() {
 export * from './useOpportunities';
 export * from './useSubscriptions';
 export * from './useProvisions';
+export * from './useOpportunityLines';
+export * from './useSupplierQuotes';
+export * from './useInsomeaQuotes';

@@ -149,3 +149,25 @@ export function useFailProvisioning() {
     },
   });
 }
+
+/**
+ * Retry provisioning mutation (ERROR → PROVISIONING)
+ */
+export function useRetryProvisioning() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => provisionsApi.retry(id),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({ queryKey: provisionsKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: provisionsKeys.lists() });
+
+      toast.success('Provisioning relancé');
+      return data;
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors du retry';
+      toast.error(message);
+    },
+  });
+}

@@ -36,13 +36,15 @@ export function DashboardLayout() {
     ];
 
     const commercialItems = [
-      { path: '/app/clients', label: 'Clients', icon: '👥', roles: ['COMMERCIAL', 'ADMIN'] },
-      { path: '/app/catalogue', label: 'Catalogue', icon: '📦', roles: ['COMMERCIAL', 'ADMIN'] },
-      { path: '/app/ventes', label: 'Ventes', icon: '💼', roles: ['COMMERCIAL', 'FINANCE', 'ADMIN'] },
+      { path: '/app/clients',             label: 'Clients',      icon: '👥', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/catalogue',           label: 'Produits',     icon: '📦', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/catalogue/suppliers', label: 'Fournisseurs', icon: '🏭', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/ventes',              label: 'Ventes',       icon: '💼', roles: ['COMMERCIAL', 'FINANCE', 'ADMIN'] },
+      { path: '/app/ventes/subscriptions', label: 'Abonnements', icon: '📋', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
     ];
 
     const techItems = [
-      { path: '/app/provisions', label: 'Provisions', icon: '🔧', roles: ['TECHNICIEN', 'ADMIN'] },
+      { path: '/app/ventes/provisions', label: 'Provisions', icon: '🔧', roles: ['TECHNICIEN', 'ADMIN'] },
     ];
 
     const notificationItems = [

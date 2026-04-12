@@ -197,7 +197,7 @@ export function useCreateRenewal() {
     mutationFn: ({ id, data }) => subscriptionsApi.createRenewal(id, data),
     onSuccess: ({ data }) => {
       // Invalidate subscriptions
-      queryClient.invalidateQueries({ queryKey: subscriptionsKeys.detail(data.opportunity.id) });
+      queryClient.invalidateQueries({ queryKey: subscriptionsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: subscriptionsKeys.lists() });
 
       // Invalidate opportunities (new one created)

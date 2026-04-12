@@ -9,6 +9,7 @@ import { StatCard } from '../../../shared/components';
 import {
   useOpportunitiesStats,
   useSubscriptionsStats,
+  useProvisions,
 } from '../hooks';
 
 /**
@@ -128,10 +129,11 @@ export function FinanceStatsCards() {
  * Tech Stats Cards
  */
 export function TechStatsCards() {
-  const { data: provisionsStats, isLoading } = useProvisions({ limit: 1 });
+  const { data: waitingData, isLoading: waitingLoading } = useProvisions({ status: 'WAITING_PROVISION', page_size: 1 });
+  const { data: inProgressData, isLoading: inProgressLoading } = useProvisions({ status: 'PROVISIONING', page_size: 1 });
 
-  // For now using placeholder data
-  // TODO: Create provisions stats endpoint
+  const waitingCount    = waitingData?.count ?? 0;
+  const inProgressCount = inProgressData?.count ?? 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -139,28 +141,26 @@ export function TechStatsCards() {
       <StatCard
         icon="⚠️"
         label="En Attente"
-        value={5}
-        badge="ACTION"
+        value={waitingCount}
+        badge={waitingCount > 0 ? 'ACTION' : undefined}
         badgeColor="red"
-        loading={isLoading}
+        loading={waitingLoading}
       />
 
       {/* In Progress */}
       <StatCard
         icon="🔄"
         label="En Cours"
-        value={3}
-        loading={isLoading}
+        value={inProgressCount}
+        loading={inProgressLoading}
       />
 
-      {/* This Month */}
+      {/* This Month — no filter endpoint yet, keep static */}
       <StatCard
         icon="✅"
         label="Ce Mois"
-        value={28}
-        trend="+5 vs M-1"
-        trendType="up"
-        loading={isLoading}
+        value="—"
+        loading={false}
       />
     </div>
   );

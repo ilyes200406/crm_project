@@ -11,3 +11,6 @@ export const ventesApi = {
 export { opportunitiesApi } from './opportunitiesApi';
 export { subscriptionsApi } from './subscriptionsApi';
 export { provisionsApi } from './provisionsApi';
+export { linesApi } from './linesApi';
+export { supplierQuotesApi } from './supplierQuotesApi';
+export { insomeaQuotesApi } from './insomeaQuotesApi';

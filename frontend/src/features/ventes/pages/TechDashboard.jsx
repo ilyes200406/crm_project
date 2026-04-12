@@ -64,15 +64,15 @@ export function TechDashboard() {
               const product = provision.opportunity_line?.product;
 
               // Calculate provisioning time
-              const startTime = new Date(provision.started_at);
-              const endTime = new Date(provision.provisioned_at);
+              const startTime = new Date(provision.provisioning_started_at);
+              const endTime = new Date(provision.provisioning_completed_at);
               const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
 
               return (
                 <div
                   key={provision.id}
                   className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                  onClick={() => navigate(`/provisions/${provision.id}`)}
+                  onClick={() => navigate(`/app/ventes/provisions/${provision.id}`)}
                 >
                   {/* Left: Status + Info */}
                   <div className="flex items-center gap-4">
@@ -128,8 +128,8 @@ function calculateAverageTime(provisions) {
   if (!provisions || provisions.length === 0) return 0;
 
   const totalMinutes = provisions.reduce((sum, provision) => {
-    const startTime = new Date(provision.started_at);
-    const endTime = new Date(provision.provisioned_at);
+    const startTime = new Date(provision.provisioning_started_at);
+    const endTime = new Date(provision.provisioning_completed_at);
     const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
     return sum + durationMinutes;
   }, 0);

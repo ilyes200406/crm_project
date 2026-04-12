@@ -350,6 +350,27 @@ export function useUploadClientPO() {
 }
 
 /**
+ * Create Insomea Quote mutation
+ */
+export function useCreateInsomeaQuote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => opportunitiesApi.createInsomeaQuote(id, data),
+    onSuccess: ({ data }, { id }) => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.lists() });
+      toast.success('Devis Insomea créé');
+      return data;
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors de la création du devis';
+      toast.error(message);
+    },
+  });
+}
+
+/**
  * Cancel opportunity mutation
  */
 export function useCancelOpportunity() {
