@@ -1,42 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: Arial; font-size: 12px; }
-        .header { font-size: 18px; font-weight: bold; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { border: 1px solid #ddd; padding: 8px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #333; }
+
+        /* Header */
+        .header { background: #1e3a5f; color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .header .company { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+        .header .quote-info { text-align: right; }
+        .header .quote-ref { font-size: 16px; font-weight: bold; }
+        .header .quote-date { font-size: 10px; opacity: 0.85; margin-top: 4px; }
+
+        /* Meta section */
+        .meta { padding: 20px 30px; display: flex; gap: 30px; border-bottom: 2px solid #e5e7eb; }
+        .meta-block { flex: 1; }
+        .meta-block h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 8px; }
+        .meta-block p { font-size: 11px; line-height: 1.6; }
+        .meta-block .highlight { font-weight: bold; color: #1e3a5f; }
+
+        /* Opportunity info */
+        .opp-info { padding: 10px 30px 16px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 10px; color: #6b7280; }
+        .opp-info span { color: #374151; font-weight: 600; }
+
+        /* Lines table */
+        .section-title { padding: 16px 30px 8px; font-size: 12px; font-weight: bold; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; }
+        table { width: 100%; border-collapse: collapse; }
+        table thead tr { background: #1e3a5f; color: white; }
+        table thead th { padding: 8px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        table thead th.right { text-align: right; }
+        table tbody tr:nth-child(even) { background: #f9fafb; }
+        table tbody tr:nth-child(odd) { background: #ffffff; }
+        table tbody td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; vertical-align: middle; }
+        table tbody td.right { text-align: right; }
+        table tbody td.center { text-align: center; }
+        table tfoot tr { background: #f3f4f6; }
+        table tfoot td { padding: 7px 10px; font-size: 11px; border-top: 2px solid #d1d5db; }
+        table tfoot td.right { text-align: right; }
+        .product-title { font-weight: 600; color: #1f2937; }
+        .positive-margin { color: #059669; font-weight: 600; }
+
+        /* Totals block */
+        .totals { margin: 0 30px 20px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .totals table { width: 100%; }
+        .totals table tr td { padding: 7px 14px; font-size: 11px; border-bottom: 1px solid #f3f4f6; }
+        .totals table tr td:first-child { color: #6b7280; }
+        .totals table tr td:last-child { text-align: right; font-weight: 600; }
+        .totals table .total-row td { background: #1e3a5f; color: white; font-size: 13px; font-weight: bold; border-bottom: none; }
+        .totals table .margin-row td { color: #059669; font-weight: bold; background: #f0fdf4; }
+
+        /* Footer */
+        .footer { margin: 30px 30px 0; padding-top: 14px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9ca3af; text-align: center; }
+
+        /* Page padding for table */
+        .table-wrap { padding: 0 30px; }
     </style>
 </head>
 <body>
 
-<div class="header">Devis {{ quote.reference }}</div>
+<!-- Header -->
+<div class="header">
+    <div>
+        <div class="company">INSOMEA</div>
+        <div style="font-size:10px; opacity:0.8; margin-top:4px;">Solutions Informatiques</div>
+    </div>
+    <div class="quote-info">
+        <div style="font-size:10px; opacity:0.8;">DEVIS CLIENT</div>
+        <div class="quote-ref">{{ quote.reference }}</div>
+        <div class="quote-date">Émis le {{ quote.created_at|date:"d/m/Y" }}</div>
+    </div>
+</div>
 
-<p>Client: {{ quote.opportunity.client.name }}</p>
+<!-- Meta: Client + Opportunity -->
+<div class="meta">
+    <div class="meta-block">
+        <h3>Client</h3>
+        <p class="highlight">{{ client.company_name }}</p>
+        {% if client.email %}<p>{{ client.email }}</p>{% endif %}
+        {% if client.phone %}<p>{{ client.phone }}</p>{% endif %}
+    </div>
+    <div class="meta-block">
+        <h3>Opportunité</h3>
+        <p><span class="highlight">{{ opportunity.reference }}</span></p>
+        <p>{{ opportunity.name }}</p>
+    </div>
+    <div class="meta-block">
+        <h3>Référence devis</h3>
+        <p class="highlight">{{ quote.reference }}</p>
+        {% if quote.discount_percent > 0 %}
+        <p style="margin-top:4px; color:#d97706;">Remise globale : {{ quote.discount_percent }}%</p>
+        {% endif %}
+    </div>
+</div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Produit</th>
-            <th>Achat</th>
-            <th>Vente</th>
-            <th>Marge</th>
+<!-- Lines table -->
+<div class="section-title">Détail des prestations</div>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%">Produit</th>
+                <th class="center" style="width:8%">Qté</th>
+                <th class="right" style="width:16%">Prix unit. achat</th>
+                <th class="right" style="width:16%">Prix unit. vente</th>
+                <th class="right" style="width:13%">Total vente</th>
+                <th class="right" style="width:12%">Marge</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+            <tr>
+                <td><span class="product-title">{{ line.opportunity_line.product.title }}</span></td>
+                <td class="center">{{ line.opportunity_line.quantity }}</td>
+                <td class="right">{{ line.unit_price_purchase|floatformat:2 }} DT</td>
+                <td class="right">{{ line.unit_price_sale|floatformat:2 }} DT</td>
+                <td class="right">{{ line.line_total_sale|floatformat:2 }} DT</td>
+                <td class="right positive-margin">{{ line.line_margin|floatformat:2 }} DT</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align:right; color:#6b7280;">Sous-total vente :</td>
+                <td class="right" colspan="2">{{ quote.subtotal_sale|floatformat:2 }} DT</td>
+            </tr>
+            {% if quote.discount_percent > 0 %}
+            <tr>
+                <td colspan="4" style="text-align:right; color:#d97706;">Remise ({{ quote.discount_percent }}%) :</td>
+                <td class="right" colspan="2" style="color:#d97706;">- {{ quote.discount_amount|floatformat:2 }} DT</td>
+            </tr>
+            {% endif %}
+        </tfoot>
+    </table>
+</div>
+
+<!-- Totals -->
+<div class="totals" style="margin-top:16px;">
+    <table>
+        <tr class="total-row">
+            <td>Total vente TTC</td>
+            <td>{{ quote.total_sale|floatformat:2 }} DT</td>
         </tr>
-    </thead>
-    <tbody>
-        {% for line in lines %}
-        <tr>
-            <td>{{ line.opportunity_line.name }}</td>
-            <td>{{ line.unit_price_purchase }}</td>
-            <td>{{ line.unit_price_sale }}</td>
-            <td>{{ line.margin }}</td>
+        <tr class="margin-row">
+            <td>Marge totale</td>
+            <td>{{ quote.margin|floatformat:2 }} DT ({{ quote.margin_percent|floatformat:1 }}%)</td>
         </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    </table>
+</div>
 
-<p>Total: {{ quote.total_sale }}</p>
+<!-- Footer -->
+<div class="footer">
+    Ce document est un devis confidentiel émis par Insomea — {{ quote.reference }} — {{ quote.created_at|date:"d/m/Y" }}
+</div>
 
 </body>
 </html>

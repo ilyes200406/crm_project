@@ -249,7 +249,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         related = self._get_related(obj, field_name)
         if not related:
             return None if not many else []
-        return serializer_class(related, many=many).data
+        return serializer_class(related, many=many, context=self.context).data
     
     
     def get_supplier_quotes(self, obj):
@@ -263,7 +263,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         )
         from ..models import SupplierQuote
         queryset = SupplierQuote.objects.filter(id__in=quotes)
-        return SupplierQuoteListSerializer(queryset, many=True).data
+        return SupplierQuoteListSerializer(queryset, many=True, context=self.context).data
     
     def get_insomea_quote(self, obj):
         """InsomeaQuote"""

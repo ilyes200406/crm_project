@@ -146,6 +146,11 @@ class Opportunity(models.Model):
         except self.__class__.insomea_quote.RelatedObjectDoesNotExist:
             return False
     
+    @transition(field=status, source=OpportunityStatus.INSOMEA_QUOTE_CREATED, target=OpportunityStatus.SUPPLIER_QUOTE_RECIEVED)
+    def revert_to_supplier_quote_received(self):
+        """Commercial rolls back to revise the Insomea quote."""
+        pass
+
     @transition(field=status, source=OpportunityStatus.INSOMEA_QUOTE_CREATED, target=OpportunityStatus.CLIENT_PO_REQUEST)
     def request_client_po(self):
         pass

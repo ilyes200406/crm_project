@@ -42,6 +42,7 @@ PERMISSIONS = [
     ('opportunity.request_client_po',       'Demander BC client'),
     ('opportunity.upload_client_po',        'Uploader BC client reçu'),
     ('opportunity.update_insomea_quote',    'Réviser devis Insomea (négociation)'),
+    ('opportunity.rollback_insomea_quote', 'Revenir au devis Insomea (modifier prix vente)'),
     ('opportunity.approve',                 'Approuver une opportunité'),
     ('opportunity.create_insomea_pos',      'Créer POs Insomea'),
     # Supplier quote
@@ -80,6 +81,7 @@ ROLE_PERMISSIONS = {
         'opportunity.request_client_po',
         'opportunity.upload_client_po',
         'opportunity.update_insomea_quote',
+        'opportunity.rollback_insomea_quote',
         'supplier_quote.create',
         'provision.view',
         'subscription.view',

@@ -28,6 +28,7 @@ from .quote_service import (
     create_insomea_quote,
     recalculate_supplier_quote_totals,
     recalculate_insomea_quote_totals,
+    rollback_insomea_quote,
 )
 
 from .purchase_order_service import (
@@ -74,6 +75,7 @@ __all__ = [
     'create_insomea_quote',
     'recalculate_supplier_quote_totals',
     'recalculate_insomea_quote_totals',
+    'rollback_insomea_quote',
     
     # Purchase Orders
     'upload_client_po',

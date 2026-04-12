@@ -8,6 +8,7 @@ from ..models import (
     InsomeaQuote,
     InsomeaQuoteLine,
     OpportunityLineStatus,
+    OpportunityStatus,
 )
 from ..validators import (
     validate_pdf_file,
@@ -336,22 +337,25 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     return insomea_quote
 
 from django.template.loader import render_to_string
-from django.conf import settings
 from django.core.files.base import ContentFile
 
 
 def generate_quote_pdf(insomea_quote):
     """
-    Generate PDF for an InsomeaQuote and return a Django ContentFile
+    Generate PDF for an InsomeaQuote and return a Django ContentFile.
+    Uses xhtml2pdf (pure Python, no native libs required).
     """
+    import io
+    from xhtml2pdf import pisa
 
-    # 🔹 1. Load related data (optimize queries)
+    # 1. Load related data
     lines = insomea_quote.lines.select_related(
         'opportunity_line',
+        'opportunity_line__product',
         'supplier_quote_line'
     )
 
-    # 🔹 2. Prepare context
+    # 2. Prepare context
     context = {
         'quote': insomea_quote,
         'lines': lines,
@@ -359,47 +363,86 @@ def generate_quote_pdf(insomea_quote):
         'client': insomea_quote.opportunity.client,
     }
 
-    # 🔹 3. Render HTML from template
-    html_string = render_to_string(
-        'pdf/insomea_quote.html',
-        context
-    )
+    # 3. Render HTML from template
+    html_string = render_to_string('pdf/insomea_quote.html', context)
 
-    # 🔹 4. Generate PDF (important: base_url for static files)
-    from weasyprint import HTML
+    # 4. Generate PDF
+    buf = io.BytesIO()
+    result = pisa.CreatePDF(io.StringIO(html_string), dest=buf)
+    if result.err:
+        raise RuntimeError(f"PDF generation failed with {result.err} error(s)")
 
-    pdf_bytes = HTML(
-        string=html_string,
-        base_url=settings.BASE_DIR  # or STATIC_ROOT if needed
-    ).write_pdf()
-
-    # 🔹 5. Create Django file object
+    # 5. Return Django ContentFile
     filename = f"quote_{insomea_quote.reference}.pdf"
-
-    return ContentFile(pdf_bytes, name=filename)
+    return ContentFile(buf.getvalue(), name=filename)
 
 
 @transaction.atomic
 def recalculate_insomea_quote_totals(insomea_quote_id):
     """
     Recalcule totaux InsomeaQuote
-    
+
     Args:
         insomea_quote_id: UUID
-    
+
     Returns:
         InsomeaQuote mis à jour
-    
+
     Business Logic:
         - Agrège InsomeaQuoteLines (purchase + sale)
         - Applique discount
         - Calcule margin
         - Update totals
     """
-    
+
     insomea_quote = get_insomea_quote_by_id(insomea_quote_id)
-    
+
     # Appelle méthode model
     insomea_quote.calculate_totals()
-    
+
     return insomea_quote
+
+
+@transaction.atomic
+def rollback_insomea_quote(*, opportunity_id, user, ip_address=None):
+    """
+    Revert INSOMEA_QUOTE_CREATED → SUPPLIER_QUOTE_RECIEVED.
+
+    Deletes the existing InsomeaQuote (and its lines via CASCADE) so the
+    commercial can re-enter sale prices and generate a new one.
+
+    Args:
+        opportunity_id: UUID
+        user: User instance (COMMERCIAL or ADMIN)
+        ip_address: str
+
+    Returns:
+        Opportunity mise à jour
+
+    Raises:
+        ValidationError: If status is not INSOMEA_QUOTE_CREATED
+        PermissionDenied: If not owner (COMMERCIAL) or ADMIN
+    """
+
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
+
+    if user.role == 'COMMERCIAL':
+        if opportunity.created_by != user and opportunity.assigned_to != user:
+            raise PermissionDenied('Action non autorisée')
+
+    if opportunity.status != OpportunityStatus.INSOMEA_QUOTE_CREATED:
+        raise ValidationError(
+            f"L'opportunité doit être en INSOMEA_QUOTE_CREATED pour modifier le devis. "
+            f"Statut actuel : {opportunity.get_status_display()}"
+        )
+
+    # Delete existing InsomeaQuote (InsomeaQuoteLines cascade)
+    existing = _get_related_or_none(opportunity, 'insomea_quote')
+    if existing:
+        existing.delete()
+
+    # FSM rollback transition
+    opportunity.revert_to_supplier_quote_received()
+    opportunity.save()
+
+    return opportunity

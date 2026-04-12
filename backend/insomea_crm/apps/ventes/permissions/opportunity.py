@@ -126,6 +126,15 @@ class CanUpdateInsomeaQuote(HasVentesPerm):
     check_ownership = True
 
 
+class CanRollbackInsomeaQuote(HasVentesPerm):
+    """
+    Opportunity owner (COMMERCIAL) reverts INSOMEA_QUOTE_CREATED → SUPPLIER_QUOTE_RECIEVED
+    to re-enter sale prices and regenerate the Insomea quote.
+    """
+    permission_codename = 'opportunity.rollback_insomea_quote'
+    check_ownership = True
+
+
 class CanApproveOpportunity(HasVentesPerm):
     """
     FINANCE approves any opportunity that reaches CLIENT_PO_RECIEVED.

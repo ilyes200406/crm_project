@@ -62,6 +62,7 @@ from ..services import (
     upload_client_po,
     update_insomea_quote_transition,
     confirm_all_insomea_pos,
+    rollback_insomea_quote,
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
@@ -75,6 +76,7 @@ from ..permissions import (
     CanRequestClientPO,
     CanUploadClientPO,
     CanUpdateInsomeaQuote,
+    CanRollbackInsomeaQuote,
     CanApproveOpportunity,
     CanConfirmInsomeaPO,
 )
@@ -150,6 +152,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'request_client_po':       [CanRequestClientPO()],
             'upload_client_po':        [CanUploadClientPO()],
             'update_insomea_quote':    [CanUpdateInsomeaQuote()],
+            'rollback_insomea_quote':  [CanRollbackInsomeaQuote()],
             'confirm_all_pos':         [CanConfirmInsomeaPO()],
         }
         return mapping.get(self.action, [CanViewOpportunity()])
@@ -480,12 +483,69 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
+    def rollback_insomea_quote(self, request, pk=None):
+        """
+        Revenir à l'état SUPPLIER_QUOTE_RECIEVED pour modifier le devis Insomea.
+
+        POST /opportunities/:id/rollback_insomea_quote/
+
+        Transitions: INSOMEA_QUOTE_CREATED → SUPPLIER_QUOTE_RECIEVED
+        Deletes the existing InsomeaQuote so a new one can be generated.
+        """
+        opportunity = self.get_object()
+
+        rollback_insomea_quote(
+            opportunity_id=opportunity.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        refreshed = get_opportunity_by_id(opportunity.id, user=request.user)
+        serializer = OpportunityDetailSerializer(refreshed, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def regenerate_quote_pdf(self, request, pk=None):
+        """
+        Regenerate the InsomeaQuote PDF for this opportunity.
+
+        POST /opportunities/:id/regenerate_quote_pdf/
+
+        Returns the updated opportunity detail with the new document_url.
+        """
+        from ..models import OpportunityStatus
+        from ..services.quote_service import generate_quote_pdf
+
+        opportunity = self.get_object()
+
+        try:
+            insomea_quote = opportunity.insomea_quote
+        except Exception:
+            return Response(
+                {'detail': 'Aucun devis Insomea trouvé pour cette opportunité.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            pdf_file = generate_quote_pdf(insomea_quote)
+            insomea_quote.document.save(pdf_file.name, pdf_file, save=True)
+        except Exception as e:
+            return Response(
+                {'detail': f'Erreur génération PDF : {e}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        refreshed = get_opportunity_by_id(opportunity.id, user=request.user)
+        serializer = OpportunityDetailSerializer(refreshed, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """
         Annuler opportunité
-        
+
         POST /opportunities/:id/cancel/
-        
+
         Body:
             {
                 "reason": "Raison annulation"
