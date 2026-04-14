@@ -371,6 +371,67 @@ export function useCreateInsomeaQuote() {
 }
 
 /**
+ * Update Insomea Quote mutation (rolls back CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED)
+ */
+export function useUpdateInsomeaQuote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => opportunitiesApi.updateInsomeaQuote(id),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.lists() });
+      toast.success('Retour en modification du devis');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors de la modification';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Rollback Insomea Quote mutation
+ * Transitions INSOMEA_QUOTE_CREATED → SUPPLIER_QUOTE_RECIEVED
+ * so the commercial can re-enter sale prices and regenerate the quote.
+ */
+export function useRollbackInsomeaQuote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => opportunitiesApi.rollbackInsomeaQuote(id),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.lists() });
+      toast.success('Retour en modification du devis Insomea');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors du retour en modification';
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Regenerate InsomeaQuote PDF mutation
+ */
+export function useRegenerateQuotePdf() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => opportunitiesApi.regenerateQuotePdf(id),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(data.id) });
+      toast.success('PDF régénéré avec succès');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors de la génération du PDF';
+      toast.error(message);
+    },
+  });
+}
+
+/**
  * Cancel opportunity mutation
  */
 export function useCancelOpportunity() {

@@ -1,0 +1,8 @@
+insomea_crm/__pycache__/
+insomea_crm/**/__pycache__/
+insomea_crm/*.pyc
+insomea_crm/**/*.pyc
+insomea_crm/db.sqlite3
+insomea_crm/.env
+insomea_crm/media/
+insomea_crm/staticfiles/

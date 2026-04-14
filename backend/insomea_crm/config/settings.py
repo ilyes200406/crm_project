@@ -101,6 +101,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'channels',
     'celery',
+    'django_celery_beat',
+    "django_celery_results",
     
     # Local apps
     'apps.users.apps.UsersConfig',
@@ -148,9 +150,9 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer', #'channels_redis.core.RedisChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [config('REDIS_URL', default='redis://localhost:6379/1')],
+            'hosts': [config('REDIS_URL', default='redis://localhost:6379/0')],
         },
     },
 }
@@ -173,8 +175,12 @@ CORS_ALLOW_CREDENTIALS = True
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='insomea_crm'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default='postgres'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 

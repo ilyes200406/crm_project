@@ -343,10 +343,10 @@ from django.core.files.base import ContentFile
 def generate_quote_pdf(insomea_quote):
     """
     Generate PDF for an InsomeaQuote and return a Django ContentFile.
-    Uses xhtml2pdf (pure Python, no native libs required).
+    Uses WeasyPrint (works natively on Linux/Docker).
     """
     import io
-    from xhtml2pdf import pisa
+    from weasyprint import HTML
 
     # 1. Load related data
     lines = insomea_quote.lines.select_related(
@@ -368,9 +368,7 @@ def generate_quote_pdf(insomea_quote):
 
     # 4. Generate PDF
     buf = io.BytesIO()
-    result = pisa.CreatePDF(io.StringIO(html_string), dest=buf)
-    if result.err:
-        raise RuntimeError(f"PDF generation failed with {result.err} error(s)")
+    HTML(string=html_string).write_pdf(buf)
 
     # 5. Return Django ContentFile
     filename = f"quote_{insomea_quote.reference}.pdf"
@@ -430,11 +428,16 @@ def rollback_insomea_quote(*, opportunity_id, user, ip_address=None):
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Action non autorisée')
 
-    if opportunity.status != OpportunityStatus.INSOMEA_QUOTE_CREATED:
+    if opportunity.status not in (OpportunityStatus.INSOMEA_QUOTE_CREATED, OpportunityStatus.CLIENT_PO_REQUEST):
         raise ValidationError(
-            f"L'opportunité doit être en INSOMEA_QUOTE_CREATED pour modifier le devis. "
+            f"L'opportunité doit être en INSOMEA_QUOTE_CREATED ou CLIENT_PO_REQUEST pour modifier le devis. "
             f"Statut actuel : {opportunity.get_status_display()}"
         )
+
+    # Delete ClientPO if rolling back from CLIENT_PO_REQUEST
+    existing_po = _get_related_or_none(opportunity, 'client_purchase_order')
+    if existing_po:
+        existing_po.delete()
 
     # Delete existing InsomeaQuote (InsomeaQuoteLines cascade)
     existing = _get_related_or_none(opportunity, 'insomea_quote')

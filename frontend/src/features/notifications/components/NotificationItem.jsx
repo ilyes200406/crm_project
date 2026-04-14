@@ -99,57 +99,57 @@ function getNotificationConfig(notification) {
     // Opportunities
     'opportunity.created': {
       icon: '📝',
-      link: `/ventes/opportunities/${related_object_id}`,
+      link: `/app/ventes/opportunities/${related_object_id}`,
     },
     'opportunity.status_changed': {
       icon: '🔄',
-      link: `/ventes/opportunities/${related_object_id}`,
+      link: `/app/ventes/opportunities/${related_object_id}`,
     },
     'opportunity.client_po_uploaded': {
       icon: '📄',
-      link: `/ventes/opportunities/${related_object_id}`,
+      link: `/app/ventes/opportunities/${related_object_id}`,
     },
     'opportunity.approved': {
       icon: '✅',
-      link: `/ventes/opportunities/${related_object_id}`,
+      link: `/app/ventes/opportunities/${related_object_id}`,
     },
     'opportunity.po_confirmed': {
       icon: '✅',
-      link: `/ventes/opportunities/${related_object_id}`,
+      link: `/app/ventes/opportunities/${related_object_id}`,
     },
 
     // Subscriptions
     'subscription.expiring_soon': {
       icon: '⚠️',
-      link: `/ventes/subscriptions/${related_object_id}`,
+      link: `/app/ventes/subscriptions/${related_object_id}`,
     },
     'subscription.renewed': {
       icon: '🔄',
-      link: `/ventes/subscriptions/${related_object_id}`,
+      link: `/app/ventes/subscriptions/${related_object_id}`,
     },
     'subscription.cancelled': {
       icon: '❌',
-      link: `/ventes/subscriptions/${related_object_id}`,
+      link: `/app/ventes/subscriptions/${related_object_id}`,
     },
 
     // Provisions
     'provision.created': {
       icon: '🔧',
-      link: `/provisions/${related_object_id}`,
+      link: `/app/ventes/provisions/${related_object_id}`,
     },
     'provision.completed': {
       icon: '✅',
-      link: `/provisions/${related_object_id}`,
+      link: `/app/ventes/provisions/${related_object_id}`,
     },
     'provision.failed': {
       icon: '❌',
-      link: `/provisions/${related_object_id}`,
+      link: `/app/ventes/provisions/${related_object_id}`,
     },
 
     // Finance
     'finance.approval_required': {
       icon: '⚠️',
-      link: `/ventes/opportunities/${related_object_id}?tab=approval`,
+      link: `/app/ventes/opportunities/${related_object_id}?tab=approval`,
     },
 
     // Default

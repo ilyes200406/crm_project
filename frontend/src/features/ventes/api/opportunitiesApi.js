@@ -30,4 +30,7 @@ export const opportunitiesApi = {
   approve:         (id)          => api.post(`${BASE}/${id}/approve/`),
   confirmAllPOs:   (id)          => api.post(`${BASE}/${id}/confirm_all_pos/`),
   cancel:          (id, reason)  => api.post(`${BASE}/${id}/cancel/`, { reason }),
+  updateInsomeaQuote:   (id) => api.post(`${BASE}/${id}/update_insomea_quote/`),
+  rollbackInsomeaQuote:   (id) => api.post(`${BASE}/${id}/rollback_insomea_quote/`),
+  regenerateQuotePdf:     (id) => api.post(`${BASE}/${id}/regenerate_quote_pdf/`),
 };

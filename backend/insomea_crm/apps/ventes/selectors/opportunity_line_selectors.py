@@ -1,26 +1,7 @@
-from django.db.models import Q, Prefetch, Count, Sum, Avg
 from django.shortcuts import get_object_or_404
-
-from ..models import (
-    Opportunity,
-    OpportunityLine,
-    OpportunityStatus,
-    OpportunityLineStatus,
-)
-
-#from ..models import StatusHistory
-
+from ..models import OpportunityLine
 
 def get_lines_for_opportunity(opportunity_id):
-    """
-    Récupère toutes les lignes d'une opportunity
-    
-    Args:
-        opportunity_id: UUID
-    
-    Returns:
-        QuerySet OpportunityLine
-    """
     return OpportunityLine.objects.filter(
         opportunity_id=opportunity_id
     ).select_related(

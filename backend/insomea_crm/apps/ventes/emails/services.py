@@ -56,7 +56,7 @@ def send_supplier_quote_request(opportunity, supplier, lines):
         fail_silently=False,
     )
     
-    logger.info(f"✅ Email sent to supplier {supplier.name}")
+    logger.info(f"✅✅✅ Email sent to supplier {supplier.name}")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -107,7 +107,7 @@ def send_client_quote_with_pdf(opportunity, insomea_quote):
     
     email.send(fail_silently=False)
     
-    logger.info(f"✅ Email sent to client {client.company_name}")
+    logger.info(f"✅✅✅ Email sent to client {client.company_name}")
 
 
 def send_renewal_reminder_client(subscription, days):
@@ -157,7 +157,7 @@ def send_renewal_reminder_client(subscription, days):
         fail_silently=False,
     )
     
-    logger.info(f"✅ Renewal reminder ({days}d) sent to client {client.company_name}")
+    logger.info(f"✅✅✅ Renewal reminder ({days}d) sent to client {client.company_name}")
 
 
 def send_subscription_expired_client(subscription):
@@ -194,7 +194,7 @@ def send_subscription_expired_client(subscription):
         fail_silently=False,
     )
     
-    logger.info(f"✅ Expiration email sent to client {client.company_name}")
+    logger.info(f"✅✅✅ Expiration email sent to client {client.company_name}")
 
 def send_insomea_po_to_supplier(supplier, po, opportunity):
     """
@@ -209,6 +209,9 @@ def send_insomea_po_to_supplier(supplier, po, opportunity):
     
     Template: emails/insomea_po_to_supplier.html
     """
+    if not supplier.support_email:
+        logger.warning(f"⚠️  Supplier {supplier.name} has no email")
+        return
     
     # ✅ Get lines from supplier_quote
     supplier_quote_lines = po.supplier_quote.lines.all()
@@ -228,7 +231,9 @@ def send_insomea_po_to_supplier(supplier, po, opportunity):
         subject=f"Bon de commande Insomea - {po.po_number}",
         message=f"Bonjour {supplier.name},\n\nVeuillez trouver ci-joint notre bon de commande.",
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[supplier.email],
+        recipient_list=[supplier.support_email],
         html_message=html_message,
         fail_silently=False,
     )
+
+    logger.info(f"✅✅✅ Email sent to supplier {supplier.name}")

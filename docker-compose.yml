@@ -1,49 +1,100 @@
-#version: '3.8'
-# 
-#services:
-#
-#  redis:
-#    image: redis:7-alpine
-#    ports:
-#      - "6379:6379"
-#    volumes:
-#      - redis_data:/data
-#  
-#  celery_worker:
-#    build: .
-#    command: celery -A config worker --loglevel=info
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - db
-#      - redis
-#    env_file:
-#      - .env
-#  
-#  celery_beat:
-#    build: .
-#    command: celery -A config beat --loglevel=info
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - db
-#      - redis
-#      - celery_worker
-#    env_file:
-#      - .env
-#  web:
-#    build: .
-#    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
-#    volumes:
-#      - .:/app
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      - db
-#      - redis
-#    env_file:
-#      - .env
-#
-#volumes:
-#  # ... (volumes existants)
-#  redis_data:
+services:
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: insomea_crm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/insomea_crm/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
+      RUN_SETUP: "true"
+    volumes:
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost', 8000)); s.close()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+
+  celery_worker:
+    build: ./backend
+    command: celery -A config worker --loglevel=info
+    env_file:
+      - ./backend/insomea_crm/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - media_files:/app/media
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  celery_beat:
+    build: ./backend
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - ./backend/insomea_crm/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api
+      VITE_WS_URL: localhost:8000
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+  static_files:

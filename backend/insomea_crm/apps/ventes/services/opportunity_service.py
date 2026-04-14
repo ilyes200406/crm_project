@@ -138,7 +138,6 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
     # Mais on peut forcer si besoin:
     update_opportunity_status_from_lines(opportunity)
 
-    
     # Groupe lignes par fournisseur (via product.supplier si existe)
     from collections import defaultdict
     lines_by_supplier = defaultdict(list)
@@ -150,6 +149,8 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
         if supplier:
             lines_by_supplier[supplier].append(line)
     
+    import logging
+    logger = logging.getLogger(__name__)
     # Envoi email par fournisseur
     for supplier, lines in lines_by_supplier.items():
         try:
@@ -160,10 +161,8 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
             )
         except Exception as e:
             # Log error mais continue (email pas critique)
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending email to supplier {supplier.name}: {e}")
-    
+            logger.exception(f"❌❌❌ Error sending email to supplier {supplier.name}.")
+
     # Recharge opportunity (status recalculé via signal)
     opportunity.refresh_from_db()
     
@@ -205,6 +204,8 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
     opportunity.save()
     # Signal FSM → StatusHistory créé auto
 
+    import logging
+    logger = logging.getLogger(__name__)
     # Get InsomeaQuote
     insomea_quote = _get_related_or_none(opportunity, 'insomea_quote')
     if insomea_quote:
@@ -215,9 +216,7 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
             )
         except Exception as e:
             # Log error mais continue
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending email to client: {e}")
+            logger.exception(f"❌❌❌ Error sending email to client.")
     
     return opportunity
 
@@ -388,6 +387,8 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
     pos_created = []
     emails_sent = 0
     
+    import logging
+    logger = logging.getLogger(__name__)
     for sq_data in supplier_quotes_map.values():
         
         supplier_quote = sq_data['supplier_quote']
@@ -397,7 +398,7 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
         # Check if PO already exists (related_name='insomea_pos')
         existing_po = supplier_quote.insomea_pos.first()
         if existing_po:
-            print(f"⚠️  PO already exists for SupplierQuote {supplier_quote.id}")
+            logger.warning(f"⚠️  PO already exists for SupplierQuote {supplier_quote.id}")
             po = existing_po
         else:
             # Generate reference
@@ -419,7 +420,6 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
             line.save()
         
         pos_created.append(po)
-        
         # Send email to supplier (1 email with all lines)
         try:
             send_insomea_po_to_supplier(
@@ -429,7 +429,7 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
             )
             emails_sent += 1
         except Exception as e:
-            print(f"❌ Error sending email to {supplier.name}: {e}")
+            logger.exception(f"❌❌❌ Error sending email to {supplier.name}.")
     
     # Refresh opportunity
     opportunity.refresh_from_db()

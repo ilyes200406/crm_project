@@ -42,7 +42,7 @@ export function SubscriptionsExpiringWidget({ days = 30, limit = 5 }) {
 
   // Handle create renewal
   const handleCreateRenewal = (subscription) => {
-    navigate(`/ventes/subscriptions/${subscription.id}/renewal`);
+    navigate(`/app/ventes/subscriptions/${subscription.id}`);
   };
 
   // Loading state

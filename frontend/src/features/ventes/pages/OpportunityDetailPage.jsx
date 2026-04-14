@@ -16,6 +16,8 @@ import {
   useOpportunity,
   useRequestSupplierQuotes,
   useCreateInsomeaQuote,
+  useRollbackInsomeaQuote,
+  useRegenerateQuotePdf,
   useRequestClientPO,
   useUploadClientPO,
   useApproveOpportunity,
@@ -562,8 +564,10 @@ function SupplierQuoteReceivedSection({ opportunity, refetch }) {
 
 /** INSOMEA_QUOTE_CREATED — view quote, download PDF, send to client */
 function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
-  const requestPO  = useRequestClientPO();
-  const iq         = opportunity.insomea_quote;
+  const requestPO   = useRequestClientPO();
+  const rollbackIQ  = useRollbackInsomeaQuote();
+  const regenPdf    = useRegenerateQuotePdf();
+  const iq          = opportunity.insomea_quote;
 
   const handleDownload = async () => {
     if (!iq) return;
@@ -588,14 +592,39 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
           <Row label="Remise"      value={`${iq?.discount_percent || 0}%`} />
           <Row label="Marge"       value={<span className="text-green-600">{Number(iq?.margin || 0).toFixed(2)} DT</span>} />
         </div>
-        <button onClick={handleDownload} className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
-          ⬇️ Télécharger le PDF
-        </button>
+
+        {/* PDF actions */}
+        <div className="flex gap-2 mb-1">
+          {iq?.document_url ? (
+            <button
+              onClick={() => window.open(iq.document_url, '_blank')}
+              className="flex-1 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-lg text-sm hover:bg-blue-100"
+            >
+              👁️ Prévisualiser
+            </button>
+          ) : (
+            <button
+              onClick={async () => { await regenPdf.mutateAsync(opportunity.id); refetch(); }}
+              disabled={regenPdf.isPending}
+              className="flex-1 py-2 bg-orange-50 border border-orange-300 text-orange-700 rounded-lg text-sm hover:bg-orange-100 disabled:opacity-50"
+            >
+              {regenPdf.isPending ? '⏳ Génération...' : '🔄 Générer le PDF'}
+            </button>
+          )}
+          <button
+            onClick={handleDownload}
+            disabled={!iq?.document_url}
+            className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ⬇️ Télécharger
+          </button>
+        </div>
       </Card>
 
       <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
         📧 En cliquant ci-dessous, le devis sera envoyé par email à <strong>{opportunity.client?.email || 'client'}</strong> avec le PDF en pièce jointe.
       </div>
+
       <button
         onClick={async () => { await requestPO.mutateAsync(opportunity.id); refetch(); }}
         disabled={requestPO.isPending}
@@ -603,15 +632,36 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
       >
         {requestPO.isPending ? 'Envoi...' : '📧 Envoyer au client — Demander BC'}
       </button>
+
+      <button
+        onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); refetch(); }}
+        disabled={rollbackIQ.isPending}
+        className="w-full py-2 border border-orange-300 text-orange-600 rounded-lg text-sm hover:bg-orange-50 disabled:opacity-50"
+      >
+        {rollbackIQ.isPending ? 'Retour...' : '✏️ Modifier devis'}
+      </button>
     </div>
   );
 }
 
 /** CLIENT_PO_REQUEST — waiting or upload signed PO */
 function ClientPORequestSection({ opportunity, refetch }) {
-  const uploadPO = useUploadClientPO();
-  const fileRef  = useRef();
+  const uploadPO   = useUploadClientPO();
+  const rollbackIQ = useRollbackInsomeaQuote();
+  const fileRef    = useRef();
   const [poNumber, setPoNumber] = useState('');
+  const iq         = opportunity.insomea_quote;
+
+  const handleDownloadQuote = async () => {
+    if (!iq) return;
+    try {
+      const res = await insomeaQuotesApi.download(iq.id);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${iq.reference}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* document not yet generated */ }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -624,6 +674,38 @@ function ClientPORequestSection({ opportunity, refetch }) {
 
   return (
     <div className="space-y-4">
+      {/* Insomea quote summary — so commercial can see what was sent */}
+      {iq && (
+        <Card>
+          <h4 className="text-sm font-bold text-gray-800 mb-3">📄 Devis envoyé — {iq.reference}</h4>
+          <div className="space-y-2 text-sm mb-3">
+            <Row label="Total vente" value={<span className="font-bold text-blue-700">{Number(iq.total_sale || 0).toFixed(2)} DT</span>} />
+            <Row label="Remise"      value={`${iq.discount_percent || 0}%`} />
+            <Row label="Marge"       value={<span className="text-green-600">{Number(iq.margin || 0).toFixed(2)} DT</span>} />
+          </div>
+          <div className="flex gap-2 mb-2">
+            {iq.document_url && (
+              <button
+                onClick={() => window.open(iq.document_url, '_blank')}
+                className="flex-1 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-lg text-sm hover:bg-blue-100"
+              >
+                👁️ Prévisualiser
+              </button>
+            )}
+            <button onClick={handleDownloadQuote} className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
+              ⬇️ Télécharger
+            </button>
+          </div>
+          <button
+            onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); refetch(); }}
+            disabled={rollbackIQ.isPending}
+            className="w-full py-2 border border-orange-300 text-orange-600 rounded-lg text-sm hover:bg-orange-50 disabled:opacity-50"
+          >
+            {rollbackIQ.isPending ? 'Retour...' : '✏️ Modifier le devis'}
+          </button>
+        </Card>
+      )}
+
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
         ⏳ Devis envoyé au client. En attente du bon de commande signé.
       </div>
@@ -673,17 +755,57 @@ function ClientPOReceivedSection({ opportunity, role, refetch }) {
 
   return (
     <div className="space-y-4">
-      {po && (
-        <Card>
-          <h4 className="text-sm font-bold text-gray-800 mb-3">📄 Bon de Commande Client</h4>
-          <div className="space-y-2 text-sm">
-            <Row label="Numéro BC" value={po.po_number} />
-            <Row label="Reçu le"   value={new Date(po.created_at).toLocaleDateString('fr-FR')} />
-          </div>
-        </Card>
-      )}
+      {/* Documents to review — Finance only */}
+      <Card>
+        <h4 className="text-sm font-bold text-gray-800 mb-3">📎 Documents à vérifier</h4>
+        <div className="space-y-2">
+          {/* Supplier quotes */}
+          {(opportunity.supplier_quotes || []).map((sq) => (
+            <div key={sq.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm">
+              <span className="text-gray-700 truncate">📋 Devis fournisseur — {sq.reference || sq.supplier?.name || sq.id}</span>
+              {sq.document_url && (
+                <button
+                  onClick={() => window.open(sq.document_url, '_blank')}
+                  className="ml-2 shrink-0 px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs hover:bg-blue-100"
+                >
+                  👁️ Voir
+                </button>
+              )}
+            </div>
+          ))}
+          {/* Insomea quote */}
+          {opportunity.insomea_quote && (
+            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm">
+              <span className="text-gray-700">📄 Devis Insomea — {opportunity.insomea_quote.reference}</span>
+              {opportunity.insomea_quote.document_url && (
+                <button
+                  onClick={() => window.open(opportunity.insomea_quote.document_url, '_blank')}
+                  className="ml-2 shrink-0 px-3 py-1 bg-green-50 text-green-600 border border-green-200 rounded text-xs hover:bg-green-100"
+                >
+                  👁️ Voir
+                </button>
+              )}
+            </div>
+          )}
+          {/* Client PO */}
+          {po && (
+            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm">
+              <span className="text-gray-700">📤 BC Client — {po.po_number}</span>
+              {po.document_url && (
+                <button
+                  onClick={() => window.open(po.document_url, '_blank')}
+                  className="ml-2 shrink-0 px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-xs hover:bg-amber-100"
+                >
+                  👁️ Voir
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
+
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-        ⚠️ Vérifiez le BC client avant d'approuver. L'approbation enverra automatiquement les BC Insomea aux fournisseurs par email.
+        ⚠️ Vérifiez les documents ci-dessus avant d'approuver. L'approbation enverra automatiquement les BC Insomea aux fournisseurs par email.
       </div>
       <div className="flex gap-3">
         <button
