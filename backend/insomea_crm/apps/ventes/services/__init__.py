@@ -12,7 +12,6 @@ from .opportunity_service import (
     request_client_po,
     approve_opportunity,
     update_opportunity_status_from_lines,
-    update_insomea_quote_transition,
     confirm_all_insomea_pos,
     confirm_insomea_po,
 )
@@ -80,8 +79,7 @@ __all__ = [
     # Purchase Orders
     'upload_client_po',
     'create_insomea_pos',
-    'update_insomea_quote_transition',
-    
+
     # Provision
     'create_provisions',
     'start_provisioning',

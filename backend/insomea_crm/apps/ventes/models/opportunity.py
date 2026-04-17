@@ -155,11 +155,6 @@ class Opportunity(models.Model):
     def request_client_po(self):
         pass
 
-    @transition(field=status, source=OpportunityStatus.CLIENT_PO_REQUEST, target=OpportunityStatus.INSOMEA_QUOTE_CREATED)
-    def update_insomea_quote(self):
-        """Client negotiation: pull back the PO request to revise the Insomea quote."""
-        pass
-
     @transition(field=status, source=OpportunityStatus.CLIENT_PO_REQUEST, target=OpportunityStatus.CLIENT_PO_RECIEVED, conditions=[lambda instance: instance.opportunity_has_client_po()])
     def receive_client_po(self):
         pass

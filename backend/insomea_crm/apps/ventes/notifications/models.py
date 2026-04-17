@@ -21,6 +21,9 @@ class NotificationType(models.TextChoices):
     SUBSCRIPTION_EXPIRING = 'SUBSCRIPTION_EXPIRING', _('Subscription expire bientôt')
     SUBSCRIPTION_EXPIRED = 'SUBSCRIPTION_EXPIRED', _('Subscription expirée')
 
+    # Email delivery failures
+    EMAIL_FAILED = 'EMAIL_FAILED', _('Échec envoi email')
+
 
 class NotificationStatus(models.TextChoices):
     PENDING = 'PENDING', _('En attente')

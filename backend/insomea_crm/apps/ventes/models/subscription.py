@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, transition
 from django.core.validators import MinValueValidator
+from django.contrib.postgres.fields import ArrayField
 
 class SubscriptionStatus(models.TextChoices):
     ACTIVE = 'ACTIVE', _('Active')
@@ -36,6 +37,13 @@ class Subscription(models.Model):
     auto_renew = models.BooleanField(
         default=True,
         help_text="Renouvellement automatique activé"
+    )
+
+    notified_days = ArrayField(
+        models.IntegerField(),
+        default=list,
+        blank=True,
+        help_text="Seuils (en jours) pour lesquels une notification d'expiration a déjà été envoyée (ex: [90, 30, 7])"
     )
 
     status = FSMField(choices=SubscriptionStatus.choices, default=SubscriptionStatus.ACTIVE, protected=True)

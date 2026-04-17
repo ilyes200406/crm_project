@@ -117,15 +117,6 @@ class CanUploadClientPO(HasVentesPerm):
     check_ownership = True
 
 
-class CanUpdateInsomeaQuote(HasVentesPerm):
-    """
-    Opportunity owner retracts the PO request to revise the Insomea quote
-    (client negotiation step: CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED).
-    """
-    permission_codename = 'opportunity.update_insomea_quote'
-    check_ownership = True
-
-
 class CanRollbackInsomeaQuote(HasVentesPerm):
     """
     Opportunity owner (COMMERCIAL) reverts INSOMEA_QUOTE_CREATED → SUPPLIER_QUOTE_RECIEVED

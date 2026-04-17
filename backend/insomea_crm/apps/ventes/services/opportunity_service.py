@@ -3,7 +3,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError, Permissi
 from django.utils import timezone
 from ..models import (Opportunity, OpportunityLine, OpportunityStatus, OpportunityLineStatus, InsomeaPurchaseOrder)
 from ..selectors import (get_opportunity_by_id, get_line_by_id)
-from ..emails.services import send_supplier_quote_request, send_client_quote_with_pdf, send_insomea_po_to_supplier
 from ..validators import (validate_opportunity_data, validate_can_approve, normalize_opportunity_name, validate_can_request_client_po)
 
 @transaction.atomic
@@ -149,19 +148,13 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
         if supplier:
             lines_by_supplier[supplier].append(line)
     
-    import logging
-    logger = logging.getLogger(__name__)
-    # Envoi email par fournisseur
+    from ..tasks import send_supplier_quote_request_email
     for supplier, lines in lines_by_supplier.items():
-        try:
-            send_supplier_quote_request(
-                opportunity=opportunity,
-                supplier=supplier,
-                lines=lines
-            )
-        except Exception as e:
-            # Log error mais continue (email pas critique)
-            logger.exception(f"❌❌❌ Error sending email to supplier {supplier.name}.")
+        send_supplier_quote_request_email.delay(
+            opportunity_id=str(opportunity.id),
+            supplier_id=str(supplier.id),
+            line_ids=[str(line.id) for line in lines],
+        )
 
     # Recharge opportunity (status recalculé via signal)
     opportunity.refresh_from_db()
@@ -204,19 +197,13 @@ def request_client_po(*, opportunity_id, user, ip_address=None):
     opportunity.save()
     # Signal FSM → StatusHistory créé auto
 
-    import logging
-    logger = logging.getLogger(__name__)
-    # Get InsomeaQuote
     insomea_quote = _get_related_or_none(opportunity, 'insomea_quote')
     if insomea_quote:
-        try:
-            send_client_quote_with_pdf(
-                opportunity=opportunity,
-                insomea_quote=insomea_quote
-            )
-        except Exception as e:
-            # Log error mais continue
-            logger.exception(f"❌❌❌ Error sending email to client.")
+        from ..tasks import send_client_quote_pdf_email
+        send_client_quote_pdf_email.delay(
+            opportunity_id=str(opportunity.id),
+            insomea_quote_id=str(insomea_quote.id),
+        )
     
     return opportunity
 
@@ -385,8 +372,9 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
     
     # ✅ Create 1 PO per SupplierQuote
     pos_created = []
-    emails_sent = 0
-    
+    emails_queued = 0
+
+    from ..tasks import send_insomea_po_email
     import logging
     logger = logging.getLogger(__name__)
     for sq_data in supplier_quotes_map.values():
@@ -420,16 +408,12 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
             line.save()
         
         pos_created.append(po)
-        # Send email to supplier (1 email with all lines)
-        try:
-            send_insomea_po_to_supplier(
-                supplier=supplier,
-                po=po,  # ✅ 1 PO (contains multiple lines via supplier_quote)
-                opportunity=opportunity
-            )
-            emails_sent += 1
-        except Exception as e:
-            logger.exception(f"❌❌❌ Error sending email to {supplier.name}.")
+        send_insomea_po_email.delay(
+            supplier_id=str(supplier.id),
+            po_id=str(po.id),
+            opportunity_id=str(opportunity.id),
+        )
+        emails_queued += 1
     
     # Refresh opportunity
     opportunity.refresh_from_db()
@@ -447,7 +431,7 @@ def send_insomea_pos(*, opportunity_id, user, ip_address=None):
     return {
         'opportunity': opportunity,
         'pos_created': pos_created,
-        'emails_sent': emails_sent
+        'emails_queued': emails_queued
     }
 
 
@@ -738,36 +722,3 @@ def handle_opportunity_line_save(opportunity_line):
     update_opportunity_status_from_lines(opportunity)
 
 
-@transaction.atomic
-def update_insomea_quote_transition(*, opportunity_id, user, ip_address=None):
-    """
-    Transition Opportunity: CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED
-
-    Called when the client comes back with feedback/negotiation and the
-    commercial needs to revise the Insomea quote before re-sending.
-
-    Args:
-        opportunity_id: UUID
-        user: User instance (COMMERCIAL or ADMIN)
-        ip_address: str
-
-    Returns:
-        Opportunity mise à jour
-
-    Raises:
-        ValidationError: Si statut != CLIENT_PO_REQUEST
-        PermissionDenied: Si pas COMMERCIAL ou ADMIN
-    """
-
-    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
-
-    if opportunity.status != OpportunityStatus.CLIENT_PO_REQUEST:
-        raise ValidationError(
-            f'L\'opportunité doit être en CLIENT_PO_REQUEST pour mettre à jour le devis. '
-            f'Statut actuel : {opportunity.get_status_display()}'
-        )
-
-    opportunity.update_insomea_quote()
-    opportunity.save()
-
-    return opportunity

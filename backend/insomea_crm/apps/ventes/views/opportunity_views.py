@@ -60,7 +60,6 @@ from ..services import (
     request_client_po,
     approve_opportunity,
     upload_client_po,
-    update_insomea_quote_transition,
     confirm_all_insomea_pos,
     rollback_insomea_quote,
 )
@@ -75,7 +74,6 @@ from ..permissions import (
     CanCreateInsomeaQuote,
     CanRequestClientPO,
     CanUploadClientPO,
-    CanUpdateInsomeaQuote,
     CanRollbackInsomeaQuote,
     CanApproveOpportunity,
     CanConfirmInsomeaPO,
@@ -151,7 +149,6 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'create_insomea_quote':    [CanCreateInsomeaQuote()],
             'request_client_po':       [CanRequestClientPO()],
             'upload_client_po':        [CanUploadClientPO()],
-            'update_insomea_quote':    [CanUpdateInsomeaQuote()],
             'rollback_insomea_quote':  [CanRollbackInsomeaQuote()],
             'confirm_all_pos':         [CanConfirmInsomeaPO()],
         }
@@ -462,26 +459,6 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'client_po_id': str(client_po.id),
         }, status=status.HTTP_201_CREATED)
     
-    @action(detail=True, methods=['post'])
-    def update_insomea_quote(self, request, pk=None):
-        """
-        Retract PO request to revise the Insomea quote (client negotiation)
-
-        POST /opportunities/:id/update_insomea_quote/
-
-        Transitions: CLIENT_PO_REQUEST → INSOMEA_QUOTE_CREATED
-        """
-        opportunity = self.get_object()
-
-        opportunity = update_insomea_quote_transition(
-            opportunity_id=opportunity.id,
-            user=request.user,
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
-
-        serializer = OpportunityDetailSerializer(opportunity)
-        return Response(serializer.data)
-
     @action(detail=True, methods=['post'])
     def rollback_insomea_quote(self, request, pk=None):
         """
