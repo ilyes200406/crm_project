@@ -4,7 +4,7 @@
  * React hooks pour notifications avec WebSocket
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -35,51 +35,49 @@ export const notificationsKeys = {
  * Manages WebSocket connection and real-time notifications
  */
 export function useWebSocketNotifications() {
-  const accessToken = useAppStore((state) => state.accessToken); // ← ADAPTER
-  const queryClient = useQueryClient();
+  const accessToken = useAppStore((state) => state.accessToken);
   const [isConnected, setIsConnected] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [latestNotification, setLatestNotification] = useState(null);
 
   useEffect(() => {
     if (!accessToken) return;
 
-    // Connect to WebSocket
     websocketService.connect(accessToken);
 
-    // Subscribe to connection events
     const unsubConnected = websocketService.on('connected', () => {
-      console.log('[Notifications] WebSocket connected');
       setIsConnected(true);
     });
 
     const unsubDisconnected = websocketService.on('disconnected', () => {
-      console.log('[Notifications] WebSocket disconnected');
       setIsConnected(false);
     });
 
-    // Subscribe to messages
+    // Count events from backend (on connect, on mark-read, on heartbeat)
+    // This is the single source of truth for the bell badge
+    const unsubCount = websocketService.on('count', (data) => {
+      setUnreadCount(data.count ?? 0);
+    });
+
+    // New notification events — update state + toast, no REST refetch
     const unsubMessage = websocketService.on('message', (data) => {
-      console.log('[Notifications] New notification:', data);
-
-      // Invalidate notifications queries
-      queryClient.invalidateQueries({ queryKey: notificationsKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationsKeys.unreadCount() });
-
-      // Show toast for important notifications
       if (data.notification) {
+        setLatestNotification(data.notification);
+        setUnreadCount((prev) => prev + 1);
         showNotificationToast(data.notification);
       }
     });
 
-    // Cleanup on unmount
     return () => {
       unsubConnected();
       unsubDisconnected();
+      unsubCount();
       unsubMessage();
       websocketService.disconnect();
     };
-  }, [accessToken, queryClient]);
+  }, [accessToken]);
 
-  return { isConnected };
+  return { isConnected, unreadCount, latestNotification };
 }
 
 /**
@@ -162,7 +160,6 @@ export function useUnreadCount(options = {}) {
       return data;
     },
     staleTime: 10000,
-    refetchInterval: 30000, // Refetch every 30 seconds as backup
     ...options,
   });
 }

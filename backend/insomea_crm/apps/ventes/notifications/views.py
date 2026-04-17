@@ -8,8 +8,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Notification, NotificationStatus
+from .models import Notification
 from .serializers import NotificationSerializer
+from .services import send_count_to_websocket
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -23,7 +24,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         ).select_related('opportunity', 'provision', 'subscription')
 
         if self.request.query_params.get('unread_only') == 'true':
-            qs = qs.exclude(status=NotificationStatus.READ)
+            qs = qs.filter(is_read=False)
 
         return qs
 
@@ -33,24 +34,25 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_as_read(self, request, pk=None):
         notification = self.get_object()
         notification.mark_as_read()
+        send_count_to_websocket(request.user)
         return Response(self.get_serializer(notification).data)
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
         Notification.objects.filter(
             recipient=request.user,
-        ).exclude(
-            status=NotificationStatus.READ
+            is_read=False,
         ).update(
-            status=NotificationStatus.READ,
+            is_read=True,
             read_at=timezone.now(),
         )
+        send_count_to_websocket(request.user)
         return Response({'status': 'ok'})
 
     @action(detail=False, methods=['get'])
     def unread_count(self, request):
         count = Notification.objects.filter(
             recipient=request.user,
-            status__in=[NotificationStatus.PENDING, NotificationStatus.SENT],
+            is_read=False,
         ).count()
         return Response({'count': count})

@@ -3,7 +3,7 @@ NOTIFICATION SERIALIZER
 """
 
 from rest_framework import serializers
-from .models import Notification, NotificationStatus, NotificationType
+from .models import Notification, NotificationType
 
 
 # Maps backend type → frontend dot notation + level
@@ -54,7 +54,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_is_read(self, obj):
-        return obj.status == NotificationStatus.READ
+        return obj.is_read
 
     def get_notification_type(self, obj):
         config = _TYPE_CONFIG.get(obj.type, {})

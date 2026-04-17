@@ -169,11 +169,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_unread_count(self):
         """Get unread notifications count"""
-        from .notifications.models import Notification, NotificationStatus
-        
+        from .notifications.models import Notification
+
         return Notification.objects.filter(
             recipient=self.user,
-            status=NotificationStatus.PENDING
+            is_read=False,
         ).count()
     
     @database_sync_to_async

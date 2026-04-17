@@ -25,7 +25,6 @@ class NotificationType(models.TextChoices):
 class NotificationStatus(models.TextChoices):
     PENDING = 'PENDING', _('En attente')
     SENT = 'SENT', _('Envoyée')
-    READ = 'READ', _('Lue')
     FAILED = 'FAILED', _('Échec')
 
 
@@ -41,10 +40,11 @@ class Notification(models.Model):
     title = models.CharField(max_length=200)
     message = models.TextField()
     action_url = models.CharField(max_length=500, blank=True, help_text="URL action (ex: /opportunities/123/)")
-    status = models.CharField(max_length=20, choices=NotificationStatus.choices, default=NotificationStatus.PENDING)    
+    status = models.CharField(max_length=20, choices=NotificationStatus.choices, default=NotificationStatus.PENDING)
+    is_read = models.BooleanField(default=False)
 
-    sent_at = models.DateTimeField(null=True,blank=True)
-    read_at = models.DateTimeField(null=True,blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -71,9 +71,9 @@ class Notification(models.Model):
     def mark_as_read(self):
         """Marque notification comme lue"""
         from django.utils import timezone
-        self.status = NotificationStatus.READ
+        self.is_read = True
         self.read_at = timezone.now()
-        self.save(update_fields=['status', 'read_at'])
+        self.save(update_fields=['is_read', 'read_at'])
     
     def mark_as_failed(self):
         """Marque notification comme échouée"""

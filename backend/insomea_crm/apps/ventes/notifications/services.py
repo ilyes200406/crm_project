@@ -5,10 +5,28 @@ from django.conf import settings
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from .models import Notification, NotificationType, NotificationStatus
+from .models import Notification, NotificationType
 
 
-# 🆕 NOUVEAU: Helper pour envoyer via WebSocket
+def send_count_to_websocket(user):
+    """
+    Push updated unread count to a user via WebSocket.
+    Call this after any REST action that changes read state.
+    """
+    channel_layer = get_channel_layer()
+    unread_count = Notification.objects.filter(
+        recipient=user,
+        is_read=False,
+    ).count()
+    async_to_sync(channel_layer.group_send)(
+        f'notifications_{user.id}',
+        {
+            'type': 'notification.count',
+            'count': unread_count,
+        }
+    )
+
+
 def send_notification_to_websocket(notification):
     """
     Envoie notification via WebSocket
@@ -47,12 +65,9 @@ def send_notification_to_websocket(notification):
     )
     
     # Also send updated count
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    
     unread_count = Notification.objects.filter(
         recipient=notification.recipient,
-        status=NotificationStatus.PENDING
+        is_read=False,
     ).count()
     
     async_to_sync(channel_layer.group_send)(

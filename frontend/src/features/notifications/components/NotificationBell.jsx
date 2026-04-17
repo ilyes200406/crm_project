@@ -7,7 +7,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 import { NotificationList } from './NotificationList';
-import { useUnreadCount, useWebSocketNotifications } from '../hooks';
+import { useWebSocketNotifications } from '../hooks';
 
 /**
  * NotificationBell Component
@@ -16,12 +16,8 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // WebSocket connection
-  const { isConnected } = useWebSocketNotifications();
-
-  // Fetch unread count
-  const { data: unreadData } = useUnreadCount();
-  const unreadCount = unreadData?.count || 0;
+  // Single source of truth — WebSocket drives both connection state and unread count
+  const { isConnected, unreadCount } = useWebSocketNotifications();
 
   // Close dropdown when clicking outside
   useEffect(() => {
