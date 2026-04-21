@@ -25,6 +25,7 @@ from .models import (
     InsomeaPurchaseOrder,
     Provision,
     Subscription,
+    SubscriptionStatus,
     SubscriptionTerm,
 )
 
@@ -684,6 +685,17 @@ class SubscriptionAdmin(admin.ModelAdmin):
     )
 
     inlines = [SubscriptionTermInline]
+
+    actions = ['action_mark_pending_renewal']
+
+    @admin.action(description='[Dev] Mark selected as PENDING_RENEWAL')
+    def action_mark_pending_renewal(self, request, queryset):
+        count = 0
+        for sub in queryset.filter(status=SubscriptionStatus.ACTIVE):
+            sub.mark_pending_renewal()
+            sub.save(update_fields=['status'])
+            count += 1
+        self.message_user(request, f'{count} subscription(s) marked as PENDING_RENEWAL.')
 
     @admin.display(description='Statut', ordering='status')
     def status_badge(self, obj):

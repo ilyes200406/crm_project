@@ -59,6 +59,7 @@ from ..services import (
     request_all_supplier_quotes,
     request_client_po,
     approve_opportunity,
+    send_insomea_pos,
     upload_client_po,
     confirm_all_insomea_pos,
     rollback_insomea_quote,
@@ -151,6 +152,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             'upload_client_po':        [CanUploadClientPO()],
             'rollback_insomea_quote':  [CanRollbackInsomeaQuote()],
             'confirm_all_pos':         [CanConfirmInsomeaPO()],
+            'send_insomea_pos':        [CanApproveOpportunity()],
         }
         return mapping.get(self.action, [CanViewOpportunity()])
     
@@ -399,12 +401,34 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         return Response({
             'opportunity': OpportunityDetailSerializer(result['opportunity']).data,
             'pos_created': InsomeaPurchaseOrderListSerializer(
-                result['pos_created'], 
+                result['pos_created'],
                 many=True
             ).data,
-            'emails_sent': result['emails_sent'],
         })
     
+    @action(detail=True, methods=['post'])
+    def send_insomea_pos(self, request, pk=None):
+        """
+        Envoyer les BC Insomea aux fournisseurs (Finance)
+
+        POST /opportunities/:id/send_insomea_pos/
+
+        Transitions: APPROUVED → INSOMEA_POS_SENT
+        Envoie les emails aux fournisseurs et met à jour sent_at sur chaque PO.
+        """
+        opportunity = self.get_object()
+
+        result = send_insomea_pos(
+            opportunity_id=opportunity.id,
+            user=request.user,
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
+
+        return Response({
+            'opportunity': OpportunityDetailSerializer(result['opportunity']).data,
+            'emails_queued': result['emails_queued'],
+        })
+
     # 🆕 NOUVELLE ACTION
     @action(detail=True, methods=['post'])
     def confirm_all_pos(self, request, pk=None):

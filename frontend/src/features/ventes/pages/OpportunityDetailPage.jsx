@@ -21,6 +21,7 @@ import {
   useRequestClientPO,
   useUploadClientPO,
   useApproveOpportunity,
+  useSendInsomeaPos,
   useConfirmAllPOs,
   useCancelOpportunity,
 } from '../hooks/useOpportunities';
@@ -855,7 +856,76 @@ function ClientPOReceivedSection({ opportunity, role, refetch }) {
   );
 }
 
-/** APPROUVED or INSOMEA_POS_SENT — Finance confirms supplier receipt */
+/** APPROUVED — Finance reviews created POs then sends them */
+function ApprovedSection({ opportunity, role, refetch }) {
+  const sendPOs   = useSendInsomeaPos();
+  const pos       = opportunity.insomea_pos || [];
+  const isFinance = ['FINANCE', 'ADMIN'].includes(role);
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+        ✅ Opportunité approuvée — BC Insomea créés et prêts à envoyer.
+      </div>
+
+      {pos.length === 0 && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          ⚠️ Aucun BC Insomea trouvé. Vérifiez que toutes les lignes ont un devis fournisseur.
+        </div>
+      )}
+
+      {pos.map((po) => (
+        <Card key={po.id}>
+          <h4 className="text-sm font-bold text-gray-800 mb-2">
+            📄 BC — {po.supplier_name || po.supplier?.name}
+          </h4>
+          <div className="space-y-1 text-sm mb-3">
+            <Row label="Référence"   value={po.po_number} />
+            <Row label="Lignes"      value={po.lines_count} />
+            <Row label="Total achat" value={`${Number(po.total_purchase || 0).toFixed(2)} DT`} />
+            <Row label="Créé le"     value={new Date(po.created_at).toLocaleDateString('fr-FR')} />
+          </div>
+          {po.document_url ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.open(po.document_url, '_blank')}
+                className="flex-1 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-lg text-sm hover:bg-blue-100"
+              >
+                👁️ Prévisualiser
+              </button>
+              <a
+                href={po.document_url}
+                download
+                className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 text-center"
+              >
+                ⬇️ Télécharger
+              </a>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">PDF en cours de génération...</p>
+          )}
+        </Card>
+      ))}
+
+      {isFinance && pos.length > 0 && (
+        <>
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            ℹ️ Vérifiez les BCs ci-dessus puis envoyez-les aux fournisseurs par email.
+          </div>
+          <button
+            onClick={async () => { await sendPOs.mutateAsync(opportunity.id); refetch(); }}
+            disabled={sendPOs.isPending}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50"
+          >
+            {sendPOs.isPending ? 'Envoi en cours...' : '📧 Envoyer les BCs aux fournisseurs'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** INSOMEA_POS_SENT — Finance confirms supplier receipt */
 function InsomeaPOsSection({ opportunity, role, refetch }) {
   const confirmAll = useConfirmAllPOs();
   const pos        = opportunity.insomea_pos || [];
@@ -981,7 +1051,7 @@ function StatusSection({ opportunity, role, refetch, navigate }) {
     case 'INSOMEA_QUOTE_CREATED':   return <InsomeaQuoteCreatedSection {...props} />;
     case 'CLIENT_PO_REQUEST':       return <ClientPORequestSection {...props} />;
     case 'CLIENT_PO_RECIEVED':      return <ClientPOReceivedSection {...props} />;
-    case 'APPROUVED':
+    case 'APPROUVED':                return <ApprovedSection {...props} />;
     case 'INSOMEA_POS_SENT':        return <InsomeaPOsSection {...props} />;
     case 'INSOMEA_POS_CONFIRMED':   return <ConfirmedSection opportunity={opportunity} navigate={navigate} />;
     case 'CANCELLED':               return <CancelledSection opportunity={opportunity} />;

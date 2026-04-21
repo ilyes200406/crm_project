@@ -256,6 +256,30 @@ export function useApproveOpportunity() {
 }
 
 /**
+ * Send Insomea POs to suppliers mutation (Finance)
+ * Transitions: APPROUVED → INSOMEA_POS_SENT
+ */
+export function useSendInsomeaPos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => opportunitiesApi.sendInsomeaPos(id),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(data.opportunity.id) });
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.pipeline() });
+
+      toast.success('BC Insomea envoyés aux fournisseurs');
+      return data;
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || "Erreur lors de l'envoi des BCs";
+      toast.error(message);
+    },
+  });
+}
+
+/**
  * Confirm all POs mutation
  */
 export function useConfirmAllPOs() {

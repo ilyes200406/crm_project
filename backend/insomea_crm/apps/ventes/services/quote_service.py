@@ -340,6 +340,41 @@ from django.template.loader import render_to_string
 from django.core.files.base import ContentFile
 
 
+def generate_po_pdf(insomea_po):
+    """
+    Generate PDF for an InsomeaPurchaseOrder and return a Django ContentFile.
+    Uses WeasyPrint.
+    """
+    import io
+    from weasyprint import HTML
+    from django.template.loader import render_to_string
+
+    lines = insomea_po.supplier_quote.lines.select_related(
+        'opportunity_line',
+        'opportunity_line__product',
+        'opportunity_line__opportunity',
+        'opportunity_line__opportunity__client',
+    )
+
+    first_line = lines.first()
+    opportunity = first_line.opportunity_line.opportunity if first_line else None
+
+    context = {
+        'po': insomea_po,
+        'supplier': insomea_po.supplier,
+        'supplier_quote': insomea_po.supplier_quote,
+        'opportunity': opportunity,
+        'lines': lines,
+    }
+
+    html_string = render_to_string('pdf/insomea_purchase_order.html', context)
+    buf = io.BytesIO()
+    HTML(string=html_string).write_pdf(buf)
+
+    filename = f"po_{insomea_po.po_number}.pdf"
+    return ContentFile(buf.getvalue(), name=filename)
+
+
 def generate_quote_pdf(insomea_quote):
     """
     Generate PDF for an InsomeaQuote and return a Django ContentFile.

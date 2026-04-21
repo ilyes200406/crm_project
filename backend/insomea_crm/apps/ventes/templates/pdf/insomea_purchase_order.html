@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #333; }
+
+        .header { background: #1e3a5f; color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .header .company { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+        .header .po-info { text-align: right; }
+        .header .po-ref { font-size: 16px; font-weight: bold; }
+        .header .po-date { font-size: 10px; opacity: 0.85; margin-top: 4px; }
+
+        .meta { padding: 20px 30px; display: flex; gap: 30px; border-bottom: 2px solid #e5e7eb; }
+        .meta-block { flex: 1; }
+        .meta-block h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 8px; }
+        .meta-block p { font-size: 11px; line-height: 1.6; }
+        .meta-block .highlight { font-weight: bold; color: #1e3a5f; }
+
+        .opp-info { padding: 10px 30px 16px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 10px; color: #6b7280; }
+        .opp-info span { color: #374151; font-weight: 600; }
+
+        .section-title { padding: 16px 30px 8px; font-size: 12px; font-weight: bold; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; }
+        table { width: 100%; border-collapse: collapse; }
+        table thead tr { background: #1e3a5f; color: white; }
+        table thead th { padding: 8px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        table thead th.right { text-align: right; }
+        table thead th.center { text-align: center; }
+        table tbody tr:nth-child(even) { background: #f9fafb; }
+        table tbody tr:nth-child(odd) { background: #ffffff; }
+        table tbody td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; vertical-align: middle; }
+        table tbody td.right { text-align: right; }
+        table tbody td.center { text-align: center; }
+        table tfoot td { padding: 7px 10px; font-size: 11px; border-top: 2px solid #d1d5db; background: #f3f4f6; }
+        table tfoot td.right { text-align: right; }
+        .product-title { font-weight: 600; color: #1f2937; }
+
+        .totals { margin: 16px 30px 20px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden; max-width: 300px; margin-left: auto; margin-right: 30px; }
+        .totals table tr td { padding: 7px 14px; font-size: 11px; border-bottom: 1px solid #f3f4f6; }
+        .totals table tr td:first-child { color: #6b7280; }
+        .totals table tr td:last-child { text-align: right; font-weight: 600; }
+        .totals table .total-row td { background: #1e3a5f; color: white; font-size: 13px; font-weight: bold; border-bottom: none; }
+
+        .footer { margin: 30px 30px 0; padding-top: 14px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9ca3af; text-align: center; }
+        .table-wrap { padding: 0 30px; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div>
+        <div class="company">INSOMEA</div>
+        <div style="font-size:10px; opacity:0.8; margin-top:4px;">Bon de Commande Fournisseur</div>
+    </div>
+    <div class="po-info">
+        <div style="font-size:10px; opacity:0.8;">BON DE COMMANDE</div>
+        <div class="po-ref">{{ po.po_number }}</div>
+        <div class="po-date">Émis le {{ po.created_at|date:"d/m/Y" }}</div>
+    </div>
+</div>
+
+<!-- Meta: Supplier + Opportunity -->
+<div class="meta">
+    <div class="meta-block">
+        <h3>Fournisseur</h3>
+        <p class="highlight">{{ supplier.name }}</p>
+        {% if supplier.email %}<p>{{ supplier.email }}</p>{% endif %}
+        {% if supplier.phone %}<p>{{ supplier.phone }}</p>{% endif %}
+    </div>
+    <div class="meta-block">
+        <h3>Opportunité</h3>
+        <p><span class="highlight">{{ opportunity.reference }}</span></p>
+        <p>{{ opportunity.name }}</p>
+        <p style="color:#6b7280; margin-top:4px;">Client : {{ opportunity.client.company_name }}</p>
+    </div>
+    <div class="meta-block">
+        <h3>Référence BC</h3>
+        <p class="highlight">{{ po.po_number }}</p>
+        {% if supplier_quote.reference %}
+        <p style="margin-top:4px; color:#6b7280;">Devis four. : {{ supplier_quote.reference }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Lines -->
+<div class="section-title">Détail des articles commandés</div>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40%">Produit</th>
+                <th class="center" style="width:10%">Qté</th>
+                <th class="right" style="width:20%">Prix unit. achat (DT)</th>
+                <th class="right" style="width:20%">Total achat (DT)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+            <tr>
+                <td><span class="product-title">{{ line.opportunity_line.product.title }}</span></td>
+                <td class="center">{{ line.opportunity_line.quantity }}</td>
+                <td class="right">{{ line.unit_price_purchase|floatformat:2 }}</td>
+                <td class="right">{{ line.line_total_purchase|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" style="text-align:right; color:#6b7280;">Total achat :</td>
+                <td class="right">{{ po.total_purchase|floatformat:2 }} DT</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Total -->
+<div class="totals">
+    <table>
+        <tr class="total-row">
+            <td>Total commande</td>
+            <td>{{ po.total_purchase|floatformat:2 }} DT</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    Bon de commande confidentiel émis par Insomea — {{ po.po_number }} — {{ po.created_at|date:"d/m/Y" }}
+</div>
+
+</body>
+</html>

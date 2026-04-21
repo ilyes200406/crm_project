@@ -11,6 +11,7 @@ from .opportunity_service import (
     request_all_supplier_quotes,
     request_client_po,
     approve_opportunity,
+    send_insomea_pos,
     update_opportunity_status_from_lines,
     confirm_all_insomea_pos,
     confirm_insomea_po,
@@ -32,7 +33,6 @@ from .quote_service import (
 
 from .purchase_order_service import (
     upload_client_po,
-    create_insomea_pos,
 )
 
 from .provision_service import (
@@ -78,7 +78,7 @@ __all__ = [
     
     # Purchase Orders
     'upload_client_po',
-    'create_insomea_pos',
+    'send_insomea_pos',
 
     # Provision
     'create_provisions',
@@ -91,6 +91,7 @@ __all__ = [
     'request_all_supplier_quotes',
     'request_client_po',
     'approve_opportunity',
+    'send_insomea_pos',
     'update_opportunity_status_from_lines',
     
     # 🆕 Subscription

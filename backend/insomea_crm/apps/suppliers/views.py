@@ -28,6 +28,7 @@ from .serializers import (
     SupplierUpdateSerializer,
     SupplierStatsSerializer,
 )
+from ..products.serializers import ProductListSerializer
 from .permissions import SupplierPermission
 from .filters import SupplierFilter
 from .selectors import (

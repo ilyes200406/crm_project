@@ -276,17 +276,18 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
             provisions.append(provision)
     """
     # ───────────────────────────────────────────────────────
-    # 5. CRÉATION INSOMEA POs (1 par fournisseur)
+    # 5. CRÉATION INSOMEA POs (1 par fournisseur, sans envoi)
     # ───────────────────────────────────────────────────────
-    
-    
-    result = send_insomea_pos(
+
+    pos_created = create_insomea_pos(
         opportunity_id=opportunity.id,
         user=user,
-        ip_address=ip_address
     )
 
-    return result
+    return {
+        'opportunity': opportunity,
+        'pos_created': pos_created,
+    }
 
 def generate_insomea_po_reference(supplier):
     """
@@ -307,131 +308,146 @@ def generate_insomea_po_reference(supplier):
     return f"IPO-{today.strftime('%Y%m%d')}-{supplier_code}-{count + 1:03d}"
 
 
-@transaction.atomic
-def send_insomea_pos(*, opportunity_id, user, ip_address=None):
+def create_insomea_pos(*, opportunity_id, user):
     """
-    Send Insomea Purchase Orders to suppliers
-    
-    ✅ REFACTORÉ: Crée 1 PO par SupplierQuote (pas par ligne)
-    
-    Triggered by: approve_opportunity() (Finance)
-    
-    Flow:
-        1. Get all SupplierQuotes from opportunity lines
-        2. Pour chaque SupplierQuote:
-           - Create 1 InsomeaPurchaseOrder
-           - Link all OpportunityLines to this PO
-           - Transition all lines: SUPPLIER_QUOTE_RECEIVED → INSOMEA_PO_SENT
-        3. Send 1 email per supplier (with all lines)
-        4. Opportunity auto-transition: APPROVED → INSOMEA_PO_SENT
-    
+    Crée les InsomeaPurchaseOrders (1 par SupplierQuote) sans envoyer.
+
+    Appelé par approve_opportunity(). Les lignes restent en SUPPLIER_QUOTE_RECIEVED.
+
     Returns:
-        dict {
-            'opportunity': Opportunity,
-            'pos_created': [InsomeaPurchaseOrder, ...],
-            'emails_sent': int
-        }
+        list[InsomeaPurchaseOrder]
     """
-    
+    import logging
+    logger = logging.getLogger(__name__)
+
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
-    
-    # Check status
-    if opportunity.status != OpportunityStatus.APPROUVED:
-        raise ValidationError(
-            f"Opportunity must be APPROVED. Current: {opportunity.get_status_display()}"
-        )
-    
-    # Check lines
+
     if not opportunity.lines.exists():
         raise ValidationError("Opportunity has no lines")
-    
-    # ✅ NOUVEAU: Group lines by SupplierQuote
-    supplier_quotes_map = {}  # {supplier_quote_id: [lines]}
-    
+
+    supplier_quotes_map = {}
+
     for line in opportunity.lines.all():
-        
-        # Check status
         if line.status != OpportunityLineStatus.SUPPLIER_QUOTE_RECIEVED:
             raise ValidationError(
                 f"Line {line.id} must be SUPPLIER_QUOTE_RECIEVED. Current: {line.get_status_display()}"
             )
-        
-        # Get SupplierQuoteLine
         if not hasattr(line, 'supplier_quote_line') or not line.supplier_quote_line:
             raise ValidationError(f"Line {line.id} has no supplier quote")
-        
+
         supplier_quote = line.supplier_quote_line.supplier_quote
-        
         if supplier_quote.id not in supplier_quotes_map:
             supplier_quotes_map[supplier_quote.id] = {
                 'supplier_quote': supplier_quote,
-                'lines': []
+                'lines': [],
             }
-        
         supplier_quotes_map[supplier_quote.id]['lines'].append(line)
-    
-    # ✅ Create 1 PO per SupplierQuote
-    pos_created = []
-    emails_queued = 0
 
-    from ..tasks import send_insomea_po_email
-    import logging
-    logger = logging.getLogger(__name__)
+    pos_created = []
+
     for sq_data in supplier_quotes_map.values():
-        
         supplier_quote = sq_data['supplier_quote']
         lines = sq_data['lines']
         supplier = supplier_quote.supplier
-        
-        # Check if PO already exists (related_name='insomea_pos')
+
         existing_po = supplier_quote.insomea_pos.first()
         if existing_po:
-            logger.warning(f"⚠️  PO already exists for SupplierQuote {supplier_quote.id}")
+            logger.warning(f"PO already exists for SupplierQuote {supplier_quote.id}")
             po = existing_po
         else:
-            # Generate reference
             po_number = generate_insomea_po_reference(supplier)
-
-            # ✅ Create InsomeaPurchaseOrder (1 per SupplierQuote)
             po = InsomeaPurchaseOrder.objects.create(
                 supplier=supplier,
-                supplier_quote=supplier_quote,  # ✅ Link to quote (not line)
+                supplier_quote=supplier_quote,
                 po_number=po_number,
-                sent_at=timezone.now(),
                 created_by=user,
             )
-        
-        # Link all lines to this PO + transition
+
+        # Link lines to PO (no FSM transition yet)
         for line in lines:
             line.insomea_purchase_order = po
-            line.send_insomea_po()
-            line.save()
-        
+            line.save(update_fields=['insomea_purchase_order'])
+
+        # Generate PDF
+        try:
+            from .quote_service import generate_po_pdf
+            pdf_file = generate_po_pdf(po)
+            po.document.save(pdf_file.name, pdf_file, save=True)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not generate PDF for PO {po.po_number}")
+
         pos_created.append(po)
-        send_insomea_po_email.delay(
-            supplier_id=str(supplier.id),
-            po_id=str(po.id),
-            opportunity_id=str(opportunity.id),
+
+    return pos_created
+
+
+@transaction.atomic
+def send_insomea_pos(*, opportunity_id, user, ip_address=None):
+    """
+    Envoie les InsomeaPurchaseOrders déjà créés aux fournisseurs.
+
+    Triggered by: send_insomea_pos view action (Finance, depuis état APPROUVED)
+
+    Flow:
+        1. Vérifie que l'opportunité est APPROUVED
+        2. Pour chaque ligne: transition SUPPLIER_QUOTE_RECIEVED → INSOMEA_PO_SENT
+        3. Envoie email par fournisseur
+        4. Opportunity → INSOMEA_POS_SENT
+
+    Returns:
+        dict {'opportunity': Opportunity, 'emails_queued': int}
+    """
+    opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
+
+    if opportunity.status != OpportunityStatus.APPROUVED:
+        raise ValidationError(
+            f"Opportunity must be APPROVED. Current: {opportunity.get_status_display()}"
         )
-        emails_queued += 1
-    
-    # Refresh opportunity
+
+    if not opportunity.lines.exists():
+        raise ValidationError("Opportunity has no lines")
+
+    from ..tasks import send_insomea_po_email
+    emails_queued = 0
+    notified_pos = set()
+
+    for line in opportunity.lines.all():
+        if line.status != OpportunityLineStatus.SUPPLIER_QUOTE_RECIEVED:
+            raise ValidationError(
+                f"Line {line.id} must be SUPPLIER_QUOTE_RECIEVED. Current: {line.get_status_display()}"
+            )
+        if not line.insomea_purchase_order:
+            raise ValidationError(f"Line {line.id} has no Insomea PO — run approve first")
+
+        po = line.insomea_purchase_order
+        line.send_insomea_po()
+        line.save()
+
+        if po.id not in notified_pos:
+            po.sent_at = timezone.now()
+            po.save(update_fields=['sent_at'])
+            send_insomea_po_email.delay(
+                supplier_id=str(po.supplier.id),
+                po_id=str(po.id),
+                opportunity_id=str(opportunity.id),
+            )
+            emails_queued += 1
+            notified_pos.add(po.id)
+
     opportunity.refresh_from_db()
-    
-    # Check if all lines transitioned → auto-transition opportunity
+
     all_lines_sent = all(
         line.status == OpportunityLineStatus.INSOMEA_PO_SENT
         for line in opportunity.lines.all()
     )
-    
     if all_lines_sent:
         opportunity.all_insomea_pos_sent()
         opportunity.save()
-    
+
     return {
         'opportunity': opportunity,
-        'pos_created': pos_created,
-        'emails_queued': emails_queued
+        'emails_queued': emails_queued,
     }
 
 

@@ -28,6 +28,7 @@ export const opportunitiesApi = {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   approve:         (id)          => api.post(`${BASE}/${id}/approve/`),
+  sendInsomeaPos:  (id)          => api.post(`${BASE}/${id}/send_insomea_pos/`),
   confirmAllPOs:   (id)          => api.post(`${BASE}/${id}/confirm_all_pos/`),
   cancel:          (id, reason)  => api.post(`${BASE}/${id}/cancel/`, { reason }),
   rollbackInsomeaQuote:   (id) => api.post(`${BASE}/${id}/rollback_insomea_quote/`),

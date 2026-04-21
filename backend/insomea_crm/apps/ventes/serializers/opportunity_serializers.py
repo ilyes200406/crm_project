@@ -284,7 +284,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             .distinct()
         )
         pos = InsomeaPurchaseOrder.objects.filter(id__in=po_ids)
-        return InsomeaPurchaseOrderListSerializer(pos, many=True).data
+        return InsomeaPurchaseOrderListSerializer(pos, many=True, context=self.context).data
     
     def get_total_amount_estimate(self, obj):
         """Total estimated (from InsomeaQuote if exists)"""
@@ -570,27 +570,28 @@ class InsomeaPOSerializer(serializers.ModelSerializer):
 class InsomeaPurchaseOrderListSerializer(serializers.ModelSerializer):
     """
     Serializer liste Insomea POs
-    
+
     ✅ REFACTORÉ: Via supplier_quote
     """
-    
+
     supplier_name = serializers.CharField(
         source='supplier.name',
         read_only=True
     )
-    
+
     # ✅ Calculé depuis supplier_quote
     total_purchase = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
         read_only=True
     )
-    
+
     lines_count = serializers.IntegerField(read_only=True)
-    
+
     is_sent = serializers.BooleanField(read_only=True)
     is_confirmed = serializers.BooleanField(read_only=True)
-    
+    document_url = serializers.SerializerMethodField()
+
     class Meta:
         model = InsomeaPurchaseOrder
         fields = [
@@ -601,12 +602,21 @@ class InsomeaPurchaseOrderListSerializer(serializers.ModelSerializer):
             'supplier_quote',
             'total_purchase',
             'lines_count',
+            'document_url',
             'sent_at',
             'confirmed_at',
             'is_sent',
             'is_confirmed',
             'created_at',
         ]
+
+    def get_document_url(self, obj):
+        if obj.document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.document.url)
+            return obj.document.url
+        return None
 
 class InsomeaPurchaseOrderDetailSerializer(serializers.ModelSerializer):
     """
