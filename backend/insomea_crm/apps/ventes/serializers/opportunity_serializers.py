@@ -234,7 +234,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     def get_lines(self, obj):
         """OpportunityLines"""
         from .line_serializers import OpportunityLineDetailSerializer
-        lines = obj.lines.all().order_by('created_at')
+        lines = obj.lines.all()
         return OpportunityLineDetailSerializer(lines, many=True).data
 
     # ═══════════════════════════════════════════════════════════
@@ -254,16 +254,24 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     
     def get_supplier_quotes(self, obj):
         from .quote_serializers import SupplierQuoteListSerializer
-        quotes = (
-            obj.lines
-            .filter(supplier_quote_line__isnull=False)
-            .select_related('supplier_quote_line__supplier_quote')
-            .values_list('supplier_quote_line__supplier_quote', flat=True)
-            .distinct()
+        from ..models import SupplierQuote, SupplierQuoteLine
+        from django.db.models import Prefetch
+
+        sq_ids = set()
+        for line in obj.lines.all():
+            sq_line = getattr(line, 'supplier_quote_line', None)
+            if sq_line:
+                sq_ids.add(sq_line.supplier_quote_id)
+
+        if not sq_ids:
+            return []
+
+        quotes = SupplierQuote.objects.filter(id__in=sq_ids).select_related(
+            'supplier', 'created_by',
+        ).prefetch_related(
+            Prefetch('lines', queryset=SupplierQuoteLine.objects.select_related('opportunity_line'))
         )
-        from ..models import SupplierQuote
-        queryset = SupplierQuote.objects.filter(id__in=quotes)
-        return SupplierQuoteListSerializer(queryset, many=True, context=self.context).data
+        return SupplierQuoteListSerializer(quotes, many=True, context=self.context).data
     
     def get_insomea_quote(self, obj):
         """InsomeaQuote"""
@@ -276,14 +284,12 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
 
     def get_insomea_pos(self, obj):
         """Insomea POs"""
-        from ..models import InsomeaPurchaseOrder
-
-        po_ids = (
-            obj.lines.exclude(insomea_purchase_order__isnull=True)
-            .values_list('insomea_purchase_order_id', flat=True)
-            .distinct()
-        )
-        pos = InsomeaPurchaseOrder.objects.filter(id__in=po_ids)
+        seen, pos = set(), []
+        for line in obj.lines.all():
+            po = line.insomea_purchase_order
+            if po and po.id not in seen:
+                seen.add(po.id)
+                pos.append(po)
         return InsomeaPurchaseOrderListSerializer(pos, many=True, context=self.context).data
     
     def get_total_amount_estimate(self, obj):

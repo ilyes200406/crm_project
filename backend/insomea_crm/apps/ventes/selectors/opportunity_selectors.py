@@ -18,6 +18,8 @@ from ..models import (
     Opportunity,
     OpportunityLine,
     OpportunityStatus,
+    InsomeaQuote,
+    InsomeaQuoteLine,
 )
 
 #from ..models import StatusHistory
@@ -117,8 +119,10 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
         'client',
         'created_by',
         'assigned_to',
+        'related_opportunity',
+        'client_purchase_order',
     )
-    
+
     if prefetch_all:
         queryset = queryset.prefetch_related(
             Prefetch(
@@ -127,6 +131,7 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
                     'product',
                     'product__supplier',
                     'insomea_purchase_order',
+                    'insomea_purchase_order__supplier',
                     'supplier_quote_line',
                     'supplier_quote_line__supplier_quote',
                     'supplier_quote_line__supplier_quote__supplier',
@@ -134,8 +139,19 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
                     'provision',
                 ).order_by('created_at')
             ),
-            'insomea_quote',
-            'client_purchase_order',
+            Prefetch(
+                'insomea_quote',
+                queryset=InsomeaQuote.objects.prefetch_related(
+                    Prefetch(
+                        'lines',
+                        queryset=InsomeaQuoteLine.objects.select_related(
+                            'opportunity_line',
+                            'supplier_quote_line',
+                        )
+                    )
+                )
+            ),
+            'child_opportunities',
         )
     
     # Récupère

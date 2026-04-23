@@ -1,13 +1,5 @@
-/**
- * OPPORTUNITY DETAIL PAGE
- *
- * Single page that renders FSM-state-specific content.
- * Role (COMMERCIAL / FINANCE / ADMIN) determines which actions are visible.
- */
-
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
 import {
   User,
   Building2,
@@ -44,10 +36,10 @@ import {
   CircleDot,
 } from 'lucide-react';
 
-import { Card, Badge, StatusBadge } from '../../../shared/components';
-import { useAuth } from '../../auth/hooks/useAuth';
-import { useProducts } from '../../catalogue/hooks/useProducts';
-import { useSuppliers } from '../../catalogue/hooks/useSuppliers';
+import { Card, Badge, StatusBadge } from '../../../shared/components/index.js';
+import { useAuth } from '../../auth/hooks/useAuth.js';
+import { useProducts } from '../../catalogue/hooks/useProducts.js';
+import { useSuppliers } from '../../catalogue/hooks/useSuppliers.js';
 import {
   useOpportunity,
   useRequestSupplierQuotes,
@@ -60,25 +52,25 @@ import {
   useSendInsomeaPos,
   useConfirmAllPOs,
   useCancelOpportunity,
-} from '../hooks/useOpportunities';
-import { useAddLine, useDeleteLine } from '../hooks/useOpportunityLines';
-import { useCreateSupplierQuote } from '../hooks/useSupplierQuotes';
-import { insomeaQuotesApi } from '../api/insomeaQuotesApi';
+} from '../hooks/useOpportunities.js';
+import { useAddLine, useDeleteLine } from '../hooks/useOpportunityLines.js';
+import { useCreateSupplierQuote } from '../hooks/useSupplierQuotes.js';
+import { insomeaQuotesApi } from '../api/insomeaQuotesApi.js';
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { key: 'DRAFT',                  label: 'Brouillon'       },
-  { key: 'SUPPLIER_QUOTE_REQUEST', label: 'Devis Four.'     },
-  { key: 'SUPPLIER_QUOTE_RECIEVED',label: 'Devis Reçu'      },
-  { key: 'INSOMEA_QUOTE_CREATED',  label: 'Devis Insomea'   },
-  { key: 'CLIENT_PO_REQUEST',      label: 'Envoyé Client'   },
-  { key: 'CLIENT_PO_RECIEVED',     label: 'BC Client'       },
-  { key: 'APPROUVED',              label: 'Approuvé'        },
-  { key: 'INSOMEA_POS_SENT',       label: 'BC Insomea'      },
-  { key: 'INSOMEA_POS_CONFIRMED',  label: 'Confirmé'        },
+  { key: 'DRAFT',                   label: 'Brouillon'     },
+  { key: 'SUPPLIER_QUOTE_REQUEST',  label: 'Devis Four.'   },
+  { key: 'SUPPLIER_QUOTE_RECIEVED', label: 'Devis Reçu'    },
+  { key: 'INSOMEA_QUOTE_CREATED',   label: 'Devis Insomea' },
+  { key: 'CLIENT_PO_REQUEST',       label: 'Envoyé Client' },
+  { key: 'CLIENT_PO_RECIEVED',      label: 'BC Client'     },
+  { key: 'APPROUVED',               label: 'Approuvé'      },
+  { key: 'INSOMEA_POS_SENT',        label: 'BC Insomea'    },
+  { key: 'INSOMEA_POS_CONFIRMED',   label: 'Confirmé'      },
 ];
 
 const STEP_INDEX = Object.fromEntries(STEPS.map((s, i) => [s.key, i]));
@@ -263,7 +255,7 @@ function Sidebar({ opportunity }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// LINES TABLE (always visible)
+// LINES TABLE
 // ─────────────────────────────────────────────────────────────
 
 function LinesTable({ lines }) {
@@ -322,11 +314,10 @@ function LinesTable({ lines }) {
 // FSM SECTIONS
 // ─────────────────────────────────────────────────────────────
 
-/** DRAFT — add / remove lines, then request supplier quotes */
 function DraftSection({ opportunity, refetch }) {
-  const addLine        = useAddLine(opportunity.id);
-  const deleteLine     = useDeleteLine(opportunity.id);
-  const requestQuotes  = useRequestSupplierQuotes();
+  const addLine       = useAddLine(opportunity.id);
+  const deleteLine    = useDeleteLine(opportunity.id);
+  const requestQuotes = useRequestSupplierQuotes();
 
   const { data: productsData } = useProducts({ page_size: 200, is_active: true });
   const products = productsData?.results || [];
@@ -347,6 +338,7 @@ function DraftSection({ opportunity, refetch }) {
 
   const handleRequest = async () => {
     await requestQuotes.mutateAsync(opportunity.id);
+    refetch();
   };
 
   const lines = opportunity.lines || [];
@@ -375,7 +367,7 @@ function DraftSection({ opportunity, refetch }) {
               <input
                 type="number" min={1}
                 value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
                 className="input w-full"
               />
             </div>
@@ -454,7 +446,6 @@ function DraftSection({ opportunity, refetch }) {
   );
 }
 
-/** SUPPLIER_QUOTE_REQUEST — upload supplier quote PDFs with prices */
 function SupplierQuoteRequestSection({ opportunity, refetch }) {
   const lines = (opportunity.lines || []).filter((l) => l.status === 'SUPPLIER_QUOTE_REQUEST');
   const createQuote = useCreateSupplierQuote(opportunity.id);
@@ -486,6 +477,7 @@ function SupplierQuoteRequestSection({ opportunity, refetch }) {
 
   const handleSubmit = async (formData) => {
     await createQuote.mutateAsync(formData);
+    refetch();
   };
 
   return (
@@ -516,7 +508,13 @@ function SupplierQuoteRequestSection({ opportunity, refetch }) {
   );
 }
 
-function SupplierQuoteForm({ supplier, supplierOptions = [], lines, onSubmit, isPending }) {
+function SupplierQuoteForm({
+  supplier,
+  supplierOptions = [],
+  lines,
+  onSubmit,
+  isPending,
+}) {
   const fileRef = useRef(null);
   const [reference, setReference] = useState('');
   const [prices, setPrices] = useState({});
@@ -530,7 +528,7 @@ function SupplierQuoteForm({ supplier, supplierOptions = [], lines, onSubmit, is
     const fd = new FormData();
     fd.append('supplier_id', supplierId);
     fd.append('reference', reference);
-    if (fileRef.current.files[0]) fd.append('document', fileRef.current.files[0]);
+    if (fileRef.current?.files?.[0]) fd.append('document', fileRef.current.files[0]);
 
     const linesData = lines.map((l) => ({
       line_id:             l.id,
@@ -620,7 +618,6 @@ function SupplierQuoteForm({ supplier, supplierOptions = [], lines, onSubmit, is
         </div>
 
         <ActionButton
-          type="submit"
           loading={isPending}
           loadingText="Enregistrement..."
           icon={FileCheck}
@@ -630,13 +627,11 @@ function SupplierQuoteForm({ supplier, supplierOptions = [], lines, onSubmit, is
         >
           Enregistrer le devis fournisseur
         </ActionButton>
-        
       </form>
     </div>
   );
 }
 
-/** SUPPLIER_QUOTE_RECIEVED — create Insomea Quote */
 function SupplierQuoteReceivedSection({ opportunity, refetch }) {
   const createIQ = useCreateInsomeaQuote();
   const lines = (opportunity.lines || []).filter((l) => l.supplier_quote_line);
@@ -654,6 +649,7 @@ function SupplierQuoteReceivedSection({ opportunity, refetch }) {
       id:   opportunity.id,
       data: { lines_pricing: linesPricing, discount_percent: Number(discount) },
     });
+    refetch();
   };
 
   const totalPurchase = lines.reduce((s, l) => s + Number(l.supplier_quote_line?.unit_price_purchase || 0) * l.quantity, 0);
@@ -722,7 +718,7 @@ function SupplierQuoteReceivedSection({ opportunity, refetch }) {
           <input
             type="number" min={0} max={100} step="0.1"
             value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
+            onChange={(e) => setDiscount(Number(e.target.value))}
             className="input w-24"
           />
         </div>
@@ -742,7 +738,6 @@ function SupplierQuoteReceivedSection({ opportunity, refetch }) {
         </div>
 
         <ActionButton
-          type="submit"
           loading={createIQ.isPending}
           loadingText="Génération du devis..."
           disabled={!lines.length}
@@ -758,12 +753,11 @@ function SupplierQuoteReceivedSection({ opportunity, refetch }) {
   );
 }
 
-/** INSOMEA_QUOTE_CREATED — view quote, download PDF, send to client */
 function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
-  const requestPO   = useRequestClientPO();
-  const rollbackIQ  = useRollbackInsomeaQuote();
-  const regenPdf    = useRegenerateQuotePdf();
-  const iq          = opportunity.insomea_quote;
+  const requestPO  = useRequestClientPO();
+  const rollbackIQ = useRollbackInsomeaQuote();
+  const regenPdf   = useRegenerateQuotePdf();
+  const iq         = opportunity.insomea_quote;
 
   const handleDownload = async () => {
     if (!iq) return;
@@ -773,9 +767,7 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
       const a = document.createElement('a');
       a.href = url; a.download = `${iq.reference}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      // document not yet generated
-    }
+    } catch { /* not yet generated */ }
   };
 
   return (
@@ -799,7 +791,7 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
             </button>
           ) : (
             <button
-              onClick={async () => { await regenPdf.mutateAsync(opportunity.id); }}
+              onClick={async () => { await regenPdf.mutateAsync(opportunity.id); refetch(); }}
               disabled={regenPdf.isPending}
               className="flex-1 inline-flex items-center justify-center gap-2 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl text-sm hover:bg-amber-100 transition-colors font-medium disabled:opacity-50"
             >
@@ -822,7 +814,7 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
       </InfoBanner>
 
       <ActionButton
-        onClick={async () => { await requestPO.mutateAsync(opportunity.id); }}
+        onClick={async () => { await requestPO.mutateAsync(opportunity.id); refetch(); }}
         loading={requestPO.isPending}
         loadingText="Envoi..."
         icon={Send}
@@ -834,7 +826,7 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
       </ActionButton>
 
       <button
-        onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); }}
+        onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); refetch(); }}
         disabled={rollbackIQ.isPending}
         className="w-full inline-flex items-center justify-center gap-2 py-2.5 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
       >
@@ -845,11 +837,10 @@ function InsomeaQuoteCreatedSection({ opportunity, refetch }) {
   );
 }
 
-/** CLIENT_PO_REQUEST — waiting or upload signed PO */
 function ClientPORequestSection({ opportunity, refetch }) {
   const uploadPO   = useUploadClientPO();
   const rollbackIQ = useRollbackInsomeaQuote();
-  const fileRef    = useRef();
+  const fileRef    = useRef(null);
   const [poNumber, setPoNumber] = useState('');
   const iq         = opportunity.insomea_quote;
 
@@ -861,15 +852,16 @@ function ClientPORequestSection({ opportunity, refetch }) {
       const a = document.createElement('a');
       a.href = url; a.download = `${iq.reference}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch { /* document not yet generated */ }
+    } catch { /* not yet generated */ }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData();
     fd.append('po_number', poNumber);
-    if (fileRef.current.files[0]) fd.append('document', fileRef.current.files[0]);
+    if (fileRef.current?.files?.[0]) fd.append('document', fileRef.current.files[0]);
     await uploadPO.mutateAsync({ id: opportunity.id, data: fd });
+    refetch();
   };
 
   return (
@@ -899,7 +891,7 @@ function ClientPORequestSection({ opportunity, refetch }) {
             </button>
           </div>
           <button
-            onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); }}
+            onClick={async () => { await rollbackIQ.mutateAsync(opportunity.id); refetch(); }}
             disabled={rollbackIQ.isPending}
             className="w-full inline-flex items-center justify-center gap-2 py-2 border border-amber-200 text-amber-700 rounded-xl text-sm hover:bg-amber-50 transition-colors font-medium disabled:opacity-50"
           >
@@ -931,7 +923,6 @@ function ClientPORequestSection({ opportunity, refetch }) {
             <input ref={fileRef} type="file" accept=".pdf" required className="input w-full text-xs" />
           </div>
           <ActionButton
-            type="submit"
             loading={uploadPO.isPending}
             loadingText="Upload en cours..."
             icon={FileCheck}
@@ -948,12 +939,11 @@ function ClientPORequestSection({ opportunity, refetch }) {
   );
 }
 
-/** CLIENT_PO_RECIEVED — Finance approves, Commercial waits */
 function ClientPOReceivedSection({ opportunity, role, refetch }) {
   const navigate        = useNavigate();
   const approveMutation = useApproveOpportunity();
   const cancelMutation  = useCancelOpportunity();
-  const [showReject, setShowReject] = useState(false);
+  const [showReject, setShowReject]     = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const po = opportunity.client_po;
 
@@ -1033,7 +1023,7 @@ function ClientPOReceivedSection({ opportunity, role, refetch }) {
 
       <div className="flex gap-3">
         <ActionButton
-          onClick={async () => { await approveMutation.mutateAsync(opportunity.id); }}
+          onClick={async () => { await approveMutation.mutateAsync(opportunity.id); refetch(); }}
           loading={approveMutation.isPending}
           loadingText="Approbation en cours..."
           icon={CheckCircle}
@@ -1088,7 +1078,6 @@ function ClientPOReceivedSection({ opportunity, role, refetch }) {
   );
 }
 
-/** APPROUVED — Finance reviews created POs then sends them */
 function ApprovedSection({ opportunity, role, refetch }) {
   const sendPOs   = useSendInsomeaPos();
   const pos       = opportunity.insomea_pos || [];
@@ -1150,7 +1139,7 @@ function ApprovedSection({ opportunity, role, refetch }) {
             Vérifiez les BCs ci-dessus puis envoyez-les aux fournisseurs par email.
           </InfoBanner>
           <ActionButton
-            onClick={async () => { await sendPOs.mutateAsync(opportunity.id); }}
+            onClick={async () => { await sendPOs.mutateAsync(opportunity.id); refetch(); }}
             loading={sendPOs.isPending}
             loadingText="Envoi en cours..."
             icon={Send}
@@ -1166,7 +1155,6 @@ function ApprovedSection({ opportunity, role, refetch }) {
   );
 }
 
-/** INSOMEA_POS_SENT — Finance confirms supplier receipt */
 function InsomeaPOsSection({ opportunity, role, refetch }) {
   const confirmAll = useConfirmAllPOs();
   const pos        = opportunity.insomea_pos || [];
@@ -1207,7 +1195,7 @@ function InsomeaPOsSection({ opportunity, role, refetch }) {
             Quand les fournisseurs confirment réception des BC, cliquez ci-dessous pour créer les provisions de provisioning.
           </InfoBanner>
           <ActionButton
-            onClick={async () => { await confirmAll.mutateAsync(opportunity.id); }}
+            onClick={async () => { await confirmAll.mutateAsync(opportunity.id); refetch(); }}
             loading={confirmAll.isPending}
             loadingText="Confirmation..."
             icon={CheckCircle}
@@ -1223,17 +1211,16 @@ function InsomeaPOsSection({ opportunity, role, refetch }) {
   );
 }
 
-/** INSOMEA_POS_CONFIRMED — all done, show inline provisions table */
 function ConfirmedSection({ opportunity, navigate }) {
   const provisions = (opportunity.lines || [])
     .map((line) => line.provision)
     .filter(Boolean);
 
-  const statusLabel = {
-    WAITING_PROVISION: { text: 'En attente',   cls: 'bg-amber-100 text-amber-700' },
-    PROVISIONING:      { text: 'En cours',      cls: 'bg-blue-100 text-blue-700'  },
-    PROVISIONED:       { text: 'Provisionné',   cls: 'bg-emerald-100 text-emerald-700' },
-    ERROR:             { text: 'Erreur',         cls: 'bg-red-100 text-red-700'   },
+  const statusConfig = {
+    WAITING_PROVISION: { label: 'En attente',  cls: 'bg-amber-100 text-amber-700' },
+    PROVISIONING:      { label: 'En cours',     cls: 'bg-blue-100 text-blue-700'   },
+    PROVISIONED:       { label: 'Provisionné',  cls: 'bg-emerald-100 text-emerald-700' },
+    ERROR:             { label: 'Erreur',        cls: 'bg-red-100 text-red-700'    },
   };
 
   return (
@@ -1255,7 +1242,7 @@ function ConfirmedSection({ opportunity, navigate }) {
           <div className="divide-y divide-gray-100">
             {provisions.map((prov) => {
               const line = opportunity.lines.find((l) => l.provision?.id === prov.id);
-              const badge = statusLabel[prov.status] || { text: prov.status, cls: 'bg-gray-100 text-gray-600' };
+              const badge = statusConfig[prov.status] || { label: prov.status, cls: 'bg-gray-100 text-gray-600' };
               return (
                 <div key={prov.id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/60 transition-colors">
                   <div>
@@ -1265,7 +1252,7 @@ function ConfirmedSection({ opportunity, navigate }) {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-gray-500">Qté: {line?.quantity ?? '—'}</span>
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
-                        {badge.text}
+                        {badge.label}
                       </span>
                     </div>
                   </div>
@@ -1285,7 +1272,6 @@ function ConfirmedSection({ opportunity, navigate }) {
   );
 }
 
-/** CANCELLED */
 function CancelledSection({ opportunity }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-xl p-5">
@@ -1308,7 +1294,6 @@ function CancelledSection({ opportunity }) {
 
 function StatusSection({ opportunity, role, refetch, navigate }) {
   const props = { opportunity, role, refetch, navigate };
-
   switch (opportunity.status) {
     case 'DRAFT':                   return <DraftSection {...props} />;
     case 'SUPPLIER_QUOTE_REQUEST':  return <SupplierQuoteRequestSection {...props} />;
@@ -1316,7 +1301,7 @@ function StatusSection({ opportunity, role, refetch, navigate }) {
     case 'INSOMEA_QUOTE_CREATED':   return <InsomeaQuoteCreatedSection {...props} />;
     case 'CLIENT_PO_REQUEST':       return <ClientPORequestSection {...props} />;
     case 'CLIENT_PO_RECIEVED':      return <ClientPOReceivedSection {...props} />;
-    case 'APPROUVED':                return <ApprovedSection {...props} />;
+    case 'APPROUVED':               return <ApprovedSection {...props} />;
     case 'INSOMEA_POS_SENT':        return <InsomeaPOsSection {...props} />;
     case 'INSOMEA_POS_CONFIRMED':   return <ConfirmedSection opportunity={opportunity} navigate={navigate} />;
     case 'CANCELLED':               return <CancelledSection opportunity={opportunity} />;
@@ -1329,13 +1314,13 @@ function StatusSection({ opportunity, role, refetch, navigate }) {
 // ─────────────────────────────────────────────────────────────
 
 export function OpportunityDetailPage() {
-  const { id }      = useParams();
-  const navigate    = useNavigate();
-  const { user }    = useAuth();
-  const role        = user?.role || 'COMMERCIAL';
-  const cancelMut   = useCancelOpportunity();
+  const { id }   = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const role     = user?.role || 'COMMERCIAL';
+  const cancelMut = useCancelOpportunity();
 
-  const { data: opportunity, isLoading } = useOpportunity(id);
+  const { data: opportunity, isLoading, refetch } = useOpportunity(id);
 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason]       = useState('');
@@ -1343,6 +1328,7 @@ export function OpportunityDetailPage() {
   const handleCancel = async () => {
     await cancelMut.mutateAsync({ id, reason: cancelReason });
     setShowCancelModal(false);
+    refetch();
   };
 
   if (isLoading) {
@@ -1369,7 +1355,8 @@ export function OpportunityDetailPage() {
     );
   }
 
-  const canCancel = ['COMMERCIAL', 'ADMIN'].includes(role) && !['CANCELLED', 'INSOMEA_POS_CONFIRMED'].includes(opportunity.status);
+  const canCancel = ['COMMERCIAL', 'ADMIN'].includes(role) &&
+    !['CANCELLED', 'INSOMEA_POS_CONFIRMED'].includes(opportunity.status);
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
@@ -1408,7 +1395,7 @@ export function OpportunityDetailPage() {
         </div>
       </div>
 
-      {/* Workflow indicator */}
+      {/* Workflow */}
       {opportunity.status !== 'CANCELLED' && (
         <WorkflowIndicator status={opportunity.status} />
       )}
@@ -1416,7 +1403,7 @@ export function OpportunityDetailPage() {
       {/* Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <StatusSection opportunity={opportunity} role={role} navigate={navigate} />
+          <StatusSection opportunity={opportunity} role={role} refetch={refetch} navigate={navigate} />
         </div>
         <div>
           <Sidebar opportunity={opportunity} />
