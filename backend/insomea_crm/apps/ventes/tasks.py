@@ -336,7 +336,7 @@ def _notify_email_failure(opportunity, message):
     recipients = set()
     if opportunity.assigned_to:
         recipients.add(opportunity.assigned_to)
-    recipients.update(User.objects.filter(role='ADMIN', is_active=True))
+    recipients.update(User.objects.filter(role_id='ADMIN', is_active=True))
 
     for user in recipients:
         notification = Notification.objects.create(

@@ -9,7 +9,7 @@ from datetime import datetime
 class InsomeaQuote(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     opportunity = models.OneToOneField(Opportunity, on_delete=models.CASCADE, related_name='insomea_quote')
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Insomea_quote_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Insomea_quote_created', limit_choices_to={'role_id': 'COMMERCIAL'}, help_text="Commercial créateur")
     
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique InsomeaQuote (ex: INSOMEA-2024-00001)")
     document = models.FileField(upload_to='quotes/client/', blank=True)

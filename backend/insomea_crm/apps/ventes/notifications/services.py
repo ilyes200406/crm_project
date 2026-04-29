@@ -97,7 +97,7 @@ def notify_finance_to_approve(opportunity):
     from ...users.models.users import User
     
     # Get all FINANCE users
-    finance_users = User.objects.filter(role='FINANCE', is_active=True)
+    finance_users = User.objects.filter(role_id='FINANCE', is_active=True)
     
     for user in finance_users:
         
@@ -140,7 +140,7 @@ def notify_techniciens_provision_waiting(provision):
     from ...users.models.users import User
     
     # Get all TECHNICIEN users
-    tech_users = User.objects.filter(role='TECHNICIEN', is_active=True)
+    tech_users = User.objects.filter(role_id='TECHNICIEN', is_active=True)
     
     product_name = provision.opportunity_line.product.title
     opportunity_ref = provision.opportunity_line.opportunity.reference
@@ -189,7 +189,7 @@ def notify_all_provisioned(provision):
         recipients.add(opportunity.assigned_to)
     
     # Finance team
-    finance_users = User.objects.filter(role='FINANCE', is_active=True)
+    finance_users = User.objects.filter(role_id='FINANCE', is_active=True)
     recipients.update(finance_users)
     
     # Technicien qui a provisionné
@@ -273,7 +273,7 @@ def notify_subscription_expired(subscription):
     recipients = set()
     
     # Finance team
-    finance_users = User.objects.filter(role='FINANCE', is_active=True)
+    finance_users = User.objects.filter(role_id='FINANCE', is_active=True)
     recipients.update(finance_users)
     
     # Commercial assigné (from Term 1)
@@ -282,7 +282,7 @@ def notify_subscription_expired(subscription):
         recipients.add(first_term.opportunity.assigned_to)
     
     # Admin
-    admin_users = User.objects.filter(role='ADMIN', is_active=True)
+    admin_users = User.objects.filter(role_id='ADMIN', is_active=True)
     recipients.update(admin_users)
     
     for user in recipients:

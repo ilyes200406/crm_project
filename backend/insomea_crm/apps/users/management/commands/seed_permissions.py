@@ -115,6 +115,18 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         from apps.users.models.permission import Permission, RolePermission
+        from apps.users.models.role import Role
+
+        self.stdout.write('Seeding roles…')
+        roles = [
+            ('ADMIN', 'Administrateur'),
+            ('COMMERCIAL', 'Commercial'),
+            ('TECHNICIEN', 'Technicien'),
+            ('FINANCE', 'Finance'),
+        ]
+        for name, display_name in roles:
+            Role.objects.get_or_create(name=name, defaults={'display_name': display_name})
+        self.stdout.write(self.style.SUCCESS('  Roles OK.'))
 
         self.stdout.write('Seeding permissions…')
 
@@ -152,7 +164,7 @@ class Command(BaseCommand):
                     )
                     continue
                 _, created = RolePermission.objects.get_or_create(
-                    role=role,
+                    role_id=role,
                     permission=perm,
                 )
                 if created:

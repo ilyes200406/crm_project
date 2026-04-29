@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from ..models.users import User
+from ..models.role import Role
 
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    role = serializers.CharField(source='role_id')
 
     class Meta:
         model = User
@@ -33,6 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserMinimalSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    role = serializers.CharField(source='role_id')
 
     class Meta:
         model = User
@@ -50,6 +53,8 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
+    role = serializers.CharField()
+
     class Meta:
         model = User
         fields = [
@@ -67,13 +72,20 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
             )
         return normalized
 
+    def validate_role(self, value):
+        if not Role.objects.filter(name=value).exists():
+            raise serializers.ValidationError(
+                f"Le rôle '{value}' n'existe pas."
+            )
+        return value
+
     def create(self, validated_data):
         return User.objects.create_user(
             email=validated_data['email'],
             password=None,
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            role=validated_data['role'],
+            role_id=validated_data['role'],
             is_active=False,
             is_verified=False,
         )

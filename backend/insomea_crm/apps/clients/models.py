@@ -30,7 +30,7 @@ class Industry(models.TextChoices):
 
 class Client(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_clients', limit_choices_to={'role': 'COMMERCIAL'}, db_index=True)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_clients', limit_choices_to={'role_id': 'COMMERCIAL'}, db_index=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_clients')
 
     company_name = models.CharField(verbose_name='Raison sociale', max_length=255, db_index=True)
@@ -91,7 +91,7 @@ class Client(models.Model):
         self.save(update_fields=['is_active', 'updated_at'])
     
     def assign_to_user(self, user):
-        if user.role != 'COMMERCIAL':
+        if user.role_id != 'COMMERCIAL':
             raise ValueError('Seuls les commerciaux peuvent être assignés')
         
         self.assigned_to = user

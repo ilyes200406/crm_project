@@ -16,10 +16,7 @@ from ..selectors import (
 def add_line_to_opportunity(*, opportunity_id, data: dict, user, ip_address=None):
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent ajouter des lignes')
-    
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Vous ne pouvez modifier que vos propres opportunités')
     
@@ -40,10 +37,7 @@ def update_opportunity_line(*, line_id, data: dict, user, ip_address=None):
     line = get_line_by_id(line_id)
     opportunity = line.opportunity
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent modifier des lignes')
-    
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Vous ne pouvez modifier que vos propres opportunités')
     
@@ -65,10 +59,7 @@ def remove_line_from_opportunity(*, line_id, user, ip_address=None):
     line = get_line_by_id(line_id)
     opportunity = line.opportunity
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent supprimer des lignes')
-    
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Vous ne pouvez modifier que vos propres opportunités')
 

@@ -66,21 +66,21 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         )
         
         # RBAC filtering
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             queryset = queryset.filter(
                 opportunity__created_by=user
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
         
-        elif user.role == 'TECHNICIEN':
+        elif user.role_id == 'TECHNICIEN':
             queryset = queryset.filter(
                 opportunity__status=OpportunityStatus.INSOMEA_POS_CONFIRMED
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             queryset = queryset.filter(
                 opportunity__status__in=[
                     OpportunityStatus.CLIENT_PO_RECIEVED,
@@ -125,7 +125,7 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
         product = serializer.validated_data['product']
         
         # Vérifie permissions sur opportunity
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             if opportunity.created_by != request.user and opportunity.assigned_to != request.user:
                 return Response(
                     {'detail': 'Action non autorisée'},

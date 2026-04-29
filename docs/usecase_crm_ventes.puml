@@ -1,0 +1,92 @@
+@startuml
+left to right direction
+title Diagramme de cas d'utilisation - CRM Ventes
+
+actor Administrateur as Admin
+actor Commercial
+actor Finance
+actor Technicien as Tech
+
+rectangle "Systeme CRM - Module Ventes" {
+
+  usecase "S'authentifier" as UC_Login
+  usecase "Consulter tableau de bord" as UC_Dashboard
+  usecase "Consulter notifications" as UC_Notifications
+
+  usecase "Gerer clients et contacts" as UC_Clients
+  usecase "Gerer catalogue\nproduits / fournisseurs" as UC_Catalogue
+  usecase "Gerer utilisateurs\net roles" as UC_Users
+
+  usecase "Gerer opportunite\ncommerciale" as UC_Opp
+  usecase "Creer opportunite" as UC_CreateOpp
+  usecase "Ajouter lignes produits" as UC_AddLines
+  usecase "Demander devis\nfournisseurs" as UC_RequestSQ
+  usecase "Enregistrer devis\nfournisseurs" as UC_SaveSQ
+  usecase "Generer devis client\nInsomea" as UC_CreateIQ
+  usecase "Demander bon de\ncommande client" as UC_RequestPO
+  usecase "Enregistrer bon de\ncommande client" as UC_SavePO
+
+  usecase "Traiter approbation\nfinance" as UC_FinanceFlow
+  usecase "Recevoir notification\nd'approbation" as UC_ReceiveNotif
+  usecase "Approuver opportunite" as UC_ApproveOpp
+  usecase "Generer bons de\ncommande fournisseurs" as UC_CreateSupplierPO
+  usecase "Envoyer bons de\ncommande fournisseurs" as UC_SendSupplierPO
+  usecase "Confirmer reception\nfournisseur" as UC_ConfirmSupplierPO
+
+  usecase "Gerer provision\net provisioning" as UC_Provisioning
+  usecase "Demarrer provisioning" as UC_StartProvisioning
+  usecase "Finaliser provisioning\net creer subscription" as UC_CompleteProvisioning
+}
+
+Commercial --> UC_Login
+Commercial --> UC_Dashboard
+Commercial --> UC_Notifications
+Commercial --> UC_Clients
+Commercial --> UC_Opp
+
+Finance --> UC_Login
+Finance --> UC_Dashboard
+Finance --> UC_Notifications
+Finance --> UC_FinanceFlow
+
+Tech --> UC_Login
+Tech --> UC_Dashboard
+Tech --> UC_Notifications
+Tech --> UC_Provisioning
+
+Admin --> UC_Login
+Admin --> UC_Dashboard
+Admin --> UC_Users
+Admin --> UC_Catalogue
+Admin --> UC_Clients
+Admin --> UC_Opp
+Admin --> UC_FinanceFlow
+Admin --> UC_Provisioning
+
+UC_Opp .> UC_CreateOpp : <<include>>
+UC_Opp .> UC_AddLines : <<include>>
+UC_Opp .> UC_RequestSQ : <<include>>
+UC_Opp .> UC_SaveSQ : <<include>>
+UC_Opp .> UC_CreateIQ : <<include>>
+UC_Opp .> UC_RequestPO : <<include>>
+UC_Opp .> UC_SavePO : <<include>>
+
+UC_FinanceFlow .> UC_ReceiveNotif : <<include>>
+UC_FinanceFlow .> UC_ApproveOpp : <<include>>
+UC_FinanceFlow .> UC_CreateSupplierPO : <<include>>
+UC_FinanceFlow .> UC_SendSupplierPO : <<include>>
+UC_FinanceFlow .> UC_ConfirmSupplierPO : <<include>>
+
+UC_Provisioning .> UC_StartProvisioning : <<include>>
+UC_Provisioning .> UC_CompleteProvisioning : <<include>>
+
+UC_SavePO .> UC_ReceiveNotif : <<include>>
+
+note right of UC_SavePO
+  D'apres le code, l'enregistrement
+  du bon de commande client declenche
+  automatiquement une notification
+  vers l'equipe Finance.
+end note
+
+@enduml

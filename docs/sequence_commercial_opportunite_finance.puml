@@ -1,0 +1,84 @@
+@startuml
+title Gestion d'une opportunite par le commercial jusqu'au BC client et notification finance
+
+actor Commercial
+participant "Frontend React" as Front
+participant "OpportunityViewSet" as API
+participant "OpportunityService" as OppService
+participant "QuoteService" as QuoteService
+participant "PurchaseOrderService" as POService
+database "Base de donnees" as DB
+participant "Signal FSM" as Signal
+participant "NotificationService" as NotifService
+participant "WebSocket / Email" as Channel
+actor "Responsable Finance" as Finance
+
+Commercial -> Front : Creer une opportunite
+Front -> API : POST /opportunities/
+API -> OppService : create_opportunity(...)
+OppService -> DB : Inserer Opportunity (DRAFT)
+DB --> OppService : Opportunity creee
+OppService --> API : Opportunity
+API --> Front : Reponse de creation
+
+loop Ajout des lignes produits
+Commercial -> Front : Ajouter une ligne produit
+Front -> API : POST /opportunities/{id}/lines/
+API -> DB : Inserer OpportunityLine
+DB --> API : Ligne creee
+API --> Front : Confirmation
+end
+
+Commercial -> Front : Demander les devis fournisseurs
+Front -> API : POST /opportunities/{id}/request_supplier_quotes/
+API -> OppService : request_all_supplier_quotes(...)
+OppService -> DB : Mise a jour des lignes\net de l'opportunite
+DB --> OppService : Statuts mis a jour
+OppService --> API : Opportunity = SUPPLIER_QUOTE_REQUEST
+API --> Front : Workflow mis a jour
+
+Commercial -> Front : Enregistrer les devis fournisseurs
+Front -> API : POST /supplier-quotes/
+API -> QuoteService : create_supplier_quote(...)
+QuoteService -> DB : Creer SupplierQuote + SupplierQuoteLine
+QuoteService -> DB : Transition des lignes\nvers SUPPLIER_QUOTE_RECIEVED
+DB --> QuoteService : Donnees enregistrees
+QuoteService --> API : Devis fournisseur cree
+API --> Front : Confirmation
+
+Commercial -> Front : Generer le devis client Insomea
+Front -> API : POST /opportunities/{id}/create-insomea-quote/
+API -> QuoteService : create_insomea_quote(...)
+QuoteService -> DB : Creer InsomeaQuote + lignes
+QuoteService -> DB : Calculer total achat,\ntotal vente, remise, marge
+QuoteService -> DB : Transition Opportunity\nvers INSOMEA_QUOTE_CREATED
+DB --> QuoteService : Devis client genere
+QuoteService --> API : InsomeaQuote cree
+API --> Front : Reponse + id du devis
+
+Commercial -> Front : Demander le BC client
+Front -> API : POST /opportunities/{id}/request_client_po/
+API -> OppService : request_client_po(...)
+OppService -> DB : Transition Opportunity\nvers CLIENT_PO_REQUEST
+DB --> OppService : Statut mis a jour
+OppService --> API : Opportunity mise a jour
+API --> Front : Invitation a deposer le BC client
+
+Commercial -> Front : Televerser le BC client signe
+Front -> API : POST /opportunities/{id}/upload-client-po/\n(document PDF, numero BC)
+API -> POService : upload_client_po(...)
+POService -> DB : Verifier opportunity + permissions
+POService -> DB : Valider fichier PDF
+POService -> DB : Creer ClientPO
+POService -> DB : Transition Opportunity\nvers CLIENT_PO_RECIEVED
+DB --> POService : BC client enregistre
+POService --> API : ClientPO cree
+API --> Front : Confirmation d'enregistrement
+
+POService -> Signal : post_transition(Opportunity)
+Signal -> NotifService : notify_finance_to_approve(opportunity)
+NotifService -> DB : Creer Notification pour chaque Finance
+NotifService -> Channel : Push WebSocket + email
+Channel --> Finance : Notification de validation
+
+@enduml

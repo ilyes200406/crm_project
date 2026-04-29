@@ -22,7 +22,7 @@ class ProductPermission(permissions.BasePermission):
             return True
         
         # Écriture : ADMIN seulement
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         self.message = "Seuls les admins peuvent modifier le catalogue produits."

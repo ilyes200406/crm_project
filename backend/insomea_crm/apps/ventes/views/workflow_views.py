@@ -62,7 +62,7 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         )
         
         # RBAC filtering
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             # Voit historique de ses opportunités
             from django.db.models import Q
             queryset = queryset.filter(
@@ -74,7 +74,7 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
                 Q(provision__opportunity_line__opportunity__assigned_to=user)
             )
         
-        elif user.role == 'TECHNICIEN':
+        elif user.role_id == 'TECHNICIEN':
             # Voit historique provisions qu'il gère
             from django.db.models import Q
             from ..models import OpportunityStatus
@@ -85,7 +85,7 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
                 Q(opportunity_line__opportunity__status=OpportunityStatus.APPROUVED)
             )
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             # Voit historique opportunités en phase avancée
             from django.db.models import Q
             from ..models import OpportunityStatus
@@ -137,7 +137,7 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             )
         
         # Vérifie permissions
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             if opportunity.created_by != request.user and opportunity.assigned_to != request.user:
                 return Response(
                     {'detail': 'Action non autorisée'},
@@ -184,7 +184,7 @@ class StatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             )
         
         # Vérifie permissions (ADMIN ou soi-même)
-        if request.user.role != 'ADMIN' and request.user != user:
+        if request.user.role_id != 'ADMIN' and request.user != user:
             return Response(
                 {'detail': 'Action non autorisée'},
                 status=status.HTTP_403_FORBIDDEN

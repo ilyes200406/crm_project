@@ -52,7 +52,7 @@ class CanAccessSupplier(permissions.BasePermission):
             return True
         
         # Écriture : ADMIN ou FINANCE seulement
-        if request.user.role in ['ADMIN', 'FINANCE']:
+        if request.user.role_id in ['ADMIN', 'FINANCE']:
             return True
         
         self.message = "Seuls les admins et finance peuvent modifier des fournisseurs."
@@ -66,7 +66,7 @@ class CanAccessSupplier(permissions.BasePermission):
             return True
         
         # Écriture : ADMIN ou FINANCE
-        if request.user.role in ['ADMIN', 'FINANCE']:
+        if request.user.role_id in ['ADMIN', 'FINANCE']:
             return True
         
         self.message = "Seuls les admins et finance peuvent modifier ce fournisseur."
@@ -87,12 +87,12 @@ class CanManageSupplier(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role in ['ADMIN', 'FINANCE']
+            request.user.role_id in ['ADMIN', 'FINANCE']
         )
     
     def has_object_permission(self, request, view, obj):
         """Vérifie rôle"""
-        return request.user.role in ['ADMIN', 'FINANCE']
+        return request.user.role_id in ['ADMIN', 'FINANCE']
 
 
 # ═══════════════════════════════════════════════════════════
@@ -112,7 +112,7 @@ class CanActivateSupplier(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role in ['ADMIN', 'FINANCE']
+            request.user.role_id in ['ADMIN', 'FINANCE']
         )
 
 
@@ -129,7 +129,7 @@ class CanDeactivateSupplier(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'ADMIN'
+            request.user.role_id == 'ADMIN'
         )
 
 
@@ -171,21 +171,21 @@ class SupplierPermission(permissions.BasePermission):
         
         # POST : ADMIN ou FINANCE
         if request.method == 'POST':
-            if request.user.role in ['ADMIN', 'FINANCE']:
+            if request.user.role_id in ['ADMIN', 'FINANCE']:
                 return True
             self.message = "Seuls les admins et finance peuvent créer des fournisseurs."
             return False
         
         # PUT/PATCH : ADMIN ou FINANCE
         if request.method in ['PUT', 'PATCH']:
-            if request.user.role in ['ADMIN', 'FINANCE']:
+            if request.user.role_id in ['ADMIN', 'FINANCE']:
                 return True
             self.message = "Seuls les admins et finance peuvent modifier des fournisseurs."
             return False
         
         # DELETE : ADMIN seulement
         if request.method == 'DELETE':
-            if request.user.role == 'ADMIN':
+            if request.user.role_id == 'ADMIN':
                 return True
             self.message = "Seuls les admins peuvent désactiver des fournisseurs."
             return False
@@ -196,11 +196,11 @@ class SupplierPermission(permissions.BasePermission):
         """Permission objet spécifique"""
         
         # Admin : tout
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         # Finance : CRUD (sauf delete)
-        if request.user.role == 'FINANCE':
+        if request.user.role_id == 'FINANCE':
             if request.method in permissions.SAFE_METHODS:
                 return True
             if request.method in ['PUT', 'PATCH', 'POST']:
@@ -210,7 +210,7 @@ class SupplierPermission(permissions.BasePermission):
             return False
         
         # Commercial/Tech : read-only
-        if request.user.role in ['COMMERCIAL', 'TECHNICIEN']:
+        if request.user.role_id in ['COMMERCIAL', 'TECHNICIEN']:
             if request.method in permissions.SAFE_METHODS:
                 return True
             self.message = "Vous avez un accès en lecture seule."

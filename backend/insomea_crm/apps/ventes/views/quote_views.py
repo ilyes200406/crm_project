@@ -69,7 +69,7 @@ class SupplierQuoteViewSet(viewsets.ModelViewSet):
         )
         
         # RBAC filtering
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             # Voit devis pour ses opportunités
             queryset = queryset.filter(
                 lines__opportunity_line__opportunity__created_by=user
@@ -77,14 +77,14 @@ class SupplierQuoteViewSet(viewsets.ModelViewSet):
                 lines__opportunity_line__opportunity__assigned_to=user
             )
         
-        elif user.role == 'TECHNICIEN':
+        elif user.role_id == 'TECHNICIEN':
             # Voit devis opportunités APPROVED
             from ..models import OpportunityStatus
             queryset = queryset.filter(
                 lines__opportunity_line__opportunity__status=OpportunityStatus.APPROUVED
             )
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             # Voit tous devis opportunités en phase avancée
             from ..models import OpportunityStatus
             queryset = queryset.filter(
@@ -251,21 +251,21 @@ class InsomeaQuoteViewSet(viewsets.ReadOnlyModelViewSet):
         )
         
         # RBAC filtering
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             queryset = queryset.filter(
                 opportunity__created_by=user
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
         
-        elif user.role == 'TECHNICIEN':
+        elif user.role_id == 'TECHNICIEN':
             # Voit devis opportunités APPROVED
             from ..models import OpportunityStatus
             queryset = queryset.filter(
                 opportunity__status=OpportunityStatus.APPROUVED
             )
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             # Voit tous devis en phase avancée
             from ..models import OpportunityStatus
             queryset = queryset.filter(
@@ -348,7 +348,7 @@ class InsomeaQuoteViewSet(viewsets.ReadOnlyModelViewSet):
             )
         
         # Vérifie permissions
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             if opportunity.created_by != request.user and opportunity.assigned_to != request.user:
                 return Response(
                     {'detail': 'Action non autorisée'},

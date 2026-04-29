@@ -73,14 +73,6 @@ def create_client(*, data: dict, user, ip_address=None):
     # 1. VÉRIFICATION PERMISSIONS
     # ───────────────────────────────────────────────────────
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied(
-            'Seuls les admins et commerciaux peuvent créer des clients'
-        )
-    # Explication :
-    # Business rule : TECHNICIEN/FINANCE = read-only
-    # Lever PermissionDenied → 403 Forbidden
-    
     # ───────────────────────────────────────────────────────
     # 2. VALIDATION DONNÉES
     # ───────────────────────────────────────────────────────
@@ -124,7 +116,7 @@ def create_client(*, data: dict, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     # Si commercial crée → s'auto-assigne
-    if user.role == 'COMMERCIAL' and not data.get('assigned_to'):
+    if user.role_id == 'COMMERCIAL' and not data.get('assigned_to'):
         data['assigned_to'] = user
     # Explication business rule :
     # Commercial crée client → devient responsable
@@ -211,20 +203,10 @@ def update_client(*, client_id, data: dict, user, ip_address=None):
     # 2. VÉRIFICATION PERMISSIONS
     # ───────────────────────────────────────────────────────
     
-    if user.role == 'COMMERCIAL' and client.assigned_to != user:
+    if user.role_id == 'COMMERCIAL' and client.assigned_to != user:
         raise PermissionDenied(
             'Vous ne pouvez modifier que vos propres clients'
         )
-    # Explication business rule :
-    # Commercial modifie seulement clients assignés
-    # Admin modifie tout
-    
-    if user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied(
-            'Vous n\'avez pas les permissions pour modifier ce client'
-        )
-    # Explication :
-    # Tech/Finance = read-only
     
     # ───────────────────────────────────────────────────────
     # 3. VALIDATION DONNÉES
@@ -332,14 +314,6 @@ def delete_client(*, client_id, user, ip_address=None):
     # PERMISSIONS
     # ───────────────────────────────────────────────────────
     
-    if user.role != 'ADMIN':
-        raise PermissionDenied(
-            'Seuls les admins peuvent désactiver des clients'
-        )
-    # Explication business rule :
-    # Désactivation = action importante
-    # Réservée aux admins
-    
     # ───────────────────────────────────────────────────────
     # RÉCUPÉRATION + SOFT DELETE
     # ───────────────────────────────────────────────────────
@@ -383,11 +357,6 @@ def restore_client(*, client_id, user, ip_address=None):
     is_active = True
     Récupération après soft delete
     """
-    
-    if user.role != 'ADMIN':
-        raise PermissionDenied(
-            'Seuls les admins peuvent réactiver des clients'
-        )
     
     # Récupère même si inactif
     client = Client.objects.select_related('assigned_to', 'created_by').get(id=client_id)
@@ -435,11 +404,6 @@ def assign_client(*, client_id, assigned_to_id, user, ip_address=None):
     # PERMISSIONS
     # ───────────────────────────────────────────────────────
     
-    if user.role != 'ADMIN':
-        raise PermissionDenied(
-            'Seuls les admins peuvent réassigner des clients'
-        )
-    
     # ───────────────────────────────────────────────────────
     # RÉCUPÉRATION CLIENT
     # ───────────────────────────────────────────────────────
@@ -457,7 +421,7 @@ def assign_client(*, client_id, assigned_to_id, user, ip_address=None):
     except User.DoesNotExist:
         raise ValidationError({'assigned_to': 'Utilisateur non trouvé'})
     
-    if new_assignee.role != 'COMMERCIAL':
+    if new_assignee.role_id != 'COMMERCIAL':
         raise ValidationError({
             'assigned_to': 'Seuls les commerciaux peuvent être assignés à des clients'
         })
@@ -528,14 +492,11 @@ def create_contact(*, client_id, data: dict, user, ip_address=None):
     
     client = get_client_by_id(client_id, user=user, prefetch_all=False)
     
-    if user.role == 'COMMERCIAL' and client.assigned_to != user:
+    if user.role_id == 'COMMERCIAL' and client.assigned_to != user:
         raise PermissionDenied(
             'Vous ne pouvez ajouter de contacts que pour vos propres clients'
         )
-    
-    if user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied('Vous n\'avez pas les permissions nécessaires')
-    
+
     # ───────────────────────────────────────────────────────
     # VALIDATION
     # ───────────────────────────────────────────────────────
@@ -594,12 +555,9 @@ def update_contact(*, contact_id, data: dict, user, ip_address=None):
     client = contact.client
     
     # Permissions
-    if user.role == 'COMMERCIAL' and client.assigned_to != user:
+    if user.role_id == 'COMMERCIAL' and client.assigned_to != user:
         raise PermissionDenied('Vous ne pouvez modifier que vos propres contacts')
-    
-    if user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied('Vous n\'avez pas les permissions nécessaires')
-    
+
     # Validation
     data_with_id = {**data, 'id': contact_id}
     validate_contact_data(data_with_id, client=client)
@@ -646,12 +604,9 @@ def delete_contact(*, contact_id, user, ip_address=None):
     client = contact.client
     
     # Permissions
-    if user.role == 'COMMERCIAL' and client.assigned_to != user:
+    if user.role_id == 'COMMERCIAL' and client.assigned_to != user:
         raise PermissionDenied('Vous ne pouvez supprimer que vos propres contacts')
-    
-    if user.role in ['TECHNICIEN', 'FINANCE']:
-        raise PermissionDenied('Vous n\'avez pas les permissions nécessaires')
-    
+
     contact_name = contact.get_full_name()
     contact.delete()
     # Log

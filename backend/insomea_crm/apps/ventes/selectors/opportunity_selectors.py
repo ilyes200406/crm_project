@@ -65,7 +65,7 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
     
     # Filtres RBAC (selon rôle user)
     if user:
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             # Commercial voit :
             # - Opportunités qu'il a créées
             # - Opportunités qui lui sont assignées
@@ -73,7 +73,7 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
                 Q(created_by=user) | Q(assigned_to=user)
             )
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             # Finance voit :
             # - Opportunités CLIENT_PO_RECIEVED (à approuver)
             # - Opportunités APPROVED, INSOMEA_POS_SENT, INSOMEA_POS_CONFIRMED
@@ -159,17 +159,17 @@ def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):
     
     # RBAC check
     if user:
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             if opportunity.created_by != user and opportunity.assigned_to != user:
                 from django.http import Http404
                 raise Http404("Opportunité non trouvée")
         
-        elif user.role == 'TECHNICIEN':
+        elif user.role_id == 'TECHNICIEN':
             if opportunity.status != OpportunityStatus.APPROUVED and opportunity.assigned_to != user:
                 from django.http import Http404
                 raise Http404("Opportunité non trouvée")
         
-        elif user.role == 'FINANCE':
+        elif user.role_id == 'FINANCE':
             allowed_statuses = [
                 OpportunityStatus.CLIENT_PO_RECIEVED,
                 OpportunityStatus.APPROUVED,
@@ -204,7 +204,7 @@ def get_opportunity_by_reference(reference, user=None):
         opportunity = queryset.get(reference__iexact=reference)
         
         # RBAC check
-        if user and user.role == 'COMMERCIAL':
+        if user and user.role_id == 'COMMERCIAL':
             if opportunity.created_by != user and opportunity.assigned_to != user:
                 return None
         
@@ -302,7 +302,7 @@ def get_opportunities_needing_attention(user):
     
     queryset = get_opportunities_queryset(user=user, include_cancelled=False)
     
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         queryset = queryset.filter(
             Q(created_by=user) | Q(assigned_to=user)
         ).filter(
@@ -315,12 +315,12 @@ def get_opportunities_needing_attention(user):
             ]
         )
     
-    elif user.role == 'FINANCE':
+    elif user.role_id == 'FINANCE':
         queryset = queryset.filter(
             status=OpportunityStatus.CLIENT_PO_RECIEVED
         )
     
-    elif user.role == 'TECHNICIEN':
+    elif user.role_id == 'TECHNICIEN':
         queryset = queryset.filter(
             status=OpportunityStatus.APPROUVED
         )

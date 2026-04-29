@@ -6,6 +6,7 @@ from django.utils.html import format_html
 from ..authentication.emails import send_setup_email
 from ..authentication.models.setupToken import SetupToken
 from .models.permission import Permission, RolePermission
+from .models.role import Role
 from .models.users import User
 
 
@@ -15,6 +16,12 @@ from .models.users import User
 
 class UserAddForm(forms.ModelForm):
     """Form used only on the Add User page — no password fields."""
+
+    role = forms.ModelChoiceField(
+        queryset=Role.objects.all(),
+        to_field_name='name',
+        label='Rôle',
+    )
 
     class Meta:
         model = User
@@ -28,7 +35,7 @@ class UserAddForm(forms.ModelForm):
 
 
 class UserChangeForm(forms.ModelForm):
-    """Form used on the Edit User page — no password, no is_verified."""
+    """Form used on the Edit User page."""
 
     class Meta:
         model = User
@@ -121,15 +128,14 @@ class UserAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            # CREATE PATH: use UserManager so password and flags are set correctly
+            role = form.cleaned_data['role']
             user = User.objects.create_user(
                 email=form.cleaned_data['email'],
                 password=None,
                 first_name=form.cleaned_data.get('first_name', ''),
                 last_name=form.cleaned_data.get('last_name', ''),
-                role=form.cleaned_data['role'],
+                role_id=role.name,
             )
-            # Populate obj.pk so Django admin can redirect to the change page
             obj.pk = user.pk
 
             setup_token = SetupToken.generate_for_user(user)
@@ -148,7 +154,6 @@ class UserAdmin(admin.ModelAdmin):
                     f"Utilisateur créé mais l'envoi d'email a échoué : {e}",
                     messages.WARNING,
                 )
-            # Do NOT call super() — user is already persisted by create_user()
         else:
             super().save_model(request, obj, form, change)
 
@@ -167,11 +172,12 @@ class UserAdmin(admin.ModelAdmin):
             'TECHNICIEN': '#FF9800',
             'FINANCE':    '#4CAF50',
         }
-        color = colors.get(obj.role, '#9E9E9E')
+        color = colors.get(obj.role_id, '#9E9E9E')
+        label = obj.role.display_name
         return format_html(
             '<span style="background:{};color:white;padding:3px 10px;border-radius:3px;">{}</span>',
             color,
-            obj.get_role_display(),
+            label,
         )
     role_badge.short_description = 'Rôle'
 
@@ -241,6 +247,18 @@ class UserAdmin(admin.ModelAdmin):
 
 
 # ---------------------------------------------------------------------------
+# Role admin
+# ---------------------------------------------------------------------------
+
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'display_name', 'description', 'created_at')
+    search_fields = ('name', 'display_name')
+    readonly_fields = ('created_at',)
+    ordering = ('name',)
+
+
+# ---------------------------------------------------------------------------
 # Permission & RolePermission admins
 # ---------------------------------------------------------------------------
 
@@ -254,10 +272,15 @@ class PermissionAdmin(admin.ModelAdmin):
 
 @admin.register(RolePermission)
 class RolePermissionAdmin(admin.ModelAdmin):
-    list_display = ('role', 'permission_codename', 'permission_name')
+    list_display = ('role_name_display', 'permission_codename', 'permission_name')
     list_filter = ('role',)
-    search_fields = ('permission__codename', 'permission__name')
+    search_fields = ('role__name', 'permission__codename', 'permission__name')
     autocomplete_fields = ('permission',)
+
+    def role_name_display(self, obj):
+        return obj.role_id
+    role_name_display.short_description = 'Rôle'
+    role_name_display.admin_order_field = 'role'
 
     def permission_codename(self, obj):
         return obj.permission.codename

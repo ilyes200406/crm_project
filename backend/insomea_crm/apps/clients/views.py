@@ -916,7 +916,7 @@ class ClientActivityViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             queryset = queryset.filter(client__assigned_to=user)
         
         return queryset

@@ -29,8 +29,8 @@ class OpportunityStatus(models.TextChoices):
 class Opportunity(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name='Opportunities', db_index=True, help_text="Client concerné")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Opportunities_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Opportunities_assigned', limit_choices_to={'role__in': ['COMMERCIAL', 'TECHNICIEN', 'FINANCE']}, db_index=True, help_text="Utilisateur assigné (responsable actuel)")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Opportunities_created', limit_choices_to={'role_id': 'COMMERCIAL'}, help_text="Commercial créateur")
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='Opportunities_assigned', limit_choices_to={'role_id__in': ['COMMERCIAL', 'TECHNICIEN', 'FINANCE']}, db_index=True, help_text="Utilisateur assigné (responsable actuel)")
     related_opportunity = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_opportunities', help_text="Opportunité parente (si renewal/upsell/downgrade)")
     approved_by = models.ForeignKey(
         User,

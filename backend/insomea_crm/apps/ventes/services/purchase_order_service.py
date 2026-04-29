@@ -76,10 +76,7 @@ def upload_client_po(
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent uploader des BCs clients')
-    
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Action non autorisée')
     
@@ -164,9 +161,6 @@ def create_insomea_pos(*, opportunity_id, user, ip_address=None):
     # ───────────────────────────────────────────────────────
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
-    
-    if user.role not in ['ADMIN', 'FINANCE']:
-        raise PermissionDenied('Seul Finance peut créer des BCs Insomea')
     
     # ───────────────────────────────────────────────────────
     # 2. VÉRIFICATION PRÉCONDITIONS

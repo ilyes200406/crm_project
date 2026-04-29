@@ -11,10 +11,6 @@ from .selectors import get_product_by_id
 def create_product(*, data: dict, user):
     """Crée un produit"""
     
-    # Permissions : ADMIN seulement
-    if user.role != 'ADMIN':
-        raise PermissionDenied('Seuls les admins peuvent créer des produits')
-    
     # Validation
     validate_product_data(data)
     
@@ -33,10 +29,6 @@ def update_product(*, product_id, data: dict, user):
     """Met à jour un produit"""
     
     product = get_product_by_id(product_id, user=user)
-    
-    # Permissions : ADMIN seulement
-    if user.role != 'ADMIN':
-        raise PermissionDenied('Seuls les admins peuvent modifier des produits')
     
     # Validation
     validate_product_data(data, product=product)
@@ -59,10 +51,6 @@ def deprecate_product(*, product_id, successor_id=None, user=None):
     """Marque un produit comme obsolète"""
     
     product = get_product_by_id(product_id, user=user)
-    
-    # Permissions : ADMIN
-    if user.role != 'ADMIN':
-        raise PermissionDenied('Seuls les admins peuvent déprécier des produits')
     
     product.is_deprecated = True
     

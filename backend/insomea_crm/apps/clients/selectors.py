@@ -193,7 +193,7 @@ def get_client_by_id(client_id, user=None, prefetch_all=True):
     
     # Vérification permission RBAC
     if user:
-        if user.role == 'COMMERCIAL' and client.assigned_to != user:
+        if user.role_id == 'COMMERCIAL' and client.assigned_to != user:
             # Commercial peut voir seulement ses clients
             from django.http import Http404
             raise Http404("Client non trouvé")
@@ -406,7 +406,7 @@ def get_recent_activities(user=None, limit=20):
     ).order_by('-created_at')
     
     # Filtrage RBAC
-    if user and user.role == 'COMMERCIAL':
+    if user and user.role_id == 'COMMERCIAL':
         queryset = queryset.filter(client__assigned_to=user)
     
     return queryset[:limit]

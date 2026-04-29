@@ -43,7 +43,7 @@ class CanCompleteProvisioning(HasVentesPerm):
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if user.role == 'ADMIN':                                   # Layer 3
+        if user.role_id == 'ADMIN':                                   # Layer 3
             return True
         if not user.has_ventes_perm(self.permission_codename):     # Layer 1
             return False
@@ -56,7 +56,7 @@ class CanFailProvisioning(HasVentesPerm):
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if user.role == 'ADMIN':
+        if user.role_id == 'ADMIN':
             return True
         if not user.has_ventes_perm(self.permission_codename):
             return False
@@ -69,7 +69,7 @@ class CanRetryProvisioning(HasVentesPerm):
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if user.role == 'ADMIN':
+        if user.role_id == 'ADMIN':
             return True
         if not user.has_ventes_perm(self.permission_codename):
             return False

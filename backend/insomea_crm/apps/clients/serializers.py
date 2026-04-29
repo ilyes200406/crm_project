@@ -52,10 +52,8 @@ class UserMinimalSerializer(serializers.ModelSerializer):
     """
     
     full_name = serializers.CharField(source='get_full_name', read_only=True)
-    # Explication source='get_full_name' :
-    # Appelle method du model
-    # Retourne first_name + last_name
-    
+    role = serializers.CharField(source='role_id', read_only=True)
+
     class Meta:
         model = User
         fields = ['id', 'email', 'full_name', 'role']
@@ -565,7 +563,7 @@ class ClientAssignSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError('Utilisateur non trouvé')
         
-        if user.role != 'COMMERCIAL':
+        if user.role_id != 'COMMERCIAL':
             raise serializers.ValidationError(
                 'Seuls les commerciaux peuvent être assignés'
             )

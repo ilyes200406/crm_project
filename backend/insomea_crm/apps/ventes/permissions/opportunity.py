@@ -41,7 +41,7 @@ class CanViewOpportunity(HasVentesPerm):
         user = request.user
 
         # Layer 3 — admin sees everything
-        if user.role == 'ADMIN':
+        if user.role_id == 'ADMIN':
             return True
 
         # Resolve to Opportunity regardless of object type
@@ -53,11 +53,11 @@ class CanViewOpportunity(HasVentesPerm):
                 return False
 
         # COMMERCIAL: ownership only
-        if user.role == 'COMMERCIAL':
+        if user.role_id == 'COMMERCIAL':
             return opp.assigned_to == user or opp.created_by == user
 
         # FINANCE: from client PO received onwards
-        if user.role == 'FINANCE':
+        if user.role_id == 'FINANCE':
             return opp.status in [
                 OpportunityStatus.CLIENT_PO_RECIEVED,
                 OpportunityStatus.APPROUVED,
@@ -146,7 +146,7 @@ class CanCreateInsomeaPOs(HasVentesPerm):
         user = request.user
 
         # Layer 3 — admin override
-        if user.role == 'ADMIN':
+        if user.role_id == 'ADMIN':
             return True
 
         # Layer 1 — Finance must have the codename

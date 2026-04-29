@@ -49,16 +49,7 @@ def create_supplier(*, data: dict, user):
     """
     
     # ───────────────────────────────────────────────────────
-    # 1. VÉRIFICATION PERMISSIONS
-    # ───────────────────────────────────────────────────────
-    
-    if user.role not in ['ADMIN', 'FINANCE']:
-        raise PermissionDenied(
-            'Seuls les admins et finance peuvent créer des fournisseurs'
-        )
-    
-    # ───────────────────────────────────────────────────────
-    # 2. VALIDATION DONNÉES
+    # 1. VALIDATION DONNÉES
     # ───────────────────────────────────────────────────────
     
     validate_supplier_data(data)
@@ -115,16 +106,7 @@ def update_supplier(*, supplier_id, data: dict, user):
     supplier = get_supplier_by_id(supplier_id, user=user)
     
     # ───────────────────────────────────────────────────────
-    # 2. VÉRIFICATION PERMISSIONS
-    # ───────────────────────────────────────────────────────
-    
-    if user.role not in ['ADMIN', 'FINANCE']:
-        raise PermissionDenied(
-            'Seuls les admins et finance peuvent modifier des fournisseurs'
-        )
-    
-    # ───────────────────────────────────────────────────────
-    # 3. VALIDATION DONNÉES
+    # 2. VALIDATION DONNÉES
     # ───────────────────────────────────────────────────────
     
     validate_supplier_data(data, supplier=supplier)
@@ -173,12 +155,6 @@ def activate_supplier(*, supplier_id, user):
     
     supplier = get_supplier_by_id(supplier_id, user=user)
     
-    # Permissions
-    if user.role not in ['ADMIN', 'FINANCE']:
-        raise PermissionDenied(
-            'Seuls les admins et finance peuvent activer des fournisseurs'
-        )
-    
     if supplier.is_active:
         raise ValidationError('Ce fournisseur est déjà actif')
     
@@ -206,12 +182,6 @@ def deactivate_supplier(*, supplier_id, user):
     """
     
     supplier = get_supplier_by_id(supplier_id, user=user)
-    
-    # Permissions
-    if user.role != 'ADMIN':
-        raise PermissionDenied(
-            'Seuls les admins peuvent désactiver des fournisseurs'
-        )
     
     if not supplier.is_active:
         raise ValidationError('Ce fournisseur est déjà inactif')

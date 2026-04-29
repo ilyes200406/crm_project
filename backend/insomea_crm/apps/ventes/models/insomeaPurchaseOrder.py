@@ -30,7 +30,7 @@ class InsomeaPurchaseOrder(models.Model):
         null=True,
         blank=True,
         related_name='insomea_pos_created',
-        limit_choices_to={'role': 'FINANCE'},
+        limit_choices_to={'role_id': 'FINANCE'},
         help_text="Finance créateur"
     )
 

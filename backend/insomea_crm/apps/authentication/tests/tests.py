@@ -5,14 +5,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from ..api.serializers import LoginSerializer, SetupAccountSerializer
 from ..models.setupToken import SetupToken
 from ..api.views import revoke_all_refresh_tokens_for_user
-from ...users.models.users import RoleChoices, User
+from ...users.models.users import User
+from ...users.models.role import Role
 
 
 class AuthenticationFlowTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        Role.objects.get_or_create(name='COMMERCIAL', defaults={'display_name': 'Commercial'})
+
     def test_setup_account_marks_user_verified(self):
         user = User.objects.create_user(
             email='new.user@example.com',
-            role=RoleChoices.COMMERCIAL,
+            role_id='COMMERCIAL',
             is_active=False,
             is_verified=False,
         )
@@ -40,7 +45,7 @@ class AuthenticationFlowTests(TestCase):
         user = User.objects.create_user(
             email='pending@example.com',
             password='StrongPass123!',
-            role=RoleChoices.COMMERCIAL,
+            role_id='COMMERCIAL',
             is_active=True,
             is_verified=False,
         )
@@ -57,7 +62,7 @@ class AuthenticationFlowTests(TestCase):
         user = User.objects.create_user(
             email='session.user@example.com',
             password='StrongPass123!',
-            role=RoleChoices.COMMERCIAL,
+            role_id='COMMERCIAL',
             is_active=True,
             is_verified=True,
         )

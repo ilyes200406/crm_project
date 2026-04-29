@@ -9,7 +9,7 @@ from ...suppliers.models import Supplier
 
 class SupplierQuote(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Supplier_quote_created', limit_choices_to={'role': 'COMMERCIAL'}, help_text="Commercial créateur")    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='Supplier_quote_created', limit_choices_to={'role_id': 'COMMERCIAL'}, help_text="Commercial créateur")    
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
 
     reference = models.CharField(max_length=50, unique=True, db_index=True, help_text="Référence unique SupplierQuote")

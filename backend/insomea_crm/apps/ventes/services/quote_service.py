@@ -70,9 +70,6 @@ def create_supplier_quote(*, supplier_id, document, lines_data: list, reference=
         - Calculate totals
     """
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent créer des devis fournisseurs')
-    
     validate_pdf_file(document)
     validate_file_size(document, max_size_mb=10)
     
@@ -98,7 +95,7 @@ def create_supplier_quote(*, supplier_id, document, lines_data: list, reference=
     
     # Vérifie permissions sur opportunity
     opportunity = existing_lines.first().opportunity
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Vous ne pouvez gérer que vos propres opportunités')
     
@@ -227,10 +224,7 @@ def create_insomea_quote(*, opportunity_id, lines_pricing: list, discount_percen
     
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=True)
     
-    if user.role not in ['ADMIN', 'COMMERCIAL']:
-        raise PermissionDenied('Seuls les commerciaux peuvent créer des devis Insomea')
-    
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Action non autorisée')
     
@@ -459,7 +453,7 @@ def rollback_insomea_quote(*, opportunity_id, user, ip_address=None):
 
     opportunity = get_opportunity_by_id(opportunity_id, user=user, prefetch_all=False)
 
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         if opportunity.created_by != user and opportunity.assigned_to != user:
             raise PermissionDenied('Action non autorisée')
 

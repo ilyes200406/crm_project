@@ -1,0 +1,5 @@
+class Roles:
+    ADMIN = 'ADMIN'
+    COMMERCIAL = 'COMMERCIAL'
+    TECHNICIEN = 'TECHNICIEN'
+    FINANCE = 'FINANCE'

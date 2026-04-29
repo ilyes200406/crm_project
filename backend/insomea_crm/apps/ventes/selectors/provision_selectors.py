@@ -30,7 +30,7 @@ def get_provisions_in_progress(user=None):
     )
     
     # RBAC
-    if user and user.role == 'TECHNICIEN':
+    if user and user.role_id == 'TECHNICIEN':
         queryset = queryset.filter(provisionned_by=user)
     
     return queryset.order_by('provisioning_started_at')
@@ -44,7 +44,7 @@ def get_provision_by_id(provision_id, *, user=None):
         'provisionned_by',
     ).prefetch_related('subscription')
     
-    if user and user.role == 'TECHNICIEN':
+    if user and user.role_id == 'TECHNICIEN':
         queryset = queryset.filter(
             Q(status=ProvisionStatus.WAITING_PROVISION) |
             Q(provisionned_by=user) |
@@ -63,7 +63,7 @@ def get_all_provisions(*, user=None):
 
     # TECHNICIEN: all waiting provisions visible (so they can be picked up),
     # plus their own in-progress / completed ones.
-    if user and user.role == 'TECHNICIEN':
+    if user and user.role_id == 'TECHNICIEN':
         qs = qs.filter(
             Q(status=ProvisionStatus.WAITING_PROVISION) |
             Q(provisionned_by=user) |

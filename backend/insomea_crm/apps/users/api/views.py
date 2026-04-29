@@ -68,7 +68,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
         role = self.request.query_params.get('role')
         if role:
-            queryset = queryset.filter(role=role)
+            queryset = queryset.filter(role_id=role)
 
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:

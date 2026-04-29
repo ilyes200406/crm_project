@@ -20,7 +20,7 @@ def create_opportunity(*, data: dict, user, ip_address=None):
     payload['status'] = OpportunityStatus.DRAFT
     payload['created_by'] = user
 
-    if user.role == 'COMMERCIAL' and not payload.get('assigned_to'):
+    if user.role_id == 'COMMERCIAL' and not payload.get('assigned_to'):
         payload['assigned_to'] = user
 
     opportunity = Opportunity.objects.create(**payload)

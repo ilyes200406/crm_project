@@ -78,7 +78,7 @@ class IsAdmin(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'ADMIN'
+            request.user.role_id == 'ADMIN'
         )
 
 
@@ -97,7 +97,7 @@ class IsCommercialOrAdmin(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role in ['COMMERCIAL', 'ADMIN']
+            request.user.role_id in ['COMMERCIAL', 'ADMIN']
         )
 
 
@@ -168,7 +168,7 @@ class CanAccessClient(permissions.BasePermission):
             return True
         
         # Écriture : ADMIN ou COMMERCIAL seulement
-        return request.user.role in ['ADMIN', 'COMMERCIAL']
+        return request.user.role_id in ['ADMIN', 'COMMERCIAL']
     
     def has_object_permission(self, request, view, obj):
         """
@@ -191,11 +191,11 @@ class CanAccessClient(permissions.BasePermission):
         """
         
         # Admin : accès complet
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         # Commercial : seulement ses clients
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             # Lecture : peut voir ses clients
             if request.method in permissions.SAFE_METHODS:
                 return obj.assigned_to == request.user
@@ -204,7 +204,7 @@ class CanAccessClient(permissions.BasePermission):
             return obj.assigned_to == request.user
         
         # Finance/Tech : read-only
-        if request.user.role in ['FINANCE', 'TECHNICIEN']:
+        if request.user.role_id in ['FINANCE', 'TECHNICIEN']:
             return request.method in permissions.SAFE_METHODS
         
         # Autres rôles : refusé
@@ -240,7 +240,7 @@ class CanManageClient(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role in ['ADMIN', 'COMMERCIAL']
+            request.user.role_id in ['ADMIN', 'COMMERCIAL']
         )
     
     def has_object_permission(self, request, view, obj):
@@ -251,10 +251,10 @@ class CanManageClient(permissions.BasePermission):
         ADMIN : tout
         COMMERCIAL : ses clients seulement
         """
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             return obj.assigned_to == request.user
         
         return False
@@ -290,7 +290,7 @@ class CanManageContact(permissions.BasePermission):
             return True
         
         # Écriture : ADMIN ou COMMERCIAL
-        return request.user.role in ['ADMIN', 'COMMERCIAL']
+        return request.user.role_id in ['ADMIN', 'COMMERCIAL']
     
     def has_object_permission(self, request, view, obj):
         """
@@ -305,17 +305,17 @@ class CanManageContact(permissions.BasePermission):
         """
         
         # Admin : tout
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         # Commercial : contacts de ses clients
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             if request.method in permissions.SAFE_METHODS:
                 return obj.client.assigned_to == request.user
             return obj.client.assigned_to == request.user
         
         # Finance/Tech : read-only
-        if request.user.role in ['FINANCE', 'TECHNICIEN']:
+        if request.user.role_id in ['FINANCE', 'TECHNICIEN']:
             return request.method in permissions.SAFE_METHODS
         
         return False
@@ -362,15 +362,15 @@ class CanViewActivity(permissions.BasePermission):
         """
         
         # Admin : tout
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         # Commercial : activités de ses clients
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             return obj.client.assigned_to == request.user
         
         # Finance/Tech : toutes les activités
-        if request.user.role in ['FINANCE', 'TECHNICIEN']:
+        if request.user.role_id in ['FINANCE', 'TECHNICIEN']:
             return True
         
         return False
@@ -433,21 +433,21 @@ class ClientPermission(permissions.BasePermission):
         
         # POST : ADMIN ou COMMERCIAL
         if request.method == 'POST':
-            if request.user.role in ['ADMIN', 'COMMERCIAL']:
+            if request.user.role_id in ['ADMIN', 'COMMERCIAL']:
                 return True
             self.message = "Seuls les administrateurs et commerciaux peuvent créer des clients."
             return False
         
         # PUT/PATCH : ADMIN ou COMMERCIAL
         if request.method in ['PUT', 'PATCH']:
-            if request.user.role in ['ADMIN', 'COMMERCIAL']:
+            if request.user.role_id in ['ADMIN', 'COMMERCIAL']:
                 return True
             self.message = "Seuls les administrateurs et commerciaux peuvent modifier des clients."
             return False
         
         # DELETE : ADMIN seulement
         if request.method == 'DELETE':
-            if request.user.role == 'ADMIN':
+            if request.user.role_id == 'ADMIN':
                 return True
             self.message = "Seuls les administrateurs peuvent désactiver des clients."
             return False
@@ -463,18 +463,18 @@ class ClientPermission(permissions.BasePermission):
         """
         
         # Admin : accès complet
-        if request.user.role == 'ADMIN':
+        if request.user.role_id == 'ADMIN':
             return True
         
         # Commercial : ses clients seulement
-        if request.user.role == 'COMMERCIAL':
+        if request.user.role_id == 'COMMERCIAL':
             if obj.assigned_to == request.user:
                 return True
             self.message = "Vous ne pouvez accéder qu'à vos propres clients."
             return False
         
         # Finance/Tech : read-only
-        if request.user.role in ['FINANCE', 'TECHNICIEN']:
+        if request.user.role_id in ['FINANCE', 'TECHNICIEN']:
             if request.method in permissions.SAFE_METHODS:
                 return True
             self.message = "Vous avez un accès en lecture seule."
@@ -509,13 +509,13 @@ def user_can_access_client(user, client):
     if not user or not user.is_authenticated:
         return False
     
-    if user.role == 'ADMIN':
+    if user.role_id == 'ADMIN':
         return True
     
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         return client.assigned_to == user
     
-    if user.role in ['FINANCE', 'TECHNICIEN']:
+    if user.role_id in ['FINANCE', 'TECHNICIEN']:
         return True  # Read-only access
     
     return False
@@ -536,10 +536,10 @@ def user_can_modify_client(user, client):
     if not user or not user.is_authenticated:
         return False
     
-    if user.role == 'ADMIN':
+    if user.role_id == 'ADMIN':
         return True
     
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         return client.assigned_to == user
     
     return False
@@ -573,15 +573,15 @@ def get_accessible_clients_queryset(user, base_queryset=None):
         base_queryset = Client.objects.all()
     
     # Admin : tout
-    if user.role == 'ADMIN':
+    if user.role_id == 'ADMIN':
         return base_queryset
     
     # Commercial : ses clients
-    if user.role == 'COMMERCIAL':
+    if user.role_id == 'COMMERCIAL':
         return base_queryset.filter(assigned_to=user)
     
     # Finance/Tech : tous (pour read-only)
-    if user.role in ['FINANCE', 'TECHNICIEN']:
+    if user.role_id in ['FINANCE', 'TECHNICIEN']:
         return base_queryset.filter(is_active=True)
     
     # Autre : vide
@@ -611,7 +611,7 @@ class CanAssignClient(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'ADMIN'
+            request.user.role_id == 'ADMIN'
         )
 
 
@@ -638,7 +638,7 @@ class CanBulkUpdate(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'ADMIN'
+            request.user.role_id == 'ADMIN'
         )
 
 
@@ -663,5 +663,5 @@ class CanExportData(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role in ['ADMIN', 'COMMERCIAL', 'FINANCE']
+            request.user.role_id in ['ADMIN', 'COMMERCIAL', 'FINANCE']
         )
