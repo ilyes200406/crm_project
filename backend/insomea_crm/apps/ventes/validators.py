@@ -154,25 +154,25 @@ def validate_quantity(value):
 def validate_product_unique_in_opportunity(product, opportunity, exclude_line_id=None):
     """
     Valide qu'un produit n'existe pas déjà dans l'opportunité
-    
+
     Args:
         product: Product instance
         opportunity: Opportunity instance
         exclude_line_id: UUID (pour update, exclure ligne courante)
-    
+
     Raises:
         ValidationError: Si produit déjà présent
     """
     from .models import OpportunityLine
-    
+
     query = OpportunityLine.objects.filter(
         opportunity=opportunity,
         product=product
     )
-    
+
     if exclude_line_id:
         query = query.exclude(id=exclude_line_id)
-    
+
     if query.exists():
         existing = query.first()
         raise ValidationError(
@@ -181,6 +181,31 @@ def validate_product_unique_in_opportunity(product, opportunity, exclude_line_id
                 f'Modifiez la quantité au lieu d\'ajouter une nouvelle ligne.'
             ),
             code='duplicate_product'
+        )
+
+
+def validate_no_active_subscription_for_initial(product, opportunity):
+    """
+    For INITIAL opportunities: block if the client already has an ACTIVE
+    or PENDING_RENEWAL subscription for this product.
+    RENEWAL/UPSELL/DOWNGRADE are exempt — the client is expected to have the subscription.
+    """
+    from .models.opportunity import OpportunityType
+    if opportunity.type != OpportunityType.INITIAL:
+        return
+
+    from .models.subscription import Subscription, SubscriptionStatus
+    exists = Subscription.objects.filter(
+        client=opportunity.client,
+        product=product,
+        status__in=[SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING_RENEWAL],
+    ).exists()
+
+    if exists:
+        raise ValidationError(
+            f"Le client « {opportunity.client.company_name} » a déjà un abonnement actif "
+            f"pour « {product.title} ». Utilisez un type RENEWAL ou UPSELL.",
+            code='active_subscription_exists'
         )
 
 
@@ -554,7 +579,15 @@ def validate_opportunity_line_data(data, opportunity, line=None):
             )
         except ValidationError as e:
             errors['product'] = e.messages
-    
+
+    # Bloque ajout produit si abonnement actif existe déjà (INITIAL uniquement)
+    if 'product' in data and not line:
+        try:
+            validate_no_active_subscription_for_initial(data['product'], opportunity)
+        except ValidationError as e:
+            errors.setdefault('product', [])
+            errors['product'] += e.messages
+
     if errors:
         raise ValidationError(errors)
     

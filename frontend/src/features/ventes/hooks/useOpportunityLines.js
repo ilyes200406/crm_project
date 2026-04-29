@@ -38,7 +38,12 @@ export function useAddLine(opportunityId) {
       toast.success('Ligne ajoutée');
     },
     onError: (error) => {
-      const message = error.response?.data?.detail || "Erreur lors de l'ajout";
+      const data = error.response?.data;
+      const message =
+        data?.detail ||
+        data?.product?.[0] ||
+        Object.values(data || {})?.[0]?.[0] ||
+        "Erreur lors de l'ajout";
       toast.error(message);
     },
   });
