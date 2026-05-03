@@ -12,6 +12,7 @@ from ..validators import (
     validate_quantity,
     validate_line_editable,
 )
+from ...products.models import Product
 
 
 # ═══════════════════════════════════════════════════════════
@@ -278,6 +279,30 @@ class OpportunityLineMinimalSerializer(serializers.ModelSerializer):
 class OpportunityLineSerializer(OpportunityLineDetailSerializer):
     """Alias backward-compatible pour le ViewSet lignes."""
     pass
+
+
+# ═══════════════════════════════════════════════════════════
+# OPPORTUNITYLINE INPUT (nested / top-level create)
+# ═══════════════════════════════════════════════════════════
+
+class OpportunityLineInputSerializer(serializers.Serializer):
+    """
+    Lightweight input for POST /opportunities/{pk}/lines/.
+    The opportunity FK is injected from the URL — it is NOT expected in the body.
+    Also used as the nested 'lines' field in OpportunityCreateWithLinesSerializer.
+    """
+
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    quantity = serializers.IntegerField(min_value=1, max_value=10000, default=1)
+    billing_cycle = serializers.ChoiceField(
+        choices=['MONTHLY', 'ANNUAL'],
+        default='ANNUAL',
+    )
+    notes = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_quantity(self, value):
+        validate_quantity(value)
+        return value
 
 
 # ═══════════════════════════════════════════════════════════

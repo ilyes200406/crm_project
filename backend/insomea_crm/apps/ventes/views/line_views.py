@@ -25,10 +25,10 @@ from ..models import OpportunityLine
 from ..serializers import (
     OpportunityLineSerializer,
     OpportunityLineDetailSerializer,
-    OpportunityLineCreateSerializer,
+    OpportunityLineInputSerializer,
     OpportunityLineUpdateSerializer,
 )
-from ..selectors import get_line_by_id
+from ..selectors import get_line_by_id, get_opportunity_by_id
 from ..services import (
     add_line_to_opportunity,
     update_opportunity_line,
@@ -52,7 +52,8 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        
+        opportunity_pk = self.kwargs.get('opportunity_pk')
+
         queryset = OpportunityLine.objects.select_related(
             'product',
             'opportunity',
@@ -64,7 +65,11 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
             'insomea_quote_line',
             'provision',
         )
-        
+
+        # Scope to the parent opportunity when using nested URL
+        if opportunity_pk:
+            queryset = queryset.filter(opportunity_id=opportunity_pk)
+
         # RBAC filtering
         if user.role_id == 'COMMERCIAL':
             queryset = queryset.filter(
@@ -72,14 +77,14 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
-        
+
         elif user.role_id == 'TECHNICIEN':
             queryset = queryset.filter(
                 opportunity__status=OpportunityStatus.INSOMEA_POS_CONFIRMED
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
-        
+
         elif user.role_id == 'FINANCE':
             queryset = queryset.filter(
                 opportunity__status__in=[
@@ -89,17 +94,14 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
             ) | queryset.filter(
                 opportunity__assigned_to=user
             )
-        
+
         # ADMIN: voit tout
-        
+
         return queryset.distinct()
     
     def get_serializer_class(self):
-        """
-        Serializer selon action
-        """
         if self.action == 'create':
-            return OpportunityLineCreateSerializer
+            return OpportunityLineInputSerializer
         elif self.action in ['update', 'partial_update']:
             return OpportunityLineUpdateSerializer
         return OpportunityLineSerializer
@@ -117,44 +119,21 @@ class OpportunityLineViewSet(viewsets.ModelViewSet):
     # ═══════════════════════════════════════════════════════
     
     def create(self, request, *args, **kwargs):
+        opportunity_pk = self.kwargs.get('opportunity_pk')
+        opportunity = get_opportunity_by_id(opportunity_pk, user=request.user)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        opportunity = serializer.validated_data['opportunity']
-        product = serializer.validated_data['product']
-        
-        # Vérifie permissions sur opportunity
-        if request.user.role_id == 'COMMERCIAL':
-            if opportunity.created_by != request.user and opportunity.assigned_to != request.user:
-                return Response(
-                    {'detail': 'Action non autorisée'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        
-        # Utilise service
+
         line = add_line_to_opportunity(
             opportunity_id=opportunity.id,
-            data={
-                'product': product,
-                'quantity': serializer.validated_data['quantity'],
-                'billing_cycle': serializer.validated_data.get('billing_cycle', 'ANNUAL'),
-                'notes': serializer.validated_data.get('notes', ''),
-            },
+            data=serializer.validated_data,
             user=request.user,
-            ip_address=self.get_client_ip(request)
+            ip_address=self.get_client_ip(request),
         )
-        
-        # Retourne
-        output_serializer = OpportunityLineSerializer(
-            line,
-            context={'request': request}
-        )
-        
-        return Response(
-            output_serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+
+        output_serializer = OpportunityLineSerializer(line, context={'request': request})
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
     
     def update(self, request, *args, **kwargs):
         """

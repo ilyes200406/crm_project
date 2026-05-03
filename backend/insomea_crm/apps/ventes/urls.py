@@ -1,11 +1,12 @@
 """
 URLS - APP OPPORTUNITIES
 
-Router REST Framework
+Lines are nested under /opportunities/{opportunity_pk}/lines/
+via drf-nested-routers.
 """
 
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework_nested import routers
 
 from .views import (
     OpportunityViewSet,
@@ -14,22 +15,23 @@ from .views import (
     InsomeaQuoteViewSet,
     ProvisionViewSet,
     SubscriptionViewSet,
-#    StatusHistoryViewSet,
 )
 
-# Router principal
-router = DefaultRouter()
-
-# Register ViewSets
+# Top-level router
+router = routers.DefaultRouter()
 router.register(r'opportunities', OpportunityViewSet, basename='opportunity')
-router.register(r'opportunity-lines', OpportunityLineViewSet, basename='opportunityline')
 router.register(r'supplier-quotes', SupplierQuoteViewSet, basename='supplierquote')
 router.register(r'insomea-quotes', InsomeaQuoteViewSet, basename='insomeaquote')
 router.register(r'provisions', ProvisionViewSet, basename='provision')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
-#router.register(r'status-history', StatusHistoryViewSet, basename='statushistory')
 
-# URL patterns
+# Nested router: /opportunities/{opportunity_pk}/lines/
+opportunities_router = routers.NestedDefaultRouter(
+    router, r'opportunities', lookup='opportunity'
+)
+opportunities_router.register(r'lines', OpportunityLineViewSet, basename='opportunity-lines')
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include(opportunities_router.urls)),
 ]

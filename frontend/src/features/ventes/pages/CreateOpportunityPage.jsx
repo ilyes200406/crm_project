@@ -9,9 +9,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { Card } from '../../../shared/components';
 import { useCreateOpportunity } from '../hooks';
-
-// ── lazy-load clients list for the selector ──────────────────────
 import { useClients } from '../../clients/hooks/useClients';
+import { useProducts } from '../../catalogue/hooks/useProducts';
 
 const TYPE_OPTIONS = [
   { value: 'INITIAL',   label: 'Initial — Nouvelle vente' },
@@ -27,6 +26,9 @@ export function CreateOpportunityPage() {
   const { data: clientsData } = useClients({ page_size: 200 });
   const clients = clientsData?.results || [];
 
+  const { data: productsData } = useProducts({ page_size: 200 });
+  const products = productsData?.results || [];
+
   const [form, setForm] = useState({
     name:   '',
     client: '',
@@ -34,6 +36,11 @@ export function CreateOpportunityPage() {
     notes:  '',
   });
   const [errors, setErrors] = useState({});
+
+  // Lines builder state
+  const [lines, setLines] = useState([]);
+  const [lineForm, setLineForm] = useState({ product: '', quantity: 1 });
+  const [lineError, setLineError] = useState('');
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -45,18 +52,39 @@ export function CreateOpportunityPage() {
     return err;
   };
 
+  const handleAddLine = () => {
+    if (!lineForm.product) { setLineError('Sélectionner un produit'); return; }
+    const already = lines.some((l) => l.product === lineForm.product);
+    if (already) { setLineError('Ce produit est déjà dans la liste'); return; }
+    const product = products.find((p) => String(p.id) === String(lineForm.product));
+    setLines((prev) => [
+      ...prev,
+      { product: lineForm.product, quantity: Number(lineForm.quantity), _label: product?.title || lineForm.product },
+    ]);
+    setLineForm({ product: '', quantity: 1 });
+    setLineError('');
+  };
+
+  const handleRemoveLine = (productId) =>
+    setLines((prev) => prev.filter((l) => l.product !== productId));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
     if (Object.keys(err).length) { setErrors(err); return; }
 
-    const result = await createMutation.mutateAsync({
+    const payload = {
       name:   form.name.trim(),
       client: form.client,
       type:   form.type,
       notes:  form.notes.trim(),
-    });
+    };
 
+    if (lines.length > 0) {
+      payload.lines = lines.map(({ product, quantity }) => ({ product, quantity }));
+    }
+
+    const result = await createMutation.mutateAsync(payload);
     navigate(`/app/ventes/opportunities/${result.data.id}`);
   };
 
@@ -138,6 +166,68 @@ export function CreateOpportunityPage() {
             />
           </div>
 
+          {/* Lines section */}
+          <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Lignes produits <span className="normal-case font-normal text-gray-400">(optionnel)</span>
+            </p>
+
+            {/* Add row */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <select
+                  value={lineForm.product}
+                  onChange={(e) => { setLineForm((p) => ({ ...p, product: e.target.value })); setLineError(''); }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Produit...</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-20">
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={lineForm.quantity}
+                  onChange={(e) => setLineForm((p) => ({ ...p, quantity: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddLine}
+                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap"
+              >
+                + Ajouter
+              </button>
+            </div>
+            {lineError && <p className="text-red-500 text-xs">{lineError}</p>}
+
+            {/* Lines list */}
+            {lines.length > 0 && (
+              <ul className="space-y-1">
+                {lines.map((l) => (
+                  <li key={l.product} className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5 text-sm">
+                    <span className="text-gray-800">{l._label}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-500 text-xs">Qté: {l.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLine(l.product)}
+                        className="text-red-400 hover:text-red-600 text-xs"
+                      >
+                        Retirer
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
@@ -156,10 +246,6 @@ export function CreateOpportunityPage() {
           </div>
         </form>
       </Card>
-
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-        ℹ️ Après création, vous pourrez ajouter les lignes produits (licences).
-      </div>
     </div>
   );
 }

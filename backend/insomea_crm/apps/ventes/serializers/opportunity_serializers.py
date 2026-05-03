@@ -362,6 +362,69 @@ class OpportunityCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class OpportunityCreateWithLinesSerializer(OpportunityCreateSerializer):
+    """
+    POST /opportunities/ with optional nested lines array.
+    Validates all lines (subscription check, duplicates) before any DB write.
+    The view pops 'lines' and creates them atomically after the opportunity.
+    """
+
+    lines = serializers.ListField(child=serializers.DictField(), required=False, default=list)
+
+    class Meta(OpportunityCreateSerializer.Meta):
+        fields = OpportunityCreateSerializer.Meta.fields + ['lines']
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        lines_data = attrs.get('lines', [])
+        if not lines_data:
+            return attrs
+
+        from .line_serializers import OpportunityLineInputSerializer
+
+        client = attrs['client']
+        opp_type = attrs.get('type', OpportunityType.INITIAL)
+
+        # Validate each line independently and collect Product instances
+        parsed_lines = []
+        seen_product_ids = set()
+
+        for i, raw in enumerate(lines_data):
+            s = OpportunityLineInputSerializer(data=raw)
+            if not s.is_valid():
+                raise serializers.ValidationError({'lines': {i: s.errors}})
+            parsed_lines.append(s.validated_data)
+
+            product = s.validated_data['product']
+            if product.id in seen_product_ids:
+                raise serializers.ValidationError({
+                    'lines': f"Produit « {product.title} » apparaît en doublon dans les lignes."
+                })
+            seen_product_ids.add(product.id)
+
+        # Subscription check for INITIAL opportunities (pre-DB)
+        if opp_type == OpportunityType.INITIAL:
+            from ..models.subscription import Subscription, SubscriptionStatus
+            for ld in parsed_lines:
+                product = ld['product']
+                if Subscription.objects.filter(
+                    client=client,
+                    product=product,
+                    status__in=[SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING_RENEWAL],
+                ).exists():
+                    raise serializers.ValidationError({
+                        'lines': (
+                            f"Le client « {client.company_name} » a déjà un abonnement actif "
+                            f"pour « {product.title} ». Utilisez un type RENEWAL ou UPSELL."
+                        )
+                    })
+
+        # Replace raw dicts with validated, typed data
+        attrs['lines'] = parsed_lines
+        return attrs
+
+
 class OpportunityUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer update Opportunité

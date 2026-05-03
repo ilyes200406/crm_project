@@ -19,7 +19,7 @@ export function useOpportunityLines(opportunityId, options = {}) {
   return useQuery({
     queryKey: linesKeys.list({ opportunity: opportunityId }),
     queryFn: async () => {
-      const { data } = await linesApi.getAll({ opportunity: opportunityId });
+      const { data } = await linesApi.getAll(opportunityId);
       return data;
     },
     enabled: !!opportunityId,
@@ -32,17 +32,17 @@ export function useAddLine(opportunityId) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data) => linesApi.create({ ...data, opportunity: opportunityId }),
+    mutationFn: (data) => linesApi.create(opportunityId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(opportunityId) });
       toast.success('Ligne ajoutée');
     },
     onError: (error) => {
-      const data = error.response?.data;
+      const d = error.response?.data;
       const message =
-        data?.detail ||
-        data?.product?.[0] ||
-        Object.values(data || {})?.[0]?.[0] ||
+        d?.detail ||
+        d?.product?.[0] ||
+        Object.values(d || {})?.[0]?.[0] ||
         "Erreur lors de l'ajout";
       toast.error(message);
     },
@@ -53,7 +53,7 @@ export function useUpdateLine(opportunityId) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }) => linesApi.update(id, data),
+    mutationFn: ({ id, data }) => linesApi.update(opportunityId, id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(opportunityId) });
       toast.success('Ligne mise à jour');
@@ -69,13 +69,44 @@ export function useDeleteLine(opportunityId) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id) => linesApi.delete(id),
+    mutationFn: (id) => linesApi.delete(opportunityId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(opportunityId) });
       toast.success('Ligne supprimée');
     },
     onError: (error) => {
       const message = error.response?.data?.detail || 'Erreur lors de la suppression';
+      toast.error(message);
+    },
+  });
+}
+
+export function useCancelLine(opportunityId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, reason }) => linesApi.cancel(opportunityId, id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(opportunityId) });
+      toast.success('Ligne annulée');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || "Erreur lors de l'annulation";
+      toast.error(message);
+    },
+  });
+}
+
+export function useConfirmLinePO(opportunityId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (lineId) => linesApi.confirmPO(opportunityId, lineId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: opportunitiesKeys.detail(opportunityId) });
+    },
+    onError: (error) => {
+      const message = error.response?.data?.detail || 'Erreur lors de la confirmation';
       toast.error(message);
     },
   });

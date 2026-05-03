@@ -337,10 +337,9 @@ function DraftSection({ opportunity, refetch }) {
     e.preventDefault();
     if (!form.product) return;
     await addLine.mutateAsync({
-      opportunity: opportunity.id,
-      product:     form.product,
-      quantity:    Number(form.quantity),
-      notes:       form.notes,
+      product:  form.product,
+      quantity: Number(form.quantity),
+      notes:    form.notes,
     });
     setForm({ product: '', quantity: 1, notes: '' });
   };

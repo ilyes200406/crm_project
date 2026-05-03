@@ -38,7 +38,7 @@ from ..serializers import (
     CreateInsomeaQuoteSerializer,
     OpportunityListSerializer,
     OpportunityDetailSerializer,
-    OpportunityCreateSerializer,
+    OpportunityCreateWithLinesSerializer,
     OpportunityUpdateSerializer,
     RequestSupplierQuotesSerializer,
     RequestClientPOSerializer,
@@ -63,6 +63,7 @@ from ..services import (
     upload_client_po,
     confirm_all_insomea_pos,
     rollback_insomea_quote,
+    add_line_to_opportunity,
 )
 from ..filters import OpportunityFilter
 from ..permissions import (
@@ -119,7 +120,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return OpportunityListSerializer
         elif self.action == 'create':
-            return OpportunityCreateSerializer
+            return OpportunityCreateWithLinesSerializer
         elif self.action in ['update', 'partial_update']:
             return OpportunityUpdateSerializer
         elif self.action == 'request_supplier_quotes':
@@ -182,30 +183,42 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     
     def create(self, request):
         """
-        Créer opportunité
-        
+        Créer opportunité, avec lignes optionnelles en une seule transaction.
+
         Body:
             {
                 "name": "Nom",
                 "client": "uuid",
-                "type": "INITIAL",  // 🆕 INITIAL, RENEWAL, UPSELL, DOWNGRADE
-                "related_opportunity": "uuid",  // 🆕 Si RENEWAL
+                "type": "INITIAL",
+                "related_opportunity": "uuid",  // Si RENEWAL
                 "assigned_to": "uuid",
-                "notes": ""
+                "notes": "",
+                "lines": [                        // Optionnel
+                    {"product": "uuid", "quantity": 1, "billing_cycle": "ANNUAL", "notes": ""}
+                ]
             }
         """
-        
+        from django.db import transaction
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        # Call service
-        opportunity = create_opportunity(
-            data=serializer.validated_data,
-            user=request.user,
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
-        
-        # Return
+
+        validated = dict(serializer.validated_data)
+        lines_data = validated.pop('lines', [])
+
+        with transaction.atomic():
+            opportunity = create_opportunity(
+                data=validated,
+                user=request.user,
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+            for line_data in lines_data:
+                add_line_to_opportunity(
+                    opportunity_id=opportunity.id,
+                    data=line_data,
+                    user=request.user,
+                )
+
         output = OpportunityDetailSerializer(opportunity)
         return Response(output.data, status=status.HTTP_201_CREATED)
     
