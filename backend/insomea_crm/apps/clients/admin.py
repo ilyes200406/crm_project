@@ -67,11 +67,10 @@ class ContactInline(admin.TabularInline):
     
     readonly_fields = []
     
+    min_num = 1
+    validate_min = True
     # Limite nombre contacts affichés (performance)
     max_num = 20
-    # Explication :
-    # Si > 20 contacts, affiche warning
-    # Évite page admin trop lourde
 
 
 class ClientActivityInline(admin.TabularInline):
