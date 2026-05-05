@@ -14,14 +14,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(verbose_name='Prénom', max_length=150, blank=True)
     last_name = models.CharField(verbose_name='Nom', max_length=150, blank=True)
-    role = models.ForeignKey(
-        'Role',
-        on_delete=models.PROTECT,
-        related_name='users',
-        to_field='name',
-        db_column='role_name',
-        verbose_name='Rôle',
-    )
+    role = models.ForeignKey('Role', on_delete=models.PROTECT, related_name='users', to_field='name', db_column='role_name', verbose_name='Rôle',)
 
     is_active = models.BooleanField(verbose_name='Actif', default=False)
     is_verified = models.BooleanField(verbose_name='Email vérifié', default=False)
