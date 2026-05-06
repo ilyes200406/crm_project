@@ -14,33 +14,28 @@ from ..models import (
     OpportunityStatus,
     Provision,
     ProvisionStatus,
-#    StatusHistory,
+    StatusHistory,
+    Subscription,
+    SubscriptionStatus,
 )
 
-"""
+
 @receiver(post_transition)
 def log_fsm_transition(sender, instance, name, source, target, **kwargs):
-    from ..models import Subscription
+    """Auto-log every FSM state transition into StatusHistory."""
+    from ...core.current_user import get_current_user, get_current_ip
 
     if sender not in [Opportunity, OpportunityLine, Provision, Subscription]:
         return
 
-    method_kwargs = kwargs.get('method_kwargs', {})
-    user = method_kwargs.get('user')
-    ip_address = method_kwargs.get('ip_address')
-
     history_data = {
-        'status_precedent': source,
+        'status_precedent': source or '',
         'status_suivant': target,
         'transition_name': name,
-        'changed_by': user,
-        'ip_address': ip_address,
+        'changed_by': get_current_user(),
+        'ip_address': get_current_ip(),
         'description': f"Transition FSM : {name}",
-        'metadata': {
-            'transition_name': name,
-            'source': source,
-            'target': target,
-        },
+        'metadata': {'transition_name': name, 'source': source, 'target': target},
     }
 
     if sender == OpportunityLine:
@@ -53,7 +48,69 @@ def log_fsm_transition(sender, instance, name, source, target, **kwargs):
         history_data['subscription'] = instance
 
     StatusHistory.objects.create(**history_data)
-"""
+
+
+@receiver(post_save, sender=Opportunity)
+def log_opportunity_created(sender, instance, created, **kwargs):
+    """Audit log when an Opportunity is first created."""
+    if not created:
+        return
+    from ...core.current_user import get_current_user, get_current_ip
+    StatusHistory.objects.create(
+        opportunity=instance,
+        status_precedent='',
+        status_suivant=instance.status,
+        transition_name='create',
+        changed_by=get_current_user(),
+        ip_address=get_current_ip(),
+        description="Opportunité créée",
+        metadata={'reference': instance.reference, 'type': instance.type},
+    )
+
+
+@receiver(post_save, sender=OpportunityLine)
+def log_opportunity_line_created(sender, instance, created, **kwargs):
+    """Audit log when an OpportunityLine is first created."""
+    if not created:
+        return
+    from ...core.current_user import get_current_user, get_current_ip
+    StatusHistory.objects.create(
+        opportunity_line=instance,
+        status_precedent='',
+        status_suivant=instance.status,
+        transition_name='create',
+        changed_by=get_current_user(),
+        ip_address=get_current_ip(),
+        description=f"Ligne ajoutée : {instance.product.title} x{instance.quantity}",
+        metadata={
+            'product_id': str(instance.product.id),
+            'quantity': instance.quantity,
+            'billing_cycle': instance.billing_cycle,
+        },
+    )
+
+
+@receiver(post_save, sender=Provision)
+def log_provision_created(sender, instance, created, **kwargs):
+    """Audit log when a Provision is first created."""
+    if not created:
+        return
+    from ...core.current_user import get_current_user, get_current_ip
+    StatusHistory.objects.create(
+        provision=instance,
+        status_precedent='',
+        status_suivant=instance.status,
+        transition_name='create',
+        changed_by=get_current_user(),
+        ip_address=get_current_ip(),
+        description=f"Provision créée ({'renouvellement' if instance.is_renewal else 'initiale'})",
+        metadata={
+            'opportunity_line_id': str(instance.opportunity_line_id),
+            'product_title': instance.opportunity_line.product.title,
+            'is_renewal': instance.is_renewal,
+        },
+    )
+
 
 @receiver(post_transition, sender=Opportunity)
 def notify_on_opportunity_transition(sender, instance, name, source, target, **kwargs):
@@ -96,18 +153,36 @@ def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=OpportunityLine)
-def update_opportunity_status_on_line_delete(sender, instance, **kwargs):
-    """Recompute opportunity status after deleting a line."""
+def handle_opportunity_line_deleted(sender, instance, **kwargs):
+    """Recompute opportunity status and log deletion after a line is removed."""
     from ..services.opportunity_service import update_opportunity_status_from_lines
+    from ...core.current_user import get_current_user, get_current_ip
 
-    if instance.opportunity_id:
-        try:
-            update_opportunity_status_from_lines(instance.opportunity)
-        except Opportunity.DoesNotExist:
-            pass
+    if not instance.opportunity_id:
+        return
 
-
-
+    # Log against the opportunity so the record survives the CASCADE delete on the line FK
+    try:
+        opp = instance.opportunity
+        StatusHistory.objects.create(
+            opportunity=opp,
+            status_precedent=opp.status,
+            status_suivant=opp.status,
+            transition_name='line_deleted',
+            changed_by=get_current_user(),
+            ip_address=get_current_ip(),
+            description=f"Ligne supprimée : {instance.product.title} x{instance.quantity}",
+            metadata={
+                'line_id': str(instance.id),
+                'product_id': str(instance.product_id),
+                'product_title': instance.product.title,
+                'quantity': instance.quantity,
+                'line_status': instance.status,
+            },
+        )
+        update_opportunity_status_from_lines(opp)
+    except Opportunity.DoesNotExist:
+        pass
 
 
 # FSM transitions for SupplierQuoteLine, InsomeaQuote, and ClientPO are handled

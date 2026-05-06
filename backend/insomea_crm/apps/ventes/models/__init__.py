@@ -5,7 +5,7 @@ from .insomeaQuoteLine import InsomeaQuoteLine
 from .opportunity import Opportunity, OpportunityStatus, OpportunityType
 from .opportunityLine import BillingCycle, OpportunityLine, OpportunityLineStatus
 from .provision import Provision, ProvisionStatus
-#from .statusHistory import StatusHistory
+from .statusHistory import StatusHistory
 from .subscription import Subscription, SubscriptionStatus
 from .subscriptionTerm import SubscriptionTerm
 from .supplierQuote import SupplierQuote
@@ -24,7 +24,7 @@ __all__ = [
     'OpportunityType',
     'Provision',
     'ProvisionStatus',
-#    'StatusHistory',
+    'StatusHistory',
     'Subscription',
     'SubscriptionStatus',
     'SubscriptionTerm',

@@ -45,6 +45,7 @@ from ..serializers import (
     ApproveOpportunitySerializer,
     CancelOpportunitySerializer,
     InsomeaPurchaseOrderListSerializer,
+    StatusHistorySerializer,
     UploadClientPOSerializer,
 )
 from ..selectors import (
@@ -623,6 +624,39 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     
         pipeline = get_opportunity_pipeline_stats(user=request.user)
         return Response(pipeline)
+
+    @action(detail=True, methods=['get'], url_path='audit-trail')
+    def audit_trail(self, request, pk=None):
+        """
+        Audit trail complet pour une opportunité
+
+        GET /opportunities/:id/audit-trail/
+
+        Returns all StatusHistory records linked to the opportunity,
+        its lines, provisions, and subscriptions — ordered chronologically.
+        """
+        from django.db.models import Q
+        from ..models import StatusHistory, Provision, Subscription
+
+        opportunity = self.get_object()
+
+        line_ids = opportunity.lines.values_list('id', flat=True)
+        provision_ids = Provision.objects.filter(
+            opportunity_line__opportunity=opportunity
+        ).values_list('id', flat=True)
+        subscription_ids = Subscription.objects.filter(
+            provisions__opportunity_line__opportunity=opportunity
+        ).values_list('id', flat=True)
+
+        history = StatusHistory.objects.filter(
+            Q(opportunity=opportunity) |
+            Q(opportunity_line_id__in=line_ids) |
+            Q(provision_id__in=provision_ids) |
+            Q(subscription_id__in=subscription_ids)
+        ).select_related('changed_by').order_by('created_at')
+
+        serializer = StatusHistorySerializer(history, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def revenue_chart(self, request):

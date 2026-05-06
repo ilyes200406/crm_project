@@ -1,5 +1,6 @@
 """Serializers exports for ventes app."""
 
+from .audit_serializers import StatusHistorySerializer
 from .line_serializers import (
     OpportunityLineCreateSerializer,
     OpportunityLineDetailSerializer,
@@ -53,6 +54,7 @@ from .subscription_serializers import (
 )
 
 __all__ = [
+    'StatusHistorySerializer',
     'ApproveOpportunitySerializer',
     'CancelOpportunitySerializer',
     'ClientPOSerializer',

@@ -24,6 +24,7 @@ from .models import (
     ClientPO,
     InsomeaPurchaseOrder,
     Provision,
+    StatusHistory,
     Subscription,
     SubscriptionStatus,
     SubscriptionTerm,
@@ -67,6 +68,25 @@ PROVISION_STATUS_COLORS = {
 # ═══════════════════════════════════════════════════════════
 # INLINES
 # ═══════════════════════════════════════════════════════════
+
+class StatusHistoryInline(admin.TabularInline):
+    model = StatusHistory
+    extra = 0
+    readonly_fields = (
+        'created_at', 'transition_name', 'status_precedent',
+        'status_suivant', 'changed_by', 'ip_address', 'description',
+    )
+    fields = (
+        'created_at', 'transition_name', 'status_precedent',
+        'status_suivant', 'changed_by', 'ip_address', 'description',
+    )
+    can_delete = False
+    ordering = ('-created_at',)
+    show_change_link = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class OpportunityLineInline(admin.TabularInline):
     model = OpportunityLine
@@ -189,7 +209,7 @@ class OpportunityAdmin(admin.ModelAdmin):
         }),
     )
 
-    inlines = [OpportunityLineInline]
+    inlines = [OpportunityLineInline, StatusHistoryInline]
 
     actions = [
         'action_request_supplier_quotes',
@@ -749,6 +769,69 @@ class SubscriptionTermAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# ═══════════════════════════════════════════════════════════
+# STATUS HISTORY ADMIN
+# ═══════════════════════════════════════════════════════════
+
+@admin.register(StatusHistory)
+class StatusHistoryAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'created_at',
+        'entity_type_display',
+        'transition_name',
+        'status_precedent',
+        'status_suivant',
+        'changed_by',
+        'ip_address',
+    )
+
+    list_filter = ('transition_name', 'created_at')
+
+    search_fields = (
+        'transition_name',
+        'description',
+        'changed_by__email',
+        'opportunity__reference',
+    )
+
+    readonly_fields = (
+        'id', 'opportunity', 'opportunity_line', 'provision', 'subscription',
+        'status_precedent', 'status_suivant', 'transition_name',
+        'changed_by', 'description', 'metadata', 'ip_address', 'created_at',
+    )
+
+    fieldsets = (
+        (_('Entité'), {
+            'fields': ('id', 'opportunity', 'opportunity_line', 'provision', 'subscription')
+        }),
+        (_('Transition'), {
+            'fields': ('transition_name', 'status_precedent', 'status_suivant')
+        }),
+        (_('Contexte'), {
+            'fields': ('changed_by', 'ip_address', 'description', 'metadata')
+        }),
+        (_('Horodatage'), {
+            'fields': ('created_at',)
+        }),
+    )
+
+    ordering = ('-created_at',)
+
+    @admin.display(description='Type entité')
+    def entity_type_display(self, obj):
+        return obj.get_entity_type() or '—'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
 
 
 # ═══════════════════════════════════════════════════════════

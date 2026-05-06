@@ -106,7 +106,7 @@ def create_provisions(*, opportunity_id, user, ip_address=None):
         )
 
         provisions.append(provision)
-        # Notification handled by post_save signal (notify_on_provision_created)
+        # Audit + notification handled by post_save signal
     
     return provisions
 
