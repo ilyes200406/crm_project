@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { Bell, CheckCheck } from 'lucide-react';
 
 import { Card, Badge } from '../../../shared/components';
 import { NotificationItem } from '../components';
@@ -33,11 +34,16 @@ export function NotificationsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">🔔 Notifications</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Toutes vos notifications en temps réel
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <Bell size={18} className="text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Toutes vos notifications en temps réel
+            </p>
+          </div>
         </div>
 
         <button
@@ -84,7 +90,7 @@ export function NotificationsPage() {
           </div>
         ) : !data?.results || data.results.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-6xl mb-4">🔔</div>
+            <div className="flex justify-center mb-4"><Bell size={48} className="text-gray-300" /></div>
             <p className="text-gray-500 text-sm">
               {filter === 'unread' ? 'Aucune notification non lue' : 'Aucune notification'}
             </p>

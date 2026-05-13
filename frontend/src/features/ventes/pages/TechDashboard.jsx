@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+import { Wrench, BarChart3, CheckCircle2, Clock } from 'lucide-react';
+
 import { Card, Badge } from '../../../shared/components';
 import {
   TechStatsCards,
@@ -30,10 +32,15 @@ export function TechDashboard() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">🔧 Dashboard Technicien</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Gestion des provisions et provisioning
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <Wrench size={18} className="text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Technicien</h1>
+            <p className="text-sm text-gray-500">Gestion des provisions et provisioning</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -46,7 +53,7 @@ export function TechDashboard() {
       <ProvisionsInProgressWidget />
 
       {/* Row 3: Timeline Provisioning */}
-      <Card title="📊 Timeline Provisioning (10 dernières)">
+      <Card title={<span className="flex items-center gap-2"><BarChart3 size={16} className="text-blue-500" />Timeline Provisioning (10 dernières)</span>}>
         {completedLoading ? (
           <div className="space-y-3">
             {[...Array(5)].map((_, idx) => (
@@ -76,7 +83,9 @@ export function TechDashboard() {
                 >
                   {/* Left: Status + Info */}
                   <div className="flex items-center gap-4">
-                    <div className="text-2xl">✅</div>
+                    <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={16} className="text-green-600" />
+                    </div>
                     <div>
                       <div className="font-semibold text-gray-900">
                         {opp?.reference || '-'} - {opp?.client?.name || '-'}
@@ -107,7 +116,7 @@ export function TechDashboard() {
             {completedProvisions.results.length > 0 && (
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">⏱️ Temps moyen provisioning:</span>
+                  <span className="flex items-center gap-1.5 text-gray-600"><Clock size={13} />Temps moyen provisioning:</span>
                   <span className="font-semibold text-gray-900">
                     {calculateAverageTime(completedProvisions.results)} min
                   </span>

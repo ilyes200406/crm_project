@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, Search, RotateCcw, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 
 import { Card, DataTable, StatusBadge, Badge } from '../../../shared/components';
 import { useSubscriptions } from '../hooks';
@@ -21,7 +22,7 @@ const STATUS_OPTIONS = [
 function ExpiryBadge({ days }) {
   if (days == null) return <span className="text-gray-400 text-xs">—</span>;
   if (days < 0) return <span className="text-xs text-red-600 font-medium">Expiré</span>;
-  if (days <= 7)  return <span className="text-xs font-medium text-red-600">{days}j ⚠️</span>;
+  if (days <= 7)  return <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600"><AlertTriangle size={11} />{days}j</span>;
   if (days <= 30) return <span className="text-xs font-medium text-amber-600">{days}j</span>;
   return <span className="text-xs text-gray-500">{days}j</span>;
 }
@@ -118,22 +119,30 @@ export function SubscriptionsListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">📋 Subscriptions</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {data?.count ?? '—'} subscription{data?.count !== 1 ? 's' : ''}
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+          <ClipboardList size={18} className="text-blue-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Abonnements</h1>
+          <p className="text-sm text-gray-500">
+            {data?.count ?? '—'} abonnement{data?.count !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="🔍 Numéro, client, produit..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="relative flex-1 min-w-48">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Numéro, client, produit..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
@@ -146,9 +155,10 @@ export function SubscriptionsListPage() {
         {(search || status) && (
           <button
             onClick={() => { setSearch(''); setStatus(''); setPage(1); }}
-            className="px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            ✕ Réinitialiser
+            <RotateCcw size={13} />
+            Réinitialiser
           </button>
         )}
       </div>
@@ -172,16 +182,18 @@ export function SubscriptionsListPage() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
               >
-                ← Précédent
+                <ChevronLeft size={14} />
+                Précédent
               </button>
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700 transition-colors"
               >
-                Suivant →
+                Suivant
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>

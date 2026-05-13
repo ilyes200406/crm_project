@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { Card, Badge, EmptyState, Modal } from '../../../shared/components';
+import { User, ClipboardList, Pencil, Trash2, ArrowLeft, Sparkles, RotateCcw, FileText } from 'lucide-react';
 import { ClientCard, ContactsTable, ContactForm } from '../components';
 import { 
   useClient, 
@@ -124,9 +125,10 @@ export function ClientDetailPage() {
       <div>
         <button
           onClick={() => navigate('/app/clients')}
-          className="text-sm text-blue-600 hover:text-blue-800 mb-2"
+          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-2 transition-colors"
         >
-          ← Retour aux clients
+          <ArrowLeft size={14} />
+          Retour aux clients
         </button>
         <div className="flex items-center justify-between">
           <div>
@@ -140,16 +142,18 @@ export function ClientDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(`/app/clients/${id}/edit`)}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
             >
-              ✏️ Modifier
+              <Pencil size={14} />
+              Modifier
             </button>
             <button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 text-sm font-medium"
             >
-              🗑️ Supprimer
+              <Trash2 size={14} />
+              Supprimer
             </button>
           </div>
         </div>
@@ -243,7 +247,7 @@ export function ClientDetailPage() {
               />
             ) : (
               <EmptyState
-                icon="👤"
+                Icon={User}
                 title="Aucun contact"
                 message="Ce client n'a pas encore de contacts enregistrés."
                 action={{
@@ -263,7 +267,7 @@ export function ClientDetailPage() {
               {client.recent_activities.map((activity) => (
                 <div key={activity.id} className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="text-2xl">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                       {getActivityIcon(activity.activity_type)}
                     </div>
                     <div className="flex-1">
@@ -289,7 +293,7 @@ export function ClientDetailPage() {
             </div>
           ) : (
             <EmptyState
-              icon="📋"
+              Icon={ClipboardList}
               title="Aucune activité"
               message="Aucune activité enregistrée pour ce client."
             />
@@ -328,11 +332,11 @@ export function ClientDetailPage() {
  */
 function getActivityIcon(activityType) {
   const icons = {
-    CREATED: '✨',
-    UPDATED: '✏️',
-    DELETED: '🗑️',
-    RESTORED: '♻️',
-    ASSIGNED: '👤',
+    CREATED:  <Sparkles  size={14} className="text-blue-500" />,
+    UPDATED:  <Pencil    size={14} className="text-gray-500" />,
+    DELETED:  <Trash2    size={14} className="text-red-500" />,
+    RESTORED: <RotateCcw size={14} className="text-green-500" />,
+    ASSIGNED: <User      size={14} className="text-purple-500" />,
   };
-  return icons[activityType] || '📝';
+  return icons[activityType] || <FileText size={14} className="text-gray-400" />;
 }

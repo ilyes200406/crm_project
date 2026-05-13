@@ -1,54 +1,41 @@
-/**
- * SUBSCRIPTIONS EXPIRING WIDGET
- * 
- * Widget affichant les subscriptions expirant bientôt
- */
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { AlertTriangle, RefreshCw, ChevronRight } from 'lucide-react';
 
 import { Card, Badge, EmptyStates } from '../../../shared/components';
 import { useExpiringSubscriptions } from '../hooks';
 
-/**
- * SubscriptionsExpiringWidget Component
- * 
- * @param {Object} props
- * @param {number} props.days - Days threshold (default: 30)
- * @param {number} props.limit - Number of items to display (default: 5)
- */
 export function SubscriptionsExpiringWidget({ days = 30, limit = 5 }) {
   const navigate = useNavigate();
 
-  // Fetch expiring subscriptions
   const { data, isLoading } = useExpiringSubscriptions(days, { limit });
 
-  // Get urgency level based on days remaining
   const getUrgencyConfig = (endDate) => {
     const daysRemaining = Math.ceil(
       (new Date(endDate) - new Date()) / (1000 * 60 * 60 * 24)
     );
 
     if (daysRemaining <= 7) {
-      return { variant: 'red', icon: '🔴', label: `${daysRemaining}j restants` };
+      return { variant: 'red',    dotClass: 'bg-red-500',    label: `${daysRemaining}j restants` };
     } else if (daysRemaining <= 15) {
-      return { variant: 'orange', icon: '🟠', label: `${daysRemaining}j restants` };
+      return { variant: 'orange', dotClass: 'bg-orange-500', label: `${daysRemaining}j restants` };
     } else {
-      return { variant: 'yellow', icon: '🟡', label: `${daysRemaining}j restants` };
+      return { variant: 'yellow', dotClass: 'bg-yellow-500', label: `${daysRemaining}j restants` };
     }
   };
 
-  // Handle create renewal
-  const handleCreateRenewal = (subscription) => {
-    navigate(`/app/ventes/subscriptions/${subscription.id}`);
-  };
+  const cardTitle = (
+    <span className="flex items-center gap-2">
+      <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+      Abonnements Expirant ({days}j)
+    </span>
+  );
 
-  // Loading state
   if (isLoading) {
     return (
-      <Card title="⚠️ Subscriptions Expirant (30j)">
+      <Card title={cardTitle}>
         <div className="space-y-4">
           {[...Array(3)].map((_, idx) => (
             <div key={idx} className="animate-pulse">
@@ -61,10 +48,9 @@ export function SubscriptionsExpiringWidget({ days = 30, limit = 5 }) {
     );
   }
 
-  // Empty state
   if (!data?.results || data.results.length === 0) {
     return (
-      <Card title="⚠️ Subscriptions Expirant (30j)">
+      <Card title={cardTitle}>
         <EmptyStates.NoSubscriptions />
       </Card>
     );
@@ -72,29 +58,34 @@ export function SubscriptionsExpiringWidget({ days = 30, limit = 5 }) {
 
   return (
     <Card
-      title="⚠️ Subscriptions Expirant (30j)"
+      title={cardTitle}
       footer={
         <button
           onClick={() => navigate('/ventes?tab=subscriptions&filter=expiring')}
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
         >
-          Voir tout ({data.count || 0}) →
+          Voir tout ({data.count || 0})
+          <ChevronRight size={14} />
         </button>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {data.results.map((subscription) => {
           const urgency = getUrgencyConfig(subscription.current_term?.end_date);
 
           return (
             <div
               key={subscription.id}
-              className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+              className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-colors"
               onClick={() => navigate(`/ventes/subscriptions/${subscription.id}`)}
             >
-              {/* Urgency badge */}
+              {/* Urgency badge with CSS dot */}
               <div className="flex items-center justify-between mb-2">
-                <Badge variant={urgency.variant} icon={urgency.icon} size="sm">
+                <Badge
+                  variant={urgency.variant}
+                  icon={<span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${urgency.dotClass}`} />}
+                  size="sm"
+                >
                   {urgency.label}
                 </Badge>
               </div>
@@ -109,20 +100,19 @@ export function SubscriptionsExpiringWidget({ days = 30, limit = 5 }) {
                 </div>
               </div>
 
-              {/* Subscription number */}
               <div className="text-xs text-gray-500 mb-3">
                 {subscription.subscription_number}
               </div>
 
-              {/* Action button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCreateRenewal(subscription);
+                  navigate(`/app/ventes/subscriptions/${subscription.id}`);
                 }}
-                className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 font-medium"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
               >
-                🔄 Créer Renewal
+                <RefreshCw size={13} />
+                Créer Renewal
               </button>
             </div>
           );

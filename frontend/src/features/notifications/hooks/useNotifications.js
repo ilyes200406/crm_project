@@ -96,13 +96,13 @@ function showNotificationToast(notification) {
       toast.success(`${title}\n${message}`, toastConfig);
       break;
     case 'warning':
-      toast(`${title}\n${message}`, { ...toastConfig, icon: '⚠️' });
+      toast(`${title}\n${message}`, toastConfig);
       break;
     case 'error':
       toast.error(`${title}\n${message}`, toastConfig);
       break;
     default:
-      toast(`${title}\n${message}`, { ...toastConfig, icon: '🔔' });
+      toast(`${title}\n${message}`, toastConfig);
   }
 }
 

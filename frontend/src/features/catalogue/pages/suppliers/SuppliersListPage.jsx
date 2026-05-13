@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { Factory } from 'lucide-react';
 
 import { Card } from '../../../../shared/components';
 import { SuppliersTable, SupplierFilters } from '../../components/suppliers';
@@ -31,10 +32,15 @@ export function SuppliersListPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">🏢 Fournisseurs</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Consultez la liste des fournisseurs partenaires
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Factory size={18} className="text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Fournisseurs</h1>
+              <p className="text-sm text-gray-500">Consultez la liste des fournisseurs partenaires</p>
+            </div>
+          </div>
         </div>
       </div>
 

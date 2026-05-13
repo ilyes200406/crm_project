@@ -1,54 +1,49 @@
-/**
- * DASHBOARD LAYOUT
- * 
- * Layout principal avec sidebar et header
- */
-
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  BarChart3, Users, Package, Factory, Briefcase,
+  ClipboardList, Wrench, Bell, User, LogOut,
+} from 'lucide-react';
 
-import { useAppStore } from '../app/store'; // ← UTILISER VOTRE STORE
+import { useAppStore } from '../app/store';
 import { NotificationBell } from '../features/notifications/components';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Adapter au store
+
   const user = useAppStore((state) => state.user);
   const clearSession = useAppStore((state) => state.clearSession);
 
-  // Handle logout
   const handleLogout = () => {
     clearSession();
     navigate('/login');
   };
 
-  // Navigation items by role
   const getNavItems = () => {
     const baseItems = [
       {
         path: '/app',
         label: 'Dashboard',
-        icon: '📊',
+        Icon: BarChart3,
         roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'],
       },
     ];
 
     const commercialItems = [
-      { path: '/app/clients',             label: 'Clients',      icon: '👥', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
-      { path: '/app/catalogue',           label: 'Produits',     icon: '📦', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
-      { path: '/app/catalogue/suppliers', label: 'Fournisseurs', icon: '🏭', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
-      { path: '/app/ventes',              label: 'Ventes',       icon: '💼', roles: ['COMMERCIAL', 'FINANCE', 'ADMIN'] },
-      { path: '/app/ventes/subscriptions', label: 'Abonnements', icon: '📋', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/clients',              label: 'Clients',        Icon: Users,         roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/catalogue',            label: 'Produits',       Icon: Package,       roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/catalogue/suppliers',  label: 'Fournisseurs',   Icon: Factory,       roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/ventes',               label: 'Ventes',         Icon: Briefcase,     roles: ['COMMERCIAL', 'FINANCE', 'ADMIN'] },
+      { path: '/app/ventes/subscriptions', label: 'Abonnements',    Icon: ClipboardList, roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
     ];
 
     const techItems = [
-      { path: '/app/ventes/provisions', label: 'Provisions', icon: '🔧', roles: ['TECHNICIEN', 'ADMIN'] },
+      { path: '/app/ventes/provisions', label: 'Provisions', Icon: Wrench, roles: ['TECHNICIEN', 'ADMIN'] },
     ];
 
     const notificationItems = [
-      { path: '/app/notifications', label: 'Notifications', icon: '🔔', roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
+      { path: '/app/notifications', label: 'Notifications', Icon: Bell, roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
     ];
 
     return [...baseItems, ...commercialItems, ...techItems, ...notificationItems].filter((item) =>
@@ -76,16 +71,16 @@ export function DashboardLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-                  ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <span className="text-xl">{item.icon}</span>
+                <item.Icon
+                  size={18}
+                  className={isActive ? 'text-blue-600' : 'text-gray-400'}
+                />
                 <span>{item.label}</span>
               </Link>
             );
@@ -103,17 +98,18 @@ export function DashboardLayout() {
           <div className="space-y-1 mb-3">
             <Link
               to="/app/profile"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors"
             >
-              <span>👤</span>
+              <User size={15} className="text-gray-400" />
               <span>Mon profil</span>
             </Link>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            Déconnexion
+            <LogOut size={15} className="text-red-500" />
+            <span>Déconnexion</span>
           </button>
         </div>
       </aside>
@@ -126,8 +122,6 @@ export function DashboardLayout() {
             <div className="text-sm text-gray-600">
               Bienvenue, <span className="font-medium text-gray-900">{user?.email}</span>
             </div>
-
-            {/* Notification Bell */}
             <NotificationBell />
           </div>
         </header>

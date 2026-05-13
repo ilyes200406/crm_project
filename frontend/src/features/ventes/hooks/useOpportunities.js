@@ -294,7 +294,7 @@ export function useConfirmAllPOs() {
       queryClient.invalidateQueries({ queryKey: opportunitiesKeys.pipeline() });
 
       const message = data.provisions_created
-        ? 'BC confirmés - Provisions créées ✅'
+        ? 'BC confirmés - Provisions créées'
         : 'BC confirmés';
       toast.success(message);
 

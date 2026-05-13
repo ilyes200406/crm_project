@@ -12,6 +12,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
+import { Clock, RefreshCw, XCircle, Info, Play, CheckCircle2, AlertTriangle, ChevronRight } from 'lucide-react';
+
 import { Card, StatusBadge, Badge } from '../../../shared/components';
 import { useProvision, useStartProvisioning, useCompleteProvisioning, useFailProvisioning, useRetryProvisioning } from '../hooks';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -44,16 +46,18 @@ function SectionCard({ title, children }) {
 
 function ReadOnlyStatusPanel({ provision }) {
   const labels = {
-    WAITING_PROVISION: { icon: '⏳', text: 'En attente de prise en charge par un technicien.', cls: 'bg-amber-50 border-amber-200 text-amber-800' },
-    PROVISIONING:      { icon: '🔄', text: 'Provisioning en cours par le technicien.', cls: 'bg-blue-50 border-blue-200 text-blue-800' },
-    ERROR:             { icon: '❌', text: 'Provisioning en échec. Un technicien doit intervenir.', cls: 'bg-red-50 border-red-200 text-red-800' },
+    WAITING_PROVISION: { Icon: Clock,     text: 'En attente de prise en charge par un technicien.', cls: 'bg-amber-50 border-amber-200 text-amber-800' },
+    PROVISIONING:      { Icon: RefreshCw, text: 'Provisioning en cours par le technicien.',         cls: 'bg-blue-50 border-blue-200 text-blue-800' },
+    ERROR:             { Icon: XCircle,   text: 'Provisioning en échec. Un technicien doit intervenir.', cls: 'bg-red-50 border-red-200 text-red-800' },
   };
-  const info = labels[provision.status] || { icon: 'ℹ️', text: provision.status, cls: 'bg-gray-50 border-gray-200 text-gray-700' };
+  const info = labels[provision.status] || { Icon: Info, text: provision.status, cls: 'bg-gray-50 border-gray-200 text-gray-700' };
+  const StatusIcon = info.Icon;
 
   return (
     <SectionCard title="Statut">
-      <div className={`border rounded-lg p-4 text-sm ${info.cls}`}>
-        <span className="mr-2">{info.icon}</span>{info.text}
+      <div className={`flex items-start gap-2.5 border rounded-lg p-4 text-sm ${info.cls}`}>
+        <StatusIcon size={15} className="shrink-0 mt-0.5" />
+        <span>{info.text}</span>
       </div>
       {provision.provisioning_error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 mt-2">
@@ -83,9 +87,10 @@ function WaitingPanel({ provision }) {
       <button
         onClick={() => startMutation.mutate(provision.id)}
         disabled={startMutation.isPending}
-        className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
       >
-        {startMutation.isPending ? 'Démarrage...' : '▶ Démarrer le provisioning'}
+        <Play size={15} className="shrink-0" />
+        {startMutation.isPending ? 'Démarrage...' : 'Démarrer le provisioning'}
       </button>
     </SectionCard>
   );
@@ -198,16 +203,18 @@ function ProvisioningPanel({ provision }) {
           <button
             type="submit"
             disabled={completeMutation.isPending}
-            className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm disabled:opacity-50"
           >
-            {completeMutation.isPending ? 'En cours...' : '✅ Marquer comme provisionné'}
+            <CheckCircle2 size={15} className="shrink-0" />
+            {completeMutation.isPending ? 'En cours...' : 'Marquer comme provisionné'}
           </button>
           <button
             type="button"
             onClick={() => setShowFail(true)}
-            className="px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm"
           >
-            ⚠ Signaler une erreur
+            <AlertTriangle size={14} className="shrink-0" />
+            Signaler une erreur
           </button>
         </div>
       </form>
@@ -250,7 +257,7 @@ function ProvisionedPanel({ provision }) {
   return (
     <SectionCard title="Provisioning complété">
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
-        <p className="text-green-700 font-semibold text-sm">✅ Provisioning réalisé avec succès</p>
+        <p className="flex items-center gap-1.5 text-green-700 font-semibold text-sm"><CheckCircle2 size={15} /> Provisioning réalisé avec succès</p>
         {provision.provisioning_completed_at && (
           <p className="text-green-600 text-xs">
             Complété le {new Date(provision.provisioning_completed_at).toLocaleString('fr-FR')}
@@ -281,7 +288,7 @@ function ErrorPanel({ provision }) {
   return (
     <SectionCard title="Erreur de provisioning">
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
-        <p className="text-red-700 font-semibold text-sm">❌ Provisioning en échec</p>
+        <p className="flex items-center gap-1.5 text-red-700 font-semibold text-sm"><XCircle size={15} /> Provisioning en échec</p>
         {provision.provisioning_error && (
           <p className="text-red-600 text-sm">{provision.provisioning_error}</p>
         )}
@@ -289,9 +296,10 @@ function ErrorPanel({ provision }) {
       <button
         onClick={() => retryMutation.mutate(provision.id)}
         disabled={retryMutation.isPending}
-        className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
       >
-        {retryMutation.isPending ? 'Relance...' : '🔄 Relancer le provisioning'}
+        <RefreshCw size={15} className="shrink-0" />
+        {retryMutation.isPending ? 'Relance...' : 'Relancer le provisioning'}
       </button>
     </SectionCard>
   );

@@ -118,7 +118,7 @@ export function useCompleteProvisioning() {
         queryClient.invalidateQueries({ queryKey: opportunitiesKeys.lists() });
       }
 
-      toast.success('Provisioning complété ✅');
+      toast.success('Provisioning complété');
       return data;
     },
     onError: (error) => {

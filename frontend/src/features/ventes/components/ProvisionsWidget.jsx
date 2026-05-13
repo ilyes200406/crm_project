@@ -1,37 +1,18 @@
-/**
- * PROVISIONS WIDGET
- * 
- * Widget affichant les provisions en attente (Technicien)
- */
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Play, AlertTriangle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 import { Card, DataTable, StatusBadge, EmptyStates } from '../../../shared/components';
 import { useProvisions, useStartProvisioning } from '../hooks';
 
-/**
- * ProvisionsWidget Component
- * 
- * @param {Object} props
- * @param {string} props.status - Filter by status (default: 'WAITING_PROVISION')
- * @param {number} props.limit - Number of items to display (default: 5)
- */
 export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
   const navigate = useNavigate();
 
-  // Fetch provisions
-  const { data, isLoading } = useProvisions({
-    status,
-    limit,
-  });
-
-  // Start provisioning mutation
+  const { data, isLoading } = useProvisions({ status, limit });
   const startMutation = useStartProvisioning();
 
-  // Handle start provisioning
   const handleStart = async (provision) => {
     try {
       await startMutation.mutateAsync(provision.id);
@@ -48,14 +29,9 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
         const opp = row.opportunity_line?.opportunity;
         return (
           <div>
-            <div className="font-medium text-gray-900">
-              {opp?.reference || '-'}
-            </div>
+            <div className="font-medium text-gray-900">{opp?.reference || '-'}</div>
             <div className="text-xs text-gray-500">
-              {formatDistanceToNow(new Date(row.created_at), {
-                addSuffix: true,
-                locale: fr,
-              })}
+              {formatDistanceToNow(new Date(row.created_at), { addSuffix: true, locale: fr })}
             </div>
           </div>
         );
@@ -66,9 +42,7 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
       render: (row) => {
         const client = row.opportunity_line?.opportunity?.client;
         return (
-          <div className="font-medium text-gray-700">
-            {client?.name || '-'}
-          </div>
+          <div className="font-medium text-gray-700">{client?.name || '-'}</div>
         );
       },
     },
@@ -78,12 +52,8 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
         const product = row.opportunity_line?.product;
         return (
           <div>
-            <div className="text-sm font-medium text-gray-900">
-              {product?.title || '-'}
-            </div>
-            <div className="text-xs text-gray-500">
-              Qté: {row.opportunity_line?.quantity || 0}
-            </div>
+            <div className="text-sm font-medium text-gray-900">{product?.title || '-'}</div>
+            <div className="text-xs text-gray-500">Qté: {row.opportunity_line?.quantity || 0}</div>
           </div>
         );
       },
@@ -97,9 +67,10 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
             handleStart(row);
           }}
           disabled={startMutation.isPending}
-          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          ▶️ Start
+          <Play size={12} />
+          Démarrer
         </button>
       ),
     },
@@ -109,39 +80,42 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
     navigate(`/app/ventes/provisions/${provision.id}`);
   };
 
+  const cardTitle = (
+    <span className="flex items-center gap-2">
+      <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+      Provisions en Attente
+    </span>
+  );
+
   return (
-    <Card title="⚠️ Provisions en Attente" noPadding>
+    <Card title={cardTitle} noPadding>
       <DataTable
         columns={columns}
         data={data?.results || []}
         onRowClick={handleRowClick}
         loading={isLoading}
-        emptyState={{
-          message: 'Aucune provision en attente',
-        }}
+        emptyState={{ message: 'Aucune provision en attente' }}
         striped={false}
       />
     </Card>
   );
 }
 
-/**
- * ProvisionsInProgressWidget - Kanban view
- * 
- * Widget showing provisions in progress
- */
 export function ProvisionsInProgressWidget() {
   const navigate = useNavigate();
 
-  // Fetch provisions in progress
-  const { data, isLoading } = useProvisions({
-    status: 'PROVISIONING',
-    limit: 10,
-  });
+  const { data, isLoading } = useProvisions({ status: 'PROVISIONING', limit: 10 });
+
+  const cardTitle = (
+    <span className="flex items-center gap-2">
+      <RefreshCw size={16} className="text-blue-500 shrink-0" />
+      Mes Provisions en Cours
+    </span>
+  );
 
   if (isLoading) {
     return (
-      <Card title="🔄 Mes Provisions en Cours">
+      <Card title={cardTitle}>
         <div className="h-64 bg-gray-200 rounded animate-pulse" />
       </Card>
     );
@@ -149,14 +123,14 @@ export function ProvisionsInProgressWidget() {
 
   if (!data?.results || data.results.length === 0) {
     return (
-      <Card title="🔄 Mes Provisions en Cours">
+      <Card title={cardTitle}>
         <EmptyStates.NoProvisions />
       </Card>
     );
   }
 
   return (
-    <Card title="🔄 Mes Provisions en Cours">
+    <Card title={cardTitle}>
       <div className="space-y-3">
         {data.results.map((provision) => {
           const opp = provision.opportunity_line?.opportunity;
@@ -165,30 +139,17 @@ export function ProvisionsInProgressWidget() {
           return (
             <div
               key={provision.id}
-              className="border border-blue-200 bg-blue-50 rounded-lg p-4 hover:bg-blue-100 cursor-pointer"
+              className="border border-blue-200 bg-blue-50 rounded-xl p-4 hover:bg-blue-100 cursor-pointer transition-colors"
               onClick={() => navigate(`/app/ventes/provisions/${provision.id}`)}
             >
-              {/* Status badge */}
               <div className="mb-2">
                 <StatusBadge status={provision.status} />
               </div>
-
-              {/* Opportunity info */}
               <div className="mb-1">
-                <div className="font-semibold text-gray-900">
-                  {opp?.reference || '-'}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {opp?.client?.name || '-'}
-                </div>
+                <div className="font-semibold text-gray-900">{opp?.reference || '-'}</div>
+                <div className="text-sm text-gray-600">{opp?.client?.name || '-'}</div>
               </div>
-
-              {/* Product info */}
-              <div className="text-sm text-gray-700 mb-3">
-                {product?.title || '-'}
-              </div>
-
-              {/* Started time */}
+              <div className="text-sm text-gray-700 mb-3">{product?.title || '-'}</div>
               <div className="text-xs text-gray-500">
                 Démarré{' '}
                 {formatDistanceToNow(new Date(provision.provisioning_started_at), {
@@ -196,16 +157,15 @@ export function ProvisionsInProgressWidget() {
                   locale: fr,
                 })}
               </div>
-
-              {/* Complete button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/app/ventes/provisions/${provision.id}`);
                 }}
-                className="mt-3 w-full px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 font-medium"
+                className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
               >
-                ✅ Compléter
+                <CheckCircle2 size={14} />
+                Compléter
               </button>
             </div>
           );

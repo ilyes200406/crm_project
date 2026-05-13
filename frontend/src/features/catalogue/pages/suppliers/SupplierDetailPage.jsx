@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { Card, EmptyState } from '../../../../shared/components';
+import { Package } from 'lucide-react';
 import { SupplierCard } from '../../components/suppliers';
 import { ProductsTable } from '../../components/products';
 import { useSupplier, useSupplierProducts } from '../../hooks';
@@ -153,7 +154,7 @@ export function SupplierDetailPage() {
               />
             ) : (
               <EmptyState
-                icon="📦"
+                Icon={Package}
                 title="Aucun produit"
                 message="Ce fournisseur n'a pas encore de produits enregistrés."
               />

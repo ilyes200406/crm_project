@@ -18,6 +18,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+import { Briefcase, DollarSign, BarChart3 } from 'lucide-react';
+
 import { Card } from '../../../shared/components';
 import {
   FinanceStatsCards,
@@ -48,10 +50,15 @@ export function FinanceDashboard() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">💼 Dashboard Finance</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Approbations, revenue et marges
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <Briefcase size={18} className="text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Finance</h1>
+            <p className="text-sm text-gray-500">Approbations, revenue et marges</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -63,7 +70,7 @@ export function FinanceDashboard() {
       {/* Row 2: Revenue Chart + Subscriptions Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Monthly Chart */}
-        <Card title="💰 Revenue Mensuel (12 mois)">
+        <Card title={<span className="flex items-center gap-2"><DollarSign size={16} className="text-green-500" />Revenue Mensuel (12 mois)</span>}>
           {revenueLoading ? (
             <div className="h-80 bg-gray-200 rounded animate-pulse" />
           ) : (
@@ -105,7 +112,7 @@ export function FinanceDashboard() {
         </Card>
 
         {/* Subscriptions Overview */}
-        <Card title="📊 Subscriptions Overview">
+        <Card title={<span className="flex items-center gap-2"><BarChart3 size={16} className="text-blue-500" />Subscriptions Overview</span>}>
           {subStatsLoading ? (
             <div className="h-80 bg-gray-200 rounded animate-pulse" />
           ) : (
@@ -132,16 +139,16 @@ export function FinanceDashboard() {
 
               {/* Stats summary */}
               <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">🟢 Actives:</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Actives</span>
                   <span className="font-semibold">{subStats?.active || 0}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">🟠 Pending Renewal:</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" />Pending Renewal</span>
                   <span className="font-semibold">{subStats?.pending_renewal || 0}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">🔴 Expirées:</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" />Expirées</span>
                   <span className="font-semibold">{subStats?.expired || 0}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t border-gray-200">

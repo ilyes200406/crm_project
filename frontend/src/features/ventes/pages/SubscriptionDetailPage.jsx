@@ -10,6 +10,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
+import { Bell } from 'lucide-react';
+
 import { Card, StatusBadge, Badge } from '../../../shared/components';
 import { useSubscription, useCreateRenewal } from '../hooks';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -131,7 +133,7 @@ function RenewalPanel({ subscription }) {
     <div className="border border-amber-300 bg-amber-50 rounded-xl p-5 space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-semibold text-amber-800 text-sm">🔔 Renouvellement requis</h3>
+          <h3 className="flex items-center gap-1.5 font-semibold text-amber-800 text-sm"><Bell size={14} /> Renouvellement requis</h3>
           {daysLeft != null && (
             <p className="text-amber-700 text-xs mt-0.5">
               Expire dans <span className="font-semibold">{daysLeft} jour{daysLeft !== 1 ? 's' : ''}</span>

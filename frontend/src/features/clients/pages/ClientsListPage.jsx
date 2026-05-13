@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Users, Plus } from 'lucide-react';
 
 import { Card } from '../../../shared/components';
 import { ClientsTable } from '../components';
@@ -34,16 +35,22 @@ export function ClientsListPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">👥 Clients</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Gérez vos clients et contacts
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Users size={18} className="text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
+              <p className="text-sm text-gray-500">Gérez vos clients et contacts</p>
+            </div>
+          </div>
         </div>
         <button
           onClick={() => navigate('/app/clients/new')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors"
         >
-          + Nouveau Client
+          <Plus size={15} />
+          Nouveau Client
         </button>
       </div>
 

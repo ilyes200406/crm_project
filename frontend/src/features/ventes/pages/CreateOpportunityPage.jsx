@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 
 import { Card } from '../../../shared/components';
 import { useCreateOpportunity } from '../hooks';
@@ -99,7 +100,12 @@ export function CreateOpportunityPage() {
         <span className="text-gray-800 font-medium">Nouvelle opportunité</span>
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">➕ Nouvelle Opportunité</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+          <Plus size={18} className="text-blue-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Nouvelle Opportunité</h1>
+      </div>
 
       <Card>
         <form onSubmit={handleSubmit} className="space-y-5">

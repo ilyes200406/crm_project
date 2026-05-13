@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronRight } from 'lucide-react';
 
 import { NotificationItem } from './NotificationItem';
 import { useNotifications, useMarkAllAsRead } from '../hooks';
@@ -67,7 +68,7 @@ export function NotificationList({ onClose }) {
           <h3 className="font-semibold text-gray-900">Notifications</h3>
         </div>
         <div className="p-8 text-center">
-          <div className="text-5xl mb-4">🔔</div>
+          <div className="flex justify-center mb-4"><Bell size={48} className="text-gray-300" /></div>
           <p className="text-gray-500 text-sm">
             Aucune notification
           </p>

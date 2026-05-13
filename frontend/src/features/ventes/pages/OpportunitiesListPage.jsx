@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, Search, RotateCcw, ChevronLeft, ChevronRight, Plus, Eye } from 'lucide-react';
 
 import { Card, DataTable, StatusBadge, Badge } from '../../../shared/components';
 import { useOpportunities } from '../hooks';
@@ -114,9 +115,10 @@ export function OpportunitiesListPage() {
       render: (row) => (
         <button
           onClick={(e) => { e.stopPropagation(); navigate(`/app/ventes/opportunities/${row.id}`); }}
-          className="px-3 py-1 border border-gray-300 text-gray-600 text-xs rounded-lg hover:bg-gray-50"
+          className="inline-flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-600 text-xs rounded-lg hover:bg-gray-50 transition-colors"
         >
-          Voir →
+          <Eye size={12} />
+          Voir
         </button>
       ),
     },
@@ -128,31 +130,40 @@ export function OpportunitiesListPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">📋 Opportunités</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {data?.count ?? '—'} opportunité{data?.count !== 1 ? 's' : ''}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <ClipboardList size={18} className="text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Opportunités</h1>
+            <p className="text-sm text-gray-500">
+              {data?.count ?? '—'} opportunité{data?.count !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
         {['COMMERCIAL', 'ADMIN'].includes(user?.role) && (
           <button
             onClick={() => navigate('/app/ventes/opportunities/new')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors"
           >
-            + Nouvelle Opportunité
+            <Plus size={15} />
+            Nouvelle Opportunité
           </button>
         )}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="🔍 Référence, client, nom..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="relative flex-1 min-w-48">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Référence, client, nom..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
@@ -174,9 +185,10 @@ export function OpportunitiesListPage() {
         {(search || status || type) && (
           <button
             onClick={() => { setSearch(''); setStatus(''); setType(''); setPage(1); }}
-            className="px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            ✕ Réinitialiser
+            <RotateCcw size={13} />
+            Réinitialiser
           </button>
         )}
       </div>
@@ -201,16 +213,18 @@ export function OpportunitiesListPage() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
               >
-                ← Précédent
+                <ChevronLeft size={14} />
+                Précédent
               </button>
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700 transition-colors"
               >
-                Suivant →
+                Suivant
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>

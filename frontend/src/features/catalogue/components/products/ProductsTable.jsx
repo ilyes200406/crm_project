@@ -1,25 +1,12 @@
-/**
- * PRODUCTS TABLE COMPONENT
- *
- * Table listing all products (READ-ONLY)
- */
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye } from 'lucide-react';
 
 import { DataTable, Badge } from '../../../../shared/components';
 
-/**
- * ProductsTable Component
- *
- * @param {Object} props
- * @param {Array} props.products - Products data
- * @param {boolean} props.loading - Loading state
- */
 export function ProductsTable({ products, loading }) {
   const navigate = useNavigate();
 
-  // Columns definition
   const columns = [
     {
       header: 'Produit',
@@ -32,35 +19,20 @@ export function ProductsTable({ products, loading }) {
     },
     {
       header: 'Catégorie',
-      render: (row) => (
-        <div className="text-sm text-gray-700">
-          {row.category_display || row.category || '-'}
-        </div>
-      ),
+      render: (row) => <div className="text-sm text-gray-700">{row.category_display || row.category || '-'}</div>,
     },
     {
       header: 'Éditeur',
-      render: (row) => (
-        <div className="text-sm text-gray-700">
-          {row.publisher || '-'}
-        </div>
-      ),
+      render: (row) => <div className="text-sm text-gray-700">{row.publisher || '-'}</div>,
     },
     {
       header: 'Statut',
       render: (row) => (
         <div className="flex flex-col gap-1">
-          <Badge
-            variant={row.is_active ? 'green' : 'red'}
-            size="sm"
-          >
+          <Badge variant={row.is_active ? 'green' : 'red'} size="sm">
             {row.is_active ? 'Actif' : 'Inactif'}
           </Badge>
-          {row.is_deprecated && (
-            <Badge variant="yellow" size="sm">
-              Obsolète
-            </Badge>
-          )}
+          {row.is_deprecated && <Badge variant="yellow" size="sm">Obsolète</Badge>}
         </div>
       ),
     },
@@ -68,14 +40,11 @@ export function ProductsTable({ products, loading }) {
       header: 'Actions',
       render: (row) => (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/app/catalogue/products/${row.id}`);
-          }}
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+          onClick={(e) => { e.stopPropagation(); navigate(`/app/catalogue/products/${row.id}`); }}
+          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
           title="Voir"
         >
-          👁️
+          <Eye size={15} />
         </button>
       ),
     },
@@ -87,9 +56,7 @@ export function ProductsTable({ products, loading }) {
       data={products}
       loading={loading}
       onRowClick={(product) => navigate(`/app/catalogue/products/${product.id}`)}
-      emptyState={{
-        message: 'Aucun produit trouvé',
-      }}
+      emptyState={{ message: 'Aucun produit trouvé' }}
     />
   );
 }
