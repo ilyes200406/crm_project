@@ -3,7 +3,6 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from ..authentication.emails import send_setup_email
 from ..authentication.models.setupToken import SetupToken
 from .models.permission import Permission, RolePermission
 from .models.role import Role
@@ -141,19 +140,13 @@ class UserAdmin(admin.ModelAdmin):
             setup_token = SetupToken.generate_for_user(user)
             setup_url = f"{settings.FRONTEND_URL}/setup?token={setup_token.token}"
 
-            try:
-                send_setup_email(user, setup_url)
-                self.message_user(
-                    request,
-                    f"Utilisateur {user.email} créé. Email d'invitation envoyé.",
-                    messages.SUCCESS,
-                )
-            except Exception as e:
-                self.message_user(
-                    request,
-                    f"Utilisateur créé mais l'envoi d'email a échoué : {e}",
-                    messages.WARNING,
-                )
+            from .tasks import send_setup_email_task
+            send_setup_email_task.delay(str(user.id), setup_url, str(request.user.id))
+            self.message_user(
+                request,
+                f"Utilisateur {user.email} créé. Email d'invitation en cours d'envoi.",
+                messages.SUCCESS,
+            )
         else:
             super().save_model(request, obj, form, change)
 
@@ -226,6 +219,7 @@ class UserAdmin(admin.ModelAdmin):
             setup_token = SetupToken.generate_for_user(user)
             setup_url = f"{settings.FRONTEND_URL}/setup?token={setup_token.token}"
             try:
+                from ..authentication.emails import send_setup_email
                 send_setup_email(user, setup_url)
                 sent += 1
             except Exception as e:
