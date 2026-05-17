@@ -68,19 +68,6 @@ export function CommercialDashboard() {
       {/* Stats Cards */}
       <CommercialStatsCards />
 
-      {/* Row 1: Opportunities + Subscriptions Expiring */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Opportunities Widget */}
-        <OpportunitiesWidget
-          title="Mes Opportunités Actives"
-          params={{ status__ne: 'CANCELLED' }}
-          limit={5}
-        />
-
-        {/* Subscriptions Expiring Widget */}
-        <SubscriptionsExpiringWidget days={30} limit={5} />
-      </div>
-
       {/* Row 2: Pipeline Chart + Revenue Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pipeline Chart */}
@@ -137,18 +124,6 @@ export function CommercialDashboard() {
           )}
         </Card>
       </div>
-
-      {/* Row 3: Activities */}
-      <Card title={<span className="flex items-center gap-2"><Clock size={16} className="text-gray-500" />Activités Récentes</span>}>
-        <div className="space-y-4">
-          {/* Recent activities - Placeholder for now */}
-          <ActivityItem Icon={FileText}     iconColor="blue"  title="OPP-001 créée"           description="Migration Office 365 ACME"       time="Il y a 5 min" />
-          <ActivityItem Icon={Mail}         iconColor="amber" title="BC client uploadé"        description="OPP-002 - TechCo"                time="Il y a 2h" />
-          <ActivityItem Icon={CheckCircle2} iconColor="green" title="Provisioning complété"    description="SUB-MS-001 - ACME Office 365"    time="Hier" />
-          <ActivityItem Icon={RefreshCw}    iconColor="blue"  title="Renewal créé"             description="OPP-015 - BigCorp Dynamics 365"  time="Il y a 2 jours" />
-          <ActivityItem Icon={BarChart3}    iconColor="blue"  title="Devis client envoyé"      description="OPP-003 - StartUp"              time="Il y a 3 jours" />
-        </div>
-      </Card>
     </div>
   );
 }
