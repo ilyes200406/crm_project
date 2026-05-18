@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { User } from 'lucide-react';
 
 import { ProfileForm } from '../components/ProfileForm';
 import { useMeQuery } from '../hooks/useUsers';
@@ -7,14 +8,24 @@ export function MePage() {
   const { data: me, isLoading } = useMeQuery();
 
   if (isLoading) {
-    return <p>Loading profile...</p>;
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    );
   }
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mon profil</h1>
-        <p className="text-gray-500 text-sm mt-1">Gérez vos informations personnelles.</p>
+      {/* Page header */}
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+          <User size={18} className="text-blue-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Mon profil</h1>
+          <p className="text-sm text-gray-500">Gérez vos informations personnelles.</p>
+        </div>
       </div>
 
       <ProfileForm
