@@ -97,13 +97,15 @@ def upload_client_po(
     # ───────────────────────────────────────────────────────
     # 4. CRÉATION CLIENT PO
     # ───────────────────────────────────────────────────────
-    
-    client_po = ClientPO.objects.create(
-        opportunity=opportunity,
-        created_by=user,
-        po_number=po_number,
-        document=document,
-    )
+    try:
+        client_po = ClientPO.objects.create(
+            opportunity=opportunity,
+            created_by=user,
+            po_number=po_number,
+            document=document,
+        )
+    except (IOError, OSError) as e:
+        raise ValidationError('Impossible de sauvegarder le fichier. Réessayez.') from e
 
     validate_can_receive_client_po(opportunity)
     

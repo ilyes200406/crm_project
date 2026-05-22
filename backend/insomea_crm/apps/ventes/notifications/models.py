@@ -24,6 +24,9 @@ class NotificationType(models.TextChoices):
     # Email delivery failures
     EMAIL_FAILED = 'EMAIL_FAILED', _('Échec envoi email')
 
+    # Leads
+    NOUVEAU_LEAD = 'NOUVEAU_LEAD', _('Nouvelle demande client')
+
 
 class NotificationStatus(models.TextChoices):
     PENDING = 'PENDING', _('En attente')

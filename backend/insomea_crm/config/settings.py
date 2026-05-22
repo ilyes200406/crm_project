@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'apps.products.apps.ProductsConfig',
     'apps.suppliers.apps.SuppliersConfig',
     'apps.ventes.apps.VentesConfig',
+    'apps.leads.apps.LeadsConfig',
 ]
 
 MIDDLEWARE = [
@@ -308,6 +309,9 @@ CORS_ALLOWED_ORIGINS = config(
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
+
+# En production, ajouter le domaine du site vitrine ici pour le formulaire de demande public
+# ex: CORS_ALLOWED_ORIGINS += ['https://www.insomea.tn']
 
 CORS_ALLOW_METHODS = [
     'DELETE',

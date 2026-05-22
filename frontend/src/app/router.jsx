@@ -31,6 +31,9 @@ import {
   SupplierDetailPage,
 } from '../features/catalogue/pages';
 
+// Import Leads pages
+import { DemandesListPage, PublicDemandeForm } from '../features/leads/pages';
+
 // Import Ventes pages
 import {
   // CommercialDashboard,
@@ -58,6 +61,10 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <Navigate to="/app" replace />,
+  },
+  {
+    path: '/demande',
+    element: <PublicDemandeForm />,
   },
   {
     element: <AuthLayout />,
@@ -209,6 +216,16 @@ export const router = createBrowserRouter([
         element: <SubscriptionDetailPage />,
       },
       
+      // Leads — demandes clients publiques
+      {
+        path: 'leads',
+        element: (
+          <ProtectedRoute allowedRoles={['COMMERCIAL', 'ADMIN']}>
+            <DemandesListPage />
+          </ProtectedRoute>
+        ),
+      },
+
       // Notifications
       { path: 'notifications', element: <NotificationsPage /> },
     ],

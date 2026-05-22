@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   BarChart3, Users, Package, Factory, Briefcase,
-  ClipboardList, Wrench, Bell, User, LogOut,
+  ClipboardList, Wrench, Bell, User, LogOut, Inbox,
 } from 'lucide-react';
 
 import { useAppStore } from '../app/store';
@@ -42,11 +42,15 @@ export function DashboardLayout() {
       { path: '/app/ventes/provisions', label: 'Provisions', Icon: Wrench, roles: ['TECHNICIEN', 'ADMIN'] },
     ];
 
+    const leadsItems = [
+      { path: '/app/leads', label: 'Demandes', Icon: Inbox, roles: ['COMMERCIAL', 'ADMIN'] },
+    ];
+
     const notificationItems = [
       { path: '/app/notifications', label: 'Notifications', Icon: Bell, roles: ['COMMERCIAL', 'FINANCE', 'TECHNICIEN', 'ADMIN'] },
     ];
 
-    return [...baseItems, ...commercialItems, ...techItems, ...notificationItems].filter((item) =>
+    return [...baseItems, ...commercialItems, ...techItems, ...leadsItems, ...notificationItems].filter((item) =>
       item.roles.includes(user?.role)
     );
   };

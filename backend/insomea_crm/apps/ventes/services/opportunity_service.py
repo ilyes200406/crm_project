@@ -155,6 +155,10 @@ def request_all_supplier_quotes(*, opportunity_id, user, ip_address=None):
             supplier_id=str(supplier.id),
             line_ids=[str(line.id) for line in lines],
         )
+        """
+        from ..emails.services import send_supplier_quote_request
+        send_supplier_quote_request(opportunity=opportunity, supplier=supplier, lines=lines)
+        """
 
     # Recharge opportunity (status recalculé via signal)
     opportunity.refresh_from_db()

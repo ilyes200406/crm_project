@@ -324,6 +324,7 @@ def send_notification_email(notification):
         NotificationType.SUBSCRIPTION_PROVISIONED: 'notifications/subscription_provisioned.html',
         NotificationType.SUBSCRIPTION_EXPIRING: 'notifications/subscription_expiring.html',
         NotificationType.SUBSCRIPTION_EXPIRED: 'notifications/subscription_expired.html',
+        NotificationType.NOUVEAU_LEAD: 'notifications/nouveau_lead.html',
     }
     
     template_name = template_map.get(notification.type)
