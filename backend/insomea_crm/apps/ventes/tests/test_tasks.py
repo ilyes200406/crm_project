@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import pytest
 
 from apps.ventes.models import OpportunityStatus, Subscription, SubscriptionStatus
-from apps.ventes.tasks import check_expiring_subscriptions, expire_unrenewed_subscriptions
+from apps.ventes.tasks import process_subscription_expirations
 from apps.ventes.tests.factories import make_opportunity, make_subscription, make_subscription_term
 
 
@@ -23,11 +23,11 @@ def test_check_expiring_subscriptions_marks_pending_renewal_at_30_days(client_co
     monkeypatch.setattr('apps.ventes.tasks.send_renewal_reminder_email_client', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.tasks.notify_commercial_subscription_expiring', lambda *args, **kwargs: None)
 
-    stats = check_expiring_subscriptions()
+    stats = process_subscription_expirations()
 
     subscription = Subscription.objects.get(pk=subscription.pk)
     assert subscription.status == SubscriptionStatus.PENDING_RENEWAL
-    assert stats['marked_pending_renewal'] == 1
+    assert stats['marked_pending'] == 1
 
 
 @pytest.mark.django_db
@@ -56,8 +56,8 @@ def test_expire_unrenewed_subscriptions_skips_when_renewal_in_progress(client_co
     monkeypatch.setattr('apps.ventes.tasks.send_subscription_expired_email_client', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.tasks.notify_teams_subscription_expired', lambda *args, **kwargs: None)
 
-    stats = expire_unrenewed_subscriptions()
+    stats = process_subscription_expirations()
 
     subscription = Subscription.objects.get(pk=subscription.pk)
     assert subscription.status == SubscriptionStatus.PENDING_RENEWAL
-    assert stats['renewal_in_progress'] == 1
+    assert stats['renewal_skipped'] == 1

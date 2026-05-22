@@ -433,16 +433,10 @@ CELERY_TIMEZONE = 'UTC'
 
 # Celery Beat Schedule (cron jobs)
 CELERY_BEAT_SCHEDULE = {
-    # Vérifie subscriptions expirant (daily 8am UTC)
-    'check-expiring-subscriptions': {
-        'task': 'opportunities.tasks.check_expiring_subscriptions',
-        'schedule': crontab(hour=8, minute=0),  # 8:00 AM UTC daily
-    },
-    
-    # Expire subscriptions non renouvelées (daily 9am UTC)
-    'expire-unrenewed-subscriptions': {
-        'task': 'opportunities.tasks.expire_unrenewed_subscriptions',
-        'schedule': crontab(hour=9, minute=0),  # 9:00 AM UTC daily
+    # PENDING_RENEWAL à J-30, EXPIRED quand dépassé (daily 8am UTC)
+    'process-subscription-expirations': {
+        'task': 'opportunities.tasks.process_subscription_expirations',
+        'schedule': crontab(hour=8, minute=0),
     },
 }
 

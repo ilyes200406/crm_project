@@ -2,19 +2,16 @@
 CELERY TASKS - APP OPPORTUNITIES
 
 Tasks asynchrones:
-- Vérifier subscriptions expirant
-- Envoyer notifications expiration
-- Expire subscriptions non renouvelées
+- Gérer expirations subscriptions (pending renewal + expiration)
+- Envoyer emails transactionnels (devis, BCs)
 """
 
 import logging
 from celery import shared_task
-from django.utils.timezone import now
 from django.db import transaction
 from datetime import date, timedelta
 
 from .models import Subscription, SubscriptionStatus
-from .services.subscription_service import check_subscription_expiring
 
 logger = logging.getLogger(__name__)
 
@@ -23,171 +20,84 @@ logger = logging.getLogger(__name__)
 # EXPIRATION CHECKS
 # ═══════════════════════════════════════════════════════════
 
-@shared_task(name='opportunities.tasks.check_expiring_subscriptions')
-def check_expiring_subscriptions():
+@shared_task(name='opportunities.tasks.process_subscription_expirations')
+def process_subscription_expirations():
     """
-    Vérifie subscriptions expirant bientôt
+    Daily task — two passes:
 
-    Exécution: Daily 8am UTC (Celery Beat)
+    Pass 1 (ACTIVE → PENDING_RENEWAL):
+        Any ACTIVE subscription with current_term_end <= today + 30 days.
+        Transitions FSM, sends email + notifies commercial once.
+        Idempotency: guaranteed by FSM state — once PENDING_RENEWAL, not picked up again.
 
-    Actions:
-    1. Requête unique: subscriptions ACTIVE + auto_renew dans [3, 90] jours
-    2. Pour chaque threshold [90, 60, 30, 7, 3]:
-       - Vérifie idempotence (notified_days)
-       - Envoi email client
-       - Envoi notification commercial
-    3. Si days_until_expiration <= 30:
-       - Transition FSM: ACTIVE → PENDING_RENEWAL (résiliente aux pannes)
+    Pass 2 (PENDING_RENEWAL → EXPIRED):
+        Any PENDING_RENEWAL subscription with current_term_end < today.
+        Skipped if a renewal opportunity is in progress.
+        Sends expiration email + notifies commercial once.
 
     Returns:
         dict stats
     """
 
-    logger.info('Starting check_expiring_subscriptions task')
-
-    today = now().date()
-    thresholds = [90, 60, 30, 7, 3]
-    max_days = max(thresholds)  # 90
-    min_days = min(thresholds)  # 3
-
+    today = date.today()
     stats = {
-        'total_checked': 0,
-        'notifications_sent': 0,
-        'marked_pending_renewal': 0,
+        'marked_pending': 0,
+        'expired': 0,
+        'renewal_skipped': 0,
         'errors': 0,
     }
 
-    # Single query: all ACTIVE auto-renew subscriptions expiring within range
-    subscriptions = Subscription.objects.filter(
+    # ───────────────────────────────────────────────────────
+    # PASS 1: ACTIVE → PENDING_RENEWAL
+    # ───────────────────────────────────────────────────────
+
+    expiring_soon = Subscription.objects.filter(
         status=SubscriptionStatus.ACTIVE,
-        auto_renew=True,
-        current_term_end__range=[
-            today + timedelta(days=min_days),
-            today + timedelta(days=max_days),
-        ],
+        current_term_end__lte=today + timedelta(days=30),
     ).select_related('client', 'product')
 
-    logger.info(f'Found {subscriptions.count()} subscriptions in [{min_days}d, {max_days}d] range')
-
-    for subscription in subscriptions:
-
-        stats['total_checked'] += 1
-
+    for subscription in expiring_soon:
         try:
-            days_until_expiration = (subscription.current_term_end - today).days
+            days_left = (subscription.current_term_end - today).days
 
-            # Only act on exact threshold days
-            if days_until_expiration not in thresholds:
-                continue
-
-            notified_days = subscription.notified_days or []
-
-            # Idempotency: skip if already notified at this threshold
-            if days_until_expiration in notified_days:
-                logger.info(
-                    f'Subscription {subscription.subscription_number}: '
-                    f'already notified at {days_until_expiration}d, skipping'
-                )
-                continue
-
-            # ───────────────────────────────────────────
-            # 1. Envoi email client + notification commercial
-            # ───────────────────────────────────────────
+            with transaction.atomic():
+                subscription.mark_pending_renewal()
+                subscription.save(update_fields=['status'])
 
             send_renewal_reminder_email_client(
                 subscription=subscription,
-                days_until_expiration=days_until_expiration
+                days_until_expiration=days_left,
             )
             notify_commercial_subscription_expiring(
                 subscription=subscription,
-                days_until_expiration=days_until_expiration
+                days_until_expiration=days_left,
             )
-            stats['notifications_sent'] += 1
 
-            notified_days.append(days_until_expiration)
-            subscription.notified_days = notified_days
-
-            # ───────────────────────────────────────────
-            # 2. FSM transition + save (atomic)
-            # ───────────────────────────────────────────
-
-            with transaction.atomic():
-                if (
-                    days_until_expiration <= 30 and
-                    subscription.status == SubscriptionStatus.ACTIVE
-                ):
-                    subscription.mark_pending_renewal()
-                    stats['marked_pending_renewal'] += 1
-                    logger.info(
-                        f'Subscription {subscription.subscription_number} → PENDING_RENEWAL '
-                        f'({days_until_expiration}d remaining)'
-                    )
-                    subscription.save(update_fields=['status', 'notified_days'])
-                else:
-                    subscription.save(update_fields=['notified_days'])
+            stats['marked_pending'] += 1
+            logger.info(
+                f'Subscription {subscription.subscription_number} → PENDING_RENEWAL '
+                f'({days_left}d remaining)'
+            )
 
         except Exception as e:
             logger.error(
-                f'Error processing subscription {subscription.subscription_number}: {str(e)}'
+                f'Error marking pending renewal for {subscription.subscription_number}: {e}'
             )
             stats['errors'] += 1
-            continue
 
-    logger.info(f'Task completed: {stats}')
-    return stats
+    # ───────────────────────────────────────────────────────
+    # PASS 2: PENDING_RENEWAL → EXPIRED
+    # ───────────────────────────────────────────────────────
 
+    from .models import OpportunityStatus
 
-@shared_task(name='opportunities.tasks.expire_unrenewed_subscriptions')
-def expire_unrenewed_subscriptions():
-    """
-    Expire subscriptions non renouvelées
-    
-    Exécution: Daily 9am UTC (Celery Beat)
-    
-    Actions:
-    1. Find subscriptions PENDING_RENEWAL avec end_date < today
-    2. Vérifie si renewal en cours (OpportunityLine.renewal_of_subscription)
-    3. Si PAS de renewal:
-       - Transition FSM: PENDING_RENEWAL → EXPIRED
-       - Envoi email client (subscription expirée)
-       - Notification teams
-    
-    Returns:
-        dict stats
-    """
-    
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    logger.info('🔔 Starting expire_unrenewed_subscriptions task')
-    
-    today = date.today()
-    
-    # Find subscriptions PENDING_RENEWAL passées
-    subscriptions = Subscription.objects.filter(
+    overdue = Subscription.objects.filter(
         status=SubscriptionStatus.PENDING_RENEWAL,
         current_term_end__lt=today,
     ).select_related('client', 'product').prefetch_related('renewal_lines')
-    
-    logger.info(f'📅 Found {subscriptions.count()} subscriptions to check for expiration')
-    
-    stats = {
-        'total_checked': subscriptions.count(),
-        'expired': 0,
-        'renewal_in_progress': 0,
-        'errors': 0,
-    }
-    
-    for subscription in subscriptions:
-        
+
+    for subscription in overdue:
         try:
-            
-            # ───────────────────────────────────────────────
-            # 1. Vérifie si renewal en cours
-            # ───────────────────────────────────────────────
-            
-            from .models import OpportunityStatus
-            
             renewal_in_progress = subscription.renewal_lines.filter(
                 opportunity__status__in=[
                     OpportunityStatus.DRAFT,
@@ -198,47 +108,31 @@ def expire_unrenewed_subscriptions():
                     OpportunityStatus.CLIENT_PO_RECIEVED,
                 ]
             ).exists()
-            
+
             if renewal_in_progress:
-                # Renewal en cours, pas toucher
-                stats['renewal_in_progress'] += 1
+                stats['renewal_skipped'] += 1
                 logger.info(
-                    f'⏳ Subscription {subscription.subscription_number} '
-                    f'has renewal in progress, skipping expiration'
+                    f'Subscription {subscription.subscription_number} has renewal in progress, skipping'
                 )
                 continue
-            
-            # ───────────────────────────────────────────────
-            # 2. Expire subscription
-            # ───────────────────────────────────────────────
-            
-            subscription.expire()
-            subscription.save()
-            # Signal FSM → StatusHistory créé auto
-            
-            stats['expired'] += 1
-            
-            logger.info(
-                f'❌ Subscription {subscription.subscription_number} EXPIRED '
-                f'(end_date: {subscription.current_term_end})'
-            )
-            
-            # ───────────────────────────────────────────────
-            # 3. Notifications
-            # ───────────────────────────────────────────────
-            
+
+            with transaction.atomic():
+                subscription.expire()
+                subscription.save()
+
             send_subscription_expired_email_client(subscription)
             notify_teams_subscription_expired(subscription)
-            
+
+            stats['expired'] += 1
+            logger.info(f'Subscription {subscription.subscription_number} → EXPIRED')
+
         except Exception as e:
             logger.error(
-                f'❌ Error expiring subscription {subscription.subscription_number}: {str(e)}'
+                f'Error expiring subscription {subscription.subscription_number}: {e}'
             )
             stats['errors'] += 1
-            continue
-    
-    logger.info(f'✅ Task completed: {stats}')
-    
+
+    logger.info(f'process_subscription_expirations completed: {stats}')
     return stats
 
 
