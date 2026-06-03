@@ -209,7 +209,6 @@ class OpportunityLineDetailSerializer(serializers.ModelSerializer):
         from .opportunity_serializers import OpportunityListSerializer
         return OpportunityListSerializer(obj.opportunity).data
     
-    # 🆕 NOUVEAU
     def get_renewal_of_subscription(self, obj):
         """Original subscription (si renewal)"""
         if obj.renewal_of_subscription:

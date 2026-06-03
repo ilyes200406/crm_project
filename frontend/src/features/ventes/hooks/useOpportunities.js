@@ -177,7 +177,12 @@ export function useCreateOpportunity() {
       return data;
     },
     onError: (error) => {
-      const message = error.response?.data?.detail || 'Erreur lors de la création';
+      const d = error.response?.data;
+      const firstVal = Object.values(d || {})[0];
+      const message =
+        d?.detail ||
+        (typeof firstVal === 'string' ? firstVal : firstVal?.[0]) ||
+        'Erreur lors de la création';
       toast.error(message);
     },
   });

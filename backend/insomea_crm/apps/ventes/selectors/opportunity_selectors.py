@@ -96,7 +96,7 @@ def get_opportunities_queryset(user=None, filters=None, include_cancelled=False,
     return queryset
 
 def get_all_opportunities(*, user=None):
-    return get_opportunities_queryset(user=user, include_cancelled=False)
+    return get_opportunities_queryset(user=user, include_cancelled=False).select_related('insomea_quote')
 
 
 def get_opportunity_by_id(opportunity_id, user=None, prefetch_all=True):

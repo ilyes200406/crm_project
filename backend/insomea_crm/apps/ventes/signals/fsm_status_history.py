@@ -4,9 +4,17 @@ SIGNALS - ventes
 Auto logging des transitions FSM et notifications metier.
 """
 
-from django.db.models.signals import post_delete, post_save
+import threading
+
+from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django_fsm.signals import post_transition
+
+_deletion_context = threading.local()
+
+
+def _opportunity_is_being_deleted(opportunity_id):
+    return opportunity_id in getattr(_deletion_context, 'ids', set())
 
 from ..models import (
     Opportunity,
@@ -152,6 +160,20 @@ def update_opportunity_status_on_line_save(sender, instance, created, **kwargs):
     delattr(instance, '_updating_opportunity_status')
 
 
+@receiver(pre_delete, sender=Opportunity)
+def mark_opportunity_deleting(sender, instance, **kwargs):
+    """Flag this opportunity as being deleted so line signals can skip audit logging."""
+    if not hasattr(_deletion_context, 'ids'):
+        _deletion_context.ids = set()
+    _deletion_context.ids.add(instance.id)
+
+
+@receiver(post_delete, sender=Opportunity)
+def unmark_opportunity_deleting(sender, instance, **kwargs):
+    """Clean up the deletion flag after the opportunity is fully removed."""
+    getattr(_deletion_context, 'ids', set()).discard(instance.id)
+
+
 @receiver(post_delete, sender=OpportunityLine)
 def handle_opportunity_line_deleted(sender, instance, **kwargs):
     """Recompute opportunity status and log deletion after a line is removed."""
@@ -161,9 +183,12 @@ def handle_opportunity_line_deleted(sender, instance, **kwargs):
     if not instance.opportunity_id:
         return
 
-    # Log against the opportunity so the record survives the CASCADE delete on the line FK
+    # Opportunity is being cascade-deleted — skip logging to avoid deferred FK violation
+    if _opportunity_is_being_deleted(instance.opportunity_id):
+        return
+
     try:
-        opp = instance.opportunity
+        opp = Opportunity.objects.get(id=instance.opportunity_id)
         StatusHistory.objects.create(
             opportunity=opp,
             status_precedent=opp.status,

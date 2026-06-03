@@ -111,10 +111,12 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         """
         
         queryset = self.filter_queryset(self.get_queryset())
-        
-        # Filtre expiring (custom)
+
         if request.query_params.get('expiring') == 'true':
             queryset = get_expiring_subscriptions(days=30, user=request.user)
+
+        if request.query_params.get('exclude_cancelled') == 'true':
+            queryset = queryset.exclude(status=SubscriptionStatus.CANCELLED)
         
         page = self.paginate_queryset(queryset)
         if page is not None:

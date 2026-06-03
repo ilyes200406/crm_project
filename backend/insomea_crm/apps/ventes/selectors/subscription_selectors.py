@@ -8,7 +8,7 @@ from django.db.models import Q, Prefetch, F
 from django.core.exceptions import PermissionDenied
 from datetime import date, timedelta
 
-from ..models import Subscription, SubscriptionStatus, SubscriptionTerm
+from ..models import Subscription, SubscriptionStatus, SubscriptionTerm, Provision
 
 
 # ═══════════════════════════════════════════════════════════
@@ -36,7 +36,10 @@ def get_all_subscriptions(*, user=None):
         'client',
         'product',
     ).prefetch_related(
-        'provisions',
+        Prefetch(
+            'provisions',
+            queryset=Provision.objects.select_related('provisionned_by')
+        ),
         Prefetch(
             'terms',
             queryset=SubscriptionTerm.objects.select_related(

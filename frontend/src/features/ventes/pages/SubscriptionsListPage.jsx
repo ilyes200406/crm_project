@@ -40,7 +40,7 @@ export function SubscriptionsListPage() {
     page,
     page_size: PAGE_SIZE,
     ...(search && { search }),
-    ...(status && { status }),
+    ...(status ? { status } : { exclude_cancelled: 'true' }),
   };
 
   const { data, isLoading } = useSubscriptions(params);

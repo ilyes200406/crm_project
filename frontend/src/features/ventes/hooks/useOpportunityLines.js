@@ -39,10 +39,11 @@ export function useAddLine(opportunityId) {
     },
     onError: (error) => {
       const d = error.response?.data;
+      const firstVal = Object.values(d || {})[0];
       const message =
         d?.detail ||
-        d?.product?.[0] ||
-        Object.values(d || {})?.[0]?.[0] ||
+        (typeof d?.product === 'string' ? d.product : d?.product?.[0]) ||
+        (typeof firstVal === 'string' ? firstVal : firstVal?.[0]) ||
         "Erreur lors de l'ajout";
       toast.error(message);
     },

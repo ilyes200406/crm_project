@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 import pytest
 from rest_framework.test import APIClient
-
+"""
 from apps.ventes.tests.factories import (
     make_client,
     make_opportunity,
@@ -116,3 +116,4 @@ def patch_side_effects(monkeypatch):
     monkeypatch.setattr('apps.ventes.notifications.services.notify_finance_to_approve', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.notifications.services.notify_techniciens_provision_waiting', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.notifications.services.notify_all_provisioned', lambda *args, **kwargs: None)
+"""

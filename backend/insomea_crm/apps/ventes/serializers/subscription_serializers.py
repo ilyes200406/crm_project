@@ -140,6 +140,9 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
     days_until_expiration = serializers.IntegerField(read_only=True)
     is_expiring_soon = serializers.SerializerMethodField()
     
+    # Technicien ayant provisionné l'abonnement (provision initiale)
+    provisionned_by_name = serializers.SerializerMethodField()
+
     # Current term info
     current_term = SubscriptionTermSerializer(
         source='get_current_term',
@@ -165,10 +168,20 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
             'status_display',
             'days_until_expiration',
             'is_expiring_soon',
+            'provisionned_by_name',
             'current_term',
             'created_at',
         ]
-    
+
+    def get_provisionned_by_name(self, obj):
+        provision = next(
+            (p for p in obj.provisions.all() if not p.is_renewal),
+            obj.provisions.first()
+        )
+        if provision and provision.provisionned_by:
+            return provision.provisionned_by.get_full_name()
+        return None
+
     def get_is_expiring_soon(self, obj):
         """Check if expiring in next 30 days"""
         return obj.is_expiring_soon(days=30)
@@ -215,10 +228,11 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
     days_until_expiration = serializers.IntegerField(read_only=True)
     is_expiring_soon = serializers.SerializerMethodField()
     is_active = serializers.BooleanField(read_only=True)
-    
+    has_renewal_in_progress = serializers.SerializerMethodField()
+
     # Metrics
     revenue_metrics = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Subscription
         fields = [
@@ -237,6 +251,7 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
             'days_until_expiration',
             'is_expiring_soon',
             'is_active',
+            'has_renewal_in_progress',
             'terms',
             'current_term',
             'latest_term',
@@ -270,9 +285,21 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
         return ProvisionListSerializer(provisions, many=True).data
 
     def get_is_expiring_soon(self, obj):
-        """Check expiring"""
         return obj.is_expiring_soon(days=30)
-    
+
+    def get_has_renewal_in_progress(self, obj):
+        from ..models import OpportunityStatus
+        return obj.renewal_lines.filter(
+            opportunity__status__in=[
+                OpportunityStatus.DRAFT,
+                OpportunityStatus.SUPPLIER_QUOTE_REQUEST,
+                OpportunityStatus.SUPPLIER_QUOTE_RECIEVED,
+                OpportunityStatus.INSOMEA_QUOTE_CREATED,
+                OpportunityStatus.CLIENT_PO_REQUEST,
+                OpportunityStatus.CLIENT_PO_RECIEVED,
+            ]
+        ).exists()
+
     def get_revenue_metrics(self, obj):
         """Revenue metrics"""
         from ..services.subscription_service import get_subscription_revenue_metrics

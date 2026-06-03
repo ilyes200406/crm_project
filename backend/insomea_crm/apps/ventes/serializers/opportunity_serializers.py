@@ -11,7 +11,8 @@ from ..models import (
     Opportunity,
     OpportunityType,  # 🆕 NOUVEAU
     InsomeaPurchaseOrder,
-    ClientPO
+    ClientPO,
+    InsomeaQuote,
 )
 from ..validators import (
     validate_opportunity_name,
@@ -23,6 +24,12 @@ from ..validators import (
 # Import serializers
 from ...suppliers.serializers import SupplierMinimalSerializer
 from ...users.api.serializers import UserMinimalSerializer
+
+
+class InsomeaQuoteMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InsomeaQuote
+        fields = ['id', 'total_sale']
 
 
 # ═══════════════════════════════════════════════════════════
@@ -54,13 +61,11 @@ class OpportunityListSerializer(serializers.ModelSerializer):
         read_only=True
     )
     
-    # 🆕 NOUVEAU: Type
     type_display = serializers.CharField(
         source='get_type_display',
         read_only=True
     )
     
-    # 🆕 NOUVEAU: Parent opportunity (si renewal)
     parent_opportunity_reference = serializers.CharField(
         source='related_opportunity.reference',
         read_only=True,
@@ -76,18 +81,20 @@ class OpportunityListSerializer(serializers.ModelSerializer):
     # Computed
     lines_count = serializers.IntegerField(read_only=True)
     
-    # 🆕 NOUVEAU: Flags
     is_renewal = serializers.BooleanField(read_only=True)
     is_initial = serializers.BooleanField(read_only=True)
-    
+
+    # Devis Insomea (total montant)
+    insomea_quote = InsomeaQuoteMiniSerializer(read_only=True)
+
     class Meta:
         model = Opportunity
         fields = [
             'id',
             'reference',
             'name',
-            'type',  # 🆕 NOUVEAU
-            'type_display',  # 🆕 NOUVEAU
+            'type',  
+            'type_display',  
             'client',
             'client_name',
             'status',
@@ -96,11 +103,12 @@ class OpportunityListSerializer(serializers.ModelSerializer):
             'assigned_to_name',
             'created_by',
             'created_by_name',
-            'related_opportunity',  # 🆕 NOUVEAU
-            'parent_opportunity_reference',  # 🆕 NOUVEAU
+            'related_opportunity',
+            'parent_opportunity_reference', 
             'lines_count',
-            'is_renewal',  # 🆕 NOUVEAU
-            'is_initial',  # 🆕 NOUVEAU
+            'is_renewal',
+            'is_initial',
+            'insomea_quote',
             'created_at',
             'updated_at',
         ]
@@ -123,13 +131,11 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     assigned_to = serializers.SerializerMethodField()
     created_by = serializers.SerializerMethodField()
     
-    # 🆕 NOUVEAU: Type
     type_display = serializers.CharField(
         source='get_type_display',
         read_only=True
     )
     
-    # 🆕 NOUVEAU: Related opportunities
     related_opportunity = serializers.SerializerMethodField()
     child_opportunities = serializers.SerializerMethodField()
     
@@ -154,7 +160,6 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
     lines_count = serializers.IntegerField(read_only=True)
     total_amount_estimate = serializers.SerializerMethodField()
     
-    # 🆕 NOUVEAU: Flags
     is_renewal = serializers.BooleanField(read_only=True)
     is_initial = serializers.BooleanField(read_only=True)
     
@@ -168,15 +173,15 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             'id',
             'reference',
             'name',
-            'type',  # 🆕 NOUVEAU
-            'type_display',  # 🆕 NOUVEAU
+            'type',  
+            'type_display', 
             'client',
             'status',
             'status_display',
             'assigned_to',
             'created_by',
-            'related_opportunity',  # 🆕 NOUVEAU
-            'child_opportunities',  # 🆕 NOUVEAU
+            'related_opportunity',  
+            'child_opportunities',  
             'notes',
             'cancellation_reason',
             'lines',
@@ -186,8 +191,8 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             'client_po',
             'insomea_pos',
             'total_amount_estimate',
-            'is_renewal',  # 🆕 NOUVEAU
-            'is_initial',  # 🆕 NOUVEAU
+            'is_renewal',  
+            'is_initial',  
             'can_edit',
             'can_add_items',
             'created_at',
@@ -218,14 +223,14 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         from ...users.api.serializers import UserSerializer
         return UserSerializer(obj.created_by).data
     
-    # 🆕 NOUVEAU
+
     def get_related_opportunity(self, obj):
         """Parent opportunity (si renewal)"""
         if obj.related_opportunity:
             return OpportunityListSerializer(obj.related_opportunity).data
         return None
     
-    # 🆕 NOUVEAU
+
     def get_child_opportunities(self, obj):
         """Child opportunities (renewals, upsells)"""
         children = obj.get_child_opportunities()
@@ -317,22 +322,14 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
 # ═══════════════════════════════════════════════════════════
 
 class OpportunityCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer création Opportunité
-    
-    Usage:
-        - POST /opportunities/
-    
-    🆕 MODIFIÉ: Support type + related_opportunity
-    """
     
     class Meta:
         model = Opportunity
         fields = [
             'name',
             'client',
-            'type',  # 🆕 NOUVEAU
-            'related_opportunity',  # 🆕 NOUVEAU
+            'type', 
+            'related_opportunity', 
             'assigned_to',
             'notes',
         ]
@@ -345,14 +342,14 @@ class OpportunityCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Validation"""
         
-        # 🆕 NOUVEAU: Si RENEWAL, related_opportunity requis
+        # Si RENEWAL, related_opportunity requis
         if attrs.get('type') == OpportunityType.RENEWAL:
             if not attrs.get('related_opportunity'):
                 raise serializers.ValidationError({
                     'related_opportunity': 'Required for RENEWAL type'
                 })
         
-        # 🆕 NOUVEAU: Si type != RENEWAL, related_opportunity pas permis
+        # Si type != RENEWAL, related_opportunity pas permis
         if attrs.get('type') != OpportunityType.RENEWAL:
             if attrs.get('related_opportunity'):
                 raise serializers.ValidationError({
@@ -416,7 +413,7 @@ class OpportunityCreateWithLinesSerializer(OpportunityCreateSerializer):
                     raise serializers.ValidationError({
                         'lines': (
                             f"Le client « {client.company_name} » a déjà un abonnement actif "
-                            f"pour « {product.title} ». Utilisez un type RENEWAL ou UPSELL."
+                            f"pour « {product.title} »."
                         )
                     })
 

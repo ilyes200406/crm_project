@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.clients.models import Client, ClientStatus, Industry
+from apps.clients.models import Client, Industry
 from apps.products.models import Product, ProductCategory
 from apps.suppliers.models import Supplier, SupplierType
 from apps.users.models.users import User
@@ -38,7 +38,6 @@ def make_client(*, created_by=None, assigned_to=None, email='client@example.com'
     return Client.objects.create(
         company_name=company_name,
         email=email,
-        status=ClientStatus.CUSTOMER,
         industry=Industry.IT,
         assigned_to=assigned_to,
         created_by=created_by,
@@ -91,7 +90,7 @@ def make_opportunity_line(*, opportunity, product, quantity=1, billing_cycle=Bil
 
 def make_subscription(*, client, product, number='SUB-001', quantity=1, billing_cycle=BillingCycle.ANNUAL, start=None, end=None, status=SubscriptionStatus.ACTIVE):
     start = start or date.today() - timedelta(days=30)
-    end = end or date.today() + timedelta(days=30)
+    end = end or date.today() + timedelta(days=335)
     return Subscription.objects.create(
         client=client,
         product=product,

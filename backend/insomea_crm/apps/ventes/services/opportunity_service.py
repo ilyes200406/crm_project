@@ -265,22 +265,7 @@ def approve_opportunity(*, opportunity_id, user, ip_address=None):
     # Signal FSM → StatusHistory créé auto
     
     # ───────────────────────────────────────────────────────
-    # 4. CRÉATION PROVISIONS (1 par OpportunityLine)
-    # ───────────────────────────────────────────────────────
-    """
-    provisions = []
-    
-    for line in opportunity.lines.all():
-        # Vérifie que provision n'existe pas déjà
-        if _get_related_or_none(line, 'provision') is None:
-            provision = create_provision_for_line(
-                opportunity_line_id=line.id,
-                user=user
-            )
-            provisions.append(provision)
-    """
-    # ───────────────────────────────────────────────────────
-    # 5. CRÉATION INSOMEA POs (1 par fournisseur, sans envoi)
+    # 4. CRÉATION INSOMEA POs (1 par fournisseur, sans envoi)
     # ───────────────────────────────────────────────────────
 
     pos_created = create_insomea_pos(

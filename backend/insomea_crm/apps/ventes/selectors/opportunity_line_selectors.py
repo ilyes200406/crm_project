@@ -13,7 +13,6 @@ def get_lines_for_opportunity(opportunity_id):
         'provision',
     ).order_by('created_at')
 
-
 def get_line_by_id(line_id):
     """
     Récupère une ligne par ID

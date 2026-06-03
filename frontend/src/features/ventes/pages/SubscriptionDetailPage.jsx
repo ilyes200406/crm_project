@@ -13,7 +13,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 
 import { Card, StatusBadge, Badge } from '../../../shared/components';
-import { useSubscription, useCreateRenewal } from '../hooks';
+import { useSubscription, useCreateRenewal, useCancelSubscription } from '../hooks';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 // ─────────────────────────────────────────────────────────────
@@ -176,6 +176,61 @@ function RenewalPanel({ subscription }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// CANCEL PANEL
+// ─────────────────────────────────────────────────────────────
+
+function CancelPanel({ subscription }) {
+  const cancelMutation = useCancelSubscription();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [reason, setReason] = useState('');
+
+  const handleCancel = async () => {
+    await cancelMutation.mutateAsync({ id: subscription.id, reason: reason.trim() });
+  };
+
+  return (
+    <div className="border border-red-200 bg-red-50 rounded-xl p-5 space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold text-red-800 text-sm">Subscription expirée</h3>
+          <p className="text-red-600 text-xs mt-0.5">Vous pouvez annuler définitivement cette subscription.</p>
+        </div>
+        <button
+          onClick={() => setShowConfirm(!showConfirm)}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+        >
+          {showConfirm ? 'Annuler' : 'Annuler la subscription'}
+        </button>
+      </div>
+
+      {showConfirm && (
+        <div className="space-y-3 pt-2 border-t border-red-200">
+          <div>
+            <label className="block text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">
+              Raison (optionnel)
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              placeholder="Raison de l'annulation..."
+              className="w-full border border-red-300 bg-white rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+          <button
+            onClick={handleCancel}
+            disabled={cancelMutation.isPending}
+            className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm disabled:opacity-50"
+          >
+            {cancelMutation.isPending ? 'Annulation...' : 'Confirmer l\'annulation'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────
 
@@ -206,7 +261,12 @@ export function SubscriptionDetailPage() {
   }
 
   const canRenew =
-    subscription.status === 'PENDING_RENEWAL' &&
+    ['PENDING_RENEWAL', 'EXPIRED'].includes(subscription.status) &&
+    !subscription.has_renewal_in_progress &&
+    ['COMMERCIAL', 'ADMIN'].includes(user?.role);
+
+  const canCancel =
+    subscription.status === 'EXPIRED' &&
     ['COMMERCIAL', 'ADMIN'].includes(user?.role);
 
   const metrics = subscription.revenue_metrics;
@@ -240,8 +300,9 @@ export function SubscriptionDetailPage() {
         </div>
       </div>
 
-      {/* Renewal banner */}
+      {/* Action banners */}
       {canRenew && <RenewalPanel subscription={subscription} />}
+      {canCancel && <CancelPanel subscription={subscription} />}
 
       {/* Content */}
       <div className="grid grid-cols-3 gap-6">

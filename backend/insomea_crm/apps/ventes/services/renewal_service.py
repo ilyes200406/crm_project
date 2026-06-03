@@ -58,9 +58,9 @@ def create_renewal_opportunity(*, subscription, user, quantity=None, notes='', i
     # 1. VALIDATION
     # ───────────────────────────────────────────────────────
     
-    if subscription.status != SubscriptionStatus.PENDING_RENEWAL:
+    if subscription.status not in [SubscriptionStatus.PENDING_RENEWAL, SubscriptionStatus.EXPIRED]:
         raise ValidationError(
-            f'Subscription doit être PENDING_RENEWAL pour créer renewal. '
+            f'Un renouvellement ne peut être créé que pour une subscription en attente ou expirée. '
             f'Status actuel : {subscription.get_status_display()}'
         )
     

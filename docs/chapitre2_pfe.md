@@ -138,17 +138,110 @@ L'analyse du code a egalement permis d'identifier plusieurs besoins non fonction
 - Le systeme doit permettre de rattacher les actions aux utilisateurs responsables.
 - Une couche d'audit detaillee autour des transitions de statut est prevue dans la conception generale du module ventes, meme si elle apparait encore partiellement en cours d'integration dans le code explore.
 
-## Conception generale du scenario etudie
+## 2.3 Architecture de la solution
 
-La conception generale du scenario "gestion d'une opportunite par un commercial jusqu'a l'enregistrement du bon de commande client et notification finance" repose sur une chaine de composants clairement separes.
+L'architecture de la solution adoptee dans ce projet repose sur une approche web moderne de type client-serveur. Elle se caracterise par une separation claire entre l'interface utilisateur, la logique metier, la persistance des donnees et les services asynchrones. L'exploration du depot montre egalement l'utilisation de conteneurs Docker pour faciliter l'execution des differents composants de la plateforme.
 
-- Le **frontend React** presente a l'utilisateur une page detaillee de l'opportunite avec un indicateur de workflow et des actions adaptees au statut courant.
-- Le **backend Django REST** expose des endpoints dedies comme la creation de l'opportunite, la demande du bon de commande client, l'upload du bon de commande et l'approbation.
-- Les **services metier** centralisent les regles de gestion, les validations, les transitions FSM et la creation des objets associes.
-- Les **models Django** representent les entites principales : Opportunity, OpportunityLine, SupplierQuote, InsomeaQuote, ClientPO et Notification.
-- Le **module de notifications** cree la notification, la persiste en base, la pousse en temps reel via WebSocket puis tente son envoi par email.
+### 2.3.1 Architecture physique
 
-Ainsi, la logique metier ne depend pas uniquement de l'interface utilisateur. Elle est principalement portee par les services backend, ce qui renforce la coherence, la securite et la maintenabilite de la solution.
+L'architecture physique de la solution correspond a l'organisation concrete des composants logiciels et des services techniques necessaires a son execution. D'apres le fichier `docker-compose.yml`, la plateforme est deployee sous forme de plusieurs services distincts qui communiquent entre eux.
+
+Le premier composant est le **frontend**, developpe avec **React** et **Vite**. Il constitue la couche visible par l'utilisateur final et s'execute comme une application web accessible depuis le navigateur. Ce composant dialogue avec le backend via des appels HTTP REST et via une connexion WebSocket pour les notifications temps reel.
+
+Le deuxieme composant est le **backend**, developpe avec **Django**, **Django REST Framework** et **Daphne** comme serveur ASGI. Ce serveur expose l'ensemble des API metier du CRM. Il prend en charge la gestion des utilisateurs, des clients, des produits, des fournisseurs, des opportunites, des devis, des bons de commande, des subscriptions et des notifications.
+
+Le troisieme composant est la **base de donnees PostgreSQL**. Elle assure le stockage persistant des donnees metier de l'application. Toutes les entites principales du systeme, telles que les utilisateurs, clients, opportunites, lignes d'opportunite, devis et notifications, y sont enregistrees.
+
+Le quatrieme composant est **Redis**, utilise comme service intermediaire pour plusieurs besoins techniques. Dans ce projet, Redis sert de broker pour les taches asynchrones Celery et de support aux communications temps reel via Channels, notamment pour la diffusion des notifications internes.
+
+Le cinquieme composant est **Celery Worker**, charge d'executer les traitements asynchrones. Ce service permet de deleguer certaines operations qui ne doivent pas bloquer la reponse utilisateur, comme l'envoi d'emails ou certains traitements planifies lies au cycle de vie des subscriptions.
+
+Le sixieme composant est **Celery Beat**, qui assure l'execution periodique des taches planifiees. Il intervient notamment pour les traitements recurrents, comme la gestion des subscriptions arrivant a expiration.
+
+Ainsi, l'architecture physique peut etre resumee comme suit :
+
+- le navigateur accede a l'application frontend ;
+- le frontend communique avec le backend Django via HTTP/REST ;
+- le backend accede a PostgreSQL pour lire et ecrire les donnees ;
+- le backend utilise Redis pour la messagerie interne et les notifications temps reel ;
+- Celery Worker et Celery Beat cooperent avec le backend et Redis pour les traitements asynchrones.
+
+Cette architecture physique offre plusieurs avantages : la separation des responsabilites, une meilleure scalabilite, la possibilite de deployer chaque composant independamment et une meilleure maintenabilite globale de la solution.
+
+### 2.3.2 Architecture logique
+
+L'architecture logique de la solution decrit la maniere dont les differentes responsabilites applicatives sont organisees a l'interieur du systeme. L'analyse du code montre une structuration modulaire claire, particulierement visible dans le backend.
+
+#### Couche presentation
+
+La couche presentation est assuree par le frontend React. Elle regroupe les pages, composants, hooks et services JavaScript qui permettent d'afficher les ecrans et de capter les actions de l'utilisateur. Cette couche contient notamment :
+
+- les pages des opportunites, des provisions, des subscriptions et des dashboards ;
+- les composants d'interface reutilisables ;
+- les hooks React Query pour la consommation des API ;
+- le service WebSocket pour la reception des notifications en temps reel.
+
+Cette couche ne porte pas la logique metier profonde. Son role principal est de presenter les donnees et de transmettre les actions utilisateur au backend.
+
+#### Couche API et controle
+
+Dans le backend, la couche de controle est materialisee par les **ViewSets** et les vues REST. Elle recoit les requetes HTTP provenant du frontend, verifie l'authentification, applique les permissions, valide les entrees via les serializers puis appelle les services adequats.
+
+Cette couche joue donc un role d'orchestration entre l'interface et la logique metier. Par exemple, les actions de creation d'opportunite, de generation de devis ou d'upload du bon de commande client passent par des endpoints specialises exposes par le module `ventes`.
+
+#### Couche metier
+
+La couche metier constitue le noyau fonctionnel de la solution. Elle est principalement implemente dans les dossiers `services/` du backend. C'est dans cette couche que sont centralisees :
+
+- les regles de gestion ;
+- les validations metier ;
+- les transitions de workflow ;
+- les calculs financiers ;
+- les traitements de notification.
+
+Cette organisation est particulierement visible dans les services des opportunites, des devis, des bons de commande, des provisions et des subscriptions. Ainsi, les traitements sensibles, comme le passage d'une opportunite d'un etat a un autre, ne dependent pas directement du frontend mais d'une logique serveur centralisee et reutilisable.
+
+#### Couche domaine et persistance
+
+La couche domaine repose sur les **models Django**, qui representent les entites metier du CRM. Parmi les objets centraux identifies dans le code, on trouve :
+
+- `User` pour les utilisateurs et les roles ;
+- `Client` et `Contact` pour la gestion commerciale ;
+- `Product` et `Supplier` pour le catalogue ;
+- `Opportunity` et `OpportunityLine` pour le processus de vente ;
+- `SupplierQuote`, `InsomeaQuote` et `ClientPO` pour la gestion documentaire et commerciale ;
+- `Notification`, `Provision` et `Subscription` pour le suivi des operations apres vente.
+
+Ces models assurent la persistance des donnees dans PostgreSQL et definissent egalement certaines contraintes d'integrite, comme les cles etrangeres, les index et les unicites.
+
+#### Couche securite et controle d'acces
+
+La solution integre une couche de securite fondee sur l'authentification **JWT** et sur un controle d'acces base sur les roles. Les permissions sont appliquees dans les endpoints et dans les services afin de garantir qu'un commercial, un financier, un technicien ou un administrateur n'accede qu'aux fonctionnalites autorisees.
+
+Cette organisation logique renforce la confidentialite des donnees et la fiabilite du workflow metier.
+
+#### Couche communication temps reel et traitements asynchrones
+
+Une couche transversale est dediee aux notifications et aux traitements non bloquants. Elle s'appuie sur :
+
+- **Django Channels** pour la communication WebSocket ;
+- **Redis** pour le transport des messages ;
+- **Celery** pour les taches asynchrones ;
+- les services de notification pour la creation, l'envoi et le suivi des alertes.
+
+Cette couche permet, par exemple, de notifier automatiquement l'equipe finance apres l'enregistrement d'un bon de commande client, sans perturber l'experience de l'utilisateur qui effectue l'action.
+
+#### Synthese de l'architecture logique
+
+En resume, l'architecture logique de la solution suit une organisation en couches :
+
+1. une couche presentation pour les interfaces utilisateur ;
+2. une couche API pour recevoir et traiter les requetes ;
+3. une couche metier pour les regles fonctionnelles ;
+4. une couche domaine/persistance pour les donnees ;
+5. une couche transversale pour la securite, les notifications et l'asynchrone.
+
+Cette structuration favorise la clarte du code, la reutilisabilite des composants, la maintenance de l'application et l'evolution future du systeme.
 
 ## Diagramme de sequence PlantUML
 

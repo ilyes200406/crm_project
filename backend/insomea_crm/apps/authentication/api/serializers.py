@@ -106,13 +106,7 @@ class LoginSerializer(serializers.Serializer):
                 "Ce compte n'est pas encore active. Verifiez votre email.",
                 code='authorization'
             )
-        """
-        if not user.is_verified:
-            raise serializers.ValidationError(
-                "Votre adresse email n'est pas verifiee.",
-                code='authorization'
-            )
-        """
+
         attrs['user'] = user
         return attrs
 

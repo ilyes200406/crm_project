@@ -39,6 +39,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       RUN_SETUP: "true"
     volumes:
+      - ./backend/insomea_crm:/app
       - media_files:/app/media
       - static_files:/app/staticfiles
     depends_on:

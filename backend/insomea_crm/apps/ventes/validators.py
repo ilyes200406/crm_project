@@ -204,7 +204,7 @@ def validate_no_active_subscription_for_initial(product, opportunity):
     if exists:
         raise ValidationError(
             f"Le client « {opportunity.client.company_name} » a déjà un abonnement actif "
-            f"pour « {product.title} ». Utilisez un type RENEWAL ou UPSELL.",
+            f"pour « {product.title} ».",
             code='active_subscription_exists'
         )
 
