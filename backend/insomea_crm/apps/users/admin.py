@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from ..authentication.models.setupToken import SetupToken
 from .models.permission import Permission, RolePermission

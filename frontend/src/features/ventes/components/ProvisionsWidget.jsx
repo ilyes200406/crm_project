@@ -25,38 +25,29 @@ export function ProvisionsWidget({ status = 'WAITING_PROVISION', limit = 5 }) {
   const columns = [
     {
       header: 'Opportunité',
-      render: (row) => {
-        const opp = row.opportunity_line?.opportunity;
-        return (
-          <div>
-            <div className="font-medium text-gray-900">{opp?.reference || '-'}</div>
-            <div className="text-xs text-gray-500">
-              {formatDistanceToNow(new Date(row.created_at), { addSuffix: true, locale: fr })}
-            </div>
+      render: (row) => (
+        <div>
+          <div className="font-medium text-gray-900">{row.opportunity_reference || '-'}</div>
+          <div className="text-xs text-gray-500">
+            {formatDistanceToNow(new Date(row.created_at), { addSuffix: true, locale: fr })}
           </div>
-        );
-      },
+        </div>
+      ),
     },
     {
       header: 'Client',
-      render: (row) => {
-        const client = row.opportunity_line?.opportunity?.client;
-        return (
-          <div className="font-medium text-gray-700">{client?.name || '-'}</div>
-        );
-      },
+      render: (row) => (
+        <div className="font-medium text-gray-700">{row.client_name || '-'}</div>
+      ),
     },
     {
       header: 'Produit',
-      render: (row) => {
-        const product = row.opportunity_line?.product;
-        return (
-          <div>
-            <div className="text-sm font-medium text-gray-900">{product?.title || '-'}</div>
-            <div className="text-xs text-gray-500">Qté: {row.opportunity_line?.quantity || 0}</div>
-          </div>
-        );
-      },
+      render: (row) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{row.product_title || '-'}</div>
+          <div className="text-xs text-gray-500">Qté: {row.opportunity_line?.quantity || 0}</div>
+        </div>
+      ),
     },
     {
       header: 'Actions',
@@ -132,11 +123,7 @@ export function ProvisionsInProgressWidget() {
   return (
     <Card title={cardTitle}>
       <div className="space-y-3">
-        {data.results.map((provision) => {
-          const opp = provision.opportunity_line?.opportunity;
-          const product = provision.opportunity_line?.product;
-
-          return (
+        {data.results.map((provision) => (
             <div
               key={provision.id}
               className="border border-blue-200 bg-blue-50 rounded-xl p-4 hover:bg-blue-100 cursor-pointer transition-colors"
@@ -146,10 +133,10 @@ export function ProvisionsInProgressWidget() {
                 <StatusBadge status={provision.status} />
               </div>
               <div className="mb-1">
-                <div className="font-semibold text-gray-900">{opp?.reference || '-'}</div>
-                <div className="text-sm text-gray-600">{opp?.client?.name || '-'}</div>
+                <div className="font-semibold text-gray-900">{provision.opportunity_reference || '-'}</div>
+                <div className="text-sm text-gray-600">{provision.client_name || '-'}</div>
               </div>
-              <div className="text-sm text-gray-700 mb-3">{product?.title || '-'}</div>
+              <div className="text-sm text-gray-700 mb-3">{provision.product_title || '-'}</div>
               <div className="text-xs text-gray-500">
                 Démarré{' '}
                 {formatDistanceToNow(new Date(provision.provisioning_started_at), {
@@ -168,8 +155,8 @@ export function ProvisionsInProgressWidget() {
                 Compléter
               </button>
             </div>
-          );
-        })}
+          ))}
+
       </div>
     </Card>
   );

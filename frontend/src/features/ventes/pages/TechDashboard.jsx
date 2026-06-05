@@ -67,10 +67,6 @@ export function TechDashboard() {
         ) : (
           <div className="space-y-3">
             {completedProvisions.results.map((provision) => {
-              const opp = provision.opportunity_line?.opportunity;
-              const product = provision.opportunity_line?.product;
-
-              // Calculate provisioning time
               const startTime = new Date(provision.provisioning_started_at);
               const endTime = new Date(provision.provisioning_completed_at);
               const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
@@ -88,10 +84,10 @@ export function TechDashboard() {
                     </div>
                     <div>
                       <div className="font-semibold text-gray-900">
-                        {opp?.reference || '-'} - {opp?.client?.name || '-'}
+                        {provision.opportunity_reference || '-'} - {provision.client_name || '-'}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {product?.title || '-'}
+                        {provision.product_title || '-'}
                       </div>
                     </div>
                   </div>

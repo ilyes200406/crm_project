@@ -1,8 +1,9 @@
+import os
 from datetime import date, timedelta
 
 import pytest
 from rest_framework.test import APIClient
-"""
+
 from apps.ventes.tests.factories import (
     make_client,
     make_opportunity,
@@ -13,6 +14,11 @@ from apps.ventes.tests.factories import (
     make_supplier,
     make_user,
 )
+
+
+def pytest_configure(config):
+    if not os.environ.get('DB_HOST'):
+        os.environ['DB_HOST'] = 'localhost'
 
 
 pytest_plugins = []
@@ -111,9 +117,9 @@ def patch_side_effects(monkeypatch):
         'apps.ventes.services.quote_service.generate_quote_pdf',
         lambda insomea_quote: ContentFile(b'%PDF-1.4\n%quote\n', name=f'quote-{insomea_quote.id}.pdf'),
     )
-    monkeypatch.setattr('apps.ventes.services.opportunity_service.send_supplier_quote_request', lambda *args, **kwargs: None)
-    monkeypatch.setattr('apps.ventes.services.opportunity_service.send_client_quote_with_pdf', lambda *args, **kwargs: None)
+    monkeypatch.setattr('apps.ventes.tasks.send_supplier_quote_request_email.delay', lambda *args, **kwargs: None)
+    monkeypatch.setattr('apps.ventes.tasks.send_client_quote_pdf_email.delay', lambda *args, **kwargs: None)
+    monkeypatch.setattr('apps.ventes.tasks.send_insomea_po_email.delay', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.notifications.services.notify_finance_to_approve', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.notifications.services.notify_techniciens_provision_waiting', lambda *args, **kwargs: None)
     monkeypatch.setattr('apps.ventes.notifications.services.notify_all_provisioned', lambda *args, **kwargs: None)
-"""

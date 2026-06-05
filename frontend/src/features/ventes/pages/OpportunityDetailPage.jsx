@@ -1222,11 +1222,16 @@ function InsomeaPOsSection({ opportunity, role, refetch }) {
   );
 }
 
-/** INSOMEA_POS_CONFIRMED — all done, show inline provisions table */
+/** INSOMEA_POS_CONFIRMED — all done, show documents + inline provisions table */
 function ConfirmedSection({ opportunity, navigate }) {
   const provisions = (opportunity.lines || [])
     .map((line) => line.provision)
     .filter(Boolean);
+
+  const supplierQuotes = opportunity.supplier_quotes || [];
+  const iq             = opportunity.insomea_quote;
+  const clientPo       = opportunity.client_po;
+  const insomeaPos     = opportunity.insomea_pos || [];
 
   const statusLabel = {
     WAITING_PROVISION: { text: 'En attente',   cls: 'bg-amber-100 text-amber-700' },
@@ -1235,8 +1240,20 @@ function ConfirmedSection({ opportunity, navigate }) {
     ERROR:             { text: 'Erreur',         cls: 'bg-red-100 text-red-700'   },
   };
 
+  const handleDownloadIQ = async () => {
+    if (!iq) return;
+    try {
+      const res = await insomeaQuotesApi.download(iq.id);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${iq.reference}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* document not yet generated */ }
+  };
+
   return (
     <div className="space-y-3">
+      {/* Success banner */}
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center">
         <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
           <Check size={24} strokeWidth={3} className="text-white" />
@@ -1245,6 +1262,143 @@ function ConfirmedSection({ opportunity, navigate }) {
         <p className="text-xs text-emerald-600 mt-1 leading-relaxed">Les techniciens ont été notifiés et peuvent commencer le provisioning.</p>
       </div>
 
+      {/* Supplier quotes */}
+      {supplierQuotes.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <SectionHeader icon={FileUp} title={`Devis fournisseurs (${supplierQuotes.length})`} />
+          <div className="space-y-2">
+            {supplierQuotes.map((sq) => (
+              <div key={sq.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{sq.supplier?.name || '—'}</p>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    {sq.reference && <span className="text-xs text-gray-500">{sq.reference}</span>}
+                    {sq.total_purchase != null && (
+                      <span className="text-xs font-semibold tabular-nums text-gray-700">{Number(sq.total_purchase).toFixed(2)} DT</span>
+                    )}
+                    {sq.received_at && (
+                      <span className="text-xs text-gray-400">{new Date(sq.received_at).toLocaleDateString('fr-FR')}</span>
+                    )}
+                  </div>
+                </div>
+                {sq.document_url && (
+                  <button
+                    onClick={() => window.open(sq.document_url, '_blank')}
+                    className="ml-3 shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-xs hover:bg-blue-100 transition-colors font-medium"
+                  >
+                    <Eye size={11} /> Voir
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Insomea quote */}
+      {iq && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <SectionHeader icon={FileText} title={`Devis Insomea — ${iq.reference}`} />
+          <div className="space-y-2 mb-3">
+            <Row label="Total vente" value={<span className="font-bold text-blue-700 tabular-nums">{Number(iq.total_sale || 0).toFixed(2)} DT</span>} />
+            <Row label="Remise"      value={`${iq.discount_percent || 0}%`} />
+            <Row label="Marge"       value={
+              <span className="text-emerald-600 font-semibold tabular-nums">
+                {Number(iq.margin || 0).toFixed(2)} DT
+                <span className="text-gray-400 font-normal ml-1">({Number(iq.margin_percent || 0).toFixed(1)}%)</span>
+              </span>
+            } />
+          </div>
+          <div className="flex gap-2">
+            {iq.document_url ? (
+              <button
+                onClick={() => window.open(iq.document_url, '_blank')}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-sm hover:bg-blue-100 transition-colors font-medium"
+              >
+                <Eye size={14} /> Prévisualiser
+              </button>
+            ) : null}
+            <button
+              onClick={handleDownloadIQ}
+              disabled={!iq.document_url}
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2 border border-gray-200 text-gray-700 rounded-xl text-sm hover:bg-gray-50 transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Download size={14} /> Télécharger
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Client PO */}
+      {clientPo && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <SectionHeader icon={FileCheck} title="BC Client" />
+          <div className="space-y-2 mb-3">
+            <Row label="Numéro BC"  value={clientPo.po_number} />
+            {clientPo.received_at && (
+              <Row label="Reçu le" value={new Date(clientPo.received_at).toLocaleDateString('fr-FR')} />
+            )}
+          </div>
+          {clientPo.document_url && (
+            <button
+              onClick={() => window.open(clientPo.document_url, '_blank')}
+              className="w-full inline-flex items-center justify-center gap-2 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl text-sm hover:bg-amber-100 transition-colors font-medium"
+            >
+              <Eye size={14} /> Voir le BC Client
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Insomea POs */}
+      {insomeaPos.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <SectionHeader icon={Banknote} title={`BCs Insomea (${insomeaPos.length})`} />
+          <div className="space-y-3">
+            {insomeaPos.map((po) => (
+              <div key={po.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-gray-800">{po.supplier_name || po.supplier?.name || '—'}</p>
+                  {po.confirmed_at ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      <Check size={10} strokeWidth={3} /> Confirmé
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      <Clock size={10} /> Envoyé
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1.5 mb-2.5">
+                  <Row label="Référence"   value={po.po_number} />
+                  <Row label="Total achat" value={<span className="tabular-nums">{Number(po.total_purchase || 0).toFixed(2)} DT</span>} />
+                  {po.sent_at && <Row label="Envoyé le"   value={new Date(po.sent_at).toLocaleDateString('fr-FR')} />}
+                  {po.confirmed_at && <Row label="Confirmé le" value={new Date(po.confirmed_at).toLocaleDateString('fr-FR')} />}
+                </div>
+                {po.document_url && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => window.open(po.document_url, '_blank')}
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs hover:bg-blue-100 transition-colors font-medium"
+                    >
+                      <Eye size={12} /> Voir
+                    </button>
+                    <a
+                      href={po.document_url}
+                      download
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 transition-colors font-medium"
+                    >
+                      <Download size={12} /> Télécharger
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Provisions */}
       {provisions.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">

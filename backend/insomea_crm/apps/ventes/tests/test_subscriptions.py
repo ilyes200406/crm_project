@@ -109,9 +109,9 @@ def test_active_subscription_transitions_to_pending_renewal(client_company, prod
     )
     sub.mark_pending_renewal()
     sub.save()
-    sub.refresh_from_db()
+    fresh = Subscription.objects.get(pk=sub.pk)
 
-    assert sub.status == SubscriptionStatus.PENDING_RENEWAL
+    assert fresh.status == SubscriptionStatus.PENDING_RENEWAL
 
 
 # ── Multiple terms ordered by term_number ───────────────────

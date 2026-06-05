@@ -6,6 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from apps.clients.models import Client, Industry
 from apps.products.models import Product, ProductCategory
 from apps.suppliers.models import Supplier, SupplierType
+from apps.users.models.role import Role
 from apps.users.models.users import User
 from apps.ventes.models import (
     BillingCycle,
@@ -22,10 +23,11 @@ from apps.ventes.models import (
 
 
 def make_user(*, email, role, password='password123', is_staff=False, is_superuser=False):
+    role_obj, _ = Role.objects.get_or_create(name=role, defaults={'display_name': role.title()})
     return User.objects.create_user(
         email=email,
         password=password,
-        role=role,
+        role=role_obj,
         is_active=True,
         is_staff=is_staff,
         is_superuser=is_superuser,
